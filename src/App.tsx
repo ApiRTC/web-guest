@@ -103,7 +103,7 @@ function App() {
         }
       }
     }
-  }, [session]);
+  }, [session, invitationData]);
 
   useEffect(() => {
     if (conversation && localStream)

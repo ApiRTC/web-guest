@@ -7,7 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 ReactDOM.render(
   <React.StrictMode>
-    <BrowserRouter>
+    <BrowserRouter basename="/visio-assisted" >
       <Routes>
         <Route path="/:sessionData" element={<App />} />
       </Routes>
