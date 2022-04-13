@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { UAParser } from 'ua-parser-js'
 import { RegisterInformation, Stream, UserAgent, UserData } from '@apirtc/apirtc';
-import { useSession, useConversation, useConversationStreams, VideoStream } from '@apirtc/react-lib'
+import { useSession, useCameraStream, useConversation, useConversationStreams, VideoStream } from '@apirtc/react-lib'
 import { decode as base64_decode } from 'base-64';
 
 import logo from './logo.svg';
@@ -26,23 +26,21 @@ function App() {
   const params = useParams();
   const [invitationData, setInvitationData] = useState<InvitationData | undefined>(undefined)
 
-  const [localStream, setLocalStream] = useState<Stream>();
-
+  // ApiRTC hooks
   const { session, connect } = useSession()
-  const { conversation, joined, join } =
+  const { stream: localStream } = useCameraStream(session, { constraints: { audio: false, video: true } });
+  const { conversation, joined } =
     useConversation(session,
       invitationData ? invitationData.conversation.name : undefined,
       invitationData ? { moderationEnabled: invitationData.conversation.moderationEnabled } : undefined,
       true);
   const { publishedStreams, subscribedStreams } =
-    useConversationStreams(
-      conversation,
-      joined ? localStream : undefined);
+    useConversationStreams(conversation,
+      joined && localStream ? [localStream] : []);
 
   useEffect(() => {
     if (params.sessionData) {
       const l_data: InvitationData = JSON.parse(base64_decode(params.sessionData)) as InvitationData;
-      console.log("invite", l_data)
       setInvitationData(l_data)
 
       // TODO: specifyThis : The customer-side app shall join the <sessionId>-guests group
@@ -62,15 +60,6 @@ function App() {
   useEffect(() => {
     if (session) {
       const userAgent: UserAgent = session.getUserAgent();
-      userAgent?.createStream({
-        constraints: { audio: false, video: true }
-      }).then((localStream: Stream) => {
-        console.info(COMPONENT_NAME + "|createStream", localStream)
-        setLocalStream(localStream);
-      }).catch((error: any) => {
-        console.error(COMPONENT_NAME + "|createStream", error)
-      });
-
       const parser = new UAParser();
       console.log("UAParser", parser.getResult())
       const userData: UserData = userAgent.getUserData();
@@ -117,6 +106,14 @@ function App() {
 
 export default App;
 
+      // userAgent?.createStream({
+      //   constraints: { audio: false, video: true }
+      // }).then((localStream: Stream) => {
+      //   console.info(COMPONENT_NAME + "|createStream", localStream)
+      //   setLocalStream(localStream);
+      // }).catch((error: any) => {
+      //   console.error(COMPONENT_NAME + "|createStream", error)
+      // });
 
   // useEffect(() => {
   //   if (conversation)
