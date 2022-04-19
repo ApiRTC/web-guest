@@ -49,7 +49,6 @@ function App() {
         cloudUrl: l_data.cloudUrl ? l_data.cloudUrl : 'https://cloud.apirtc.com',
       };
       registerInformation.groups = [l_data.conversation.name + "-guests"];
-
       registerInformation.userData = new UserData({ firstname: l_data.user.firstname, lastname: l_data.user.lastname })
 
       if (l_data.apiKey)
@@ -61,7 +60,7 @@ function App() {
     if (session) {
       const userAgent: UserAgent = session.getUserAgent();
       const parser = new UAParser();
-      console.log("UAParser", parser.getResult())
+      console.log(COMPONENT_NAME + "|UAParser", parser.getResult())
       const userData: UserData = userAgent.getUserData();
       userData.setToSession();
       userData.setProp('systemInfo', JSON.stringify(parser.getResult()));
@@ -72,11 +71,11 @@ function App() {
   }, [session]);
 
   const _publishedStreams = publishedStreams.map((stream: Stream) => {
-    console.log("_publishedStreams", publishedStreams, stream);
+    console.log(COMPONENT_NAME + "|_publishedStreams", publishedStreams, stream);
     return <VideoStream key={stream.getId()} stream={stream}></VideoStream>;
   });
   const _subscribedStreams = subscribedStreams.map((stream: Stream) => {
-    console.log("_subscribedStreams", subscribedStreams, stream)
+    console.log(COMPONENT_NAME + "|_subscribedStreams", subscribedStreams, stream)
     return <VideoStream key={stream.getId()} stream={stream}></VideoStream>;
   });
 
