@@ -11,32 +11,27 @@ import './App.css';
 interface InvitationData {
   cloudUrl?: string
   apiKey?: string
-  conversation: {
-    name: string
-    moderationEnabled?: boolean
-  }
+  conversation: { name: string, moderationEnabled?: boolean }
   user: {
-    firstname: string
-    lastname: string
+    firstname: string, lastname: string
   }
 }
 
 const COMPONENT_NAME = "App";
 function App() {
-  const params = useParams();
+  const params = useParams()
   const [invitationData, setInvitationData] = useState<InvitationData | undefined>(undefined)
 
   // ApiRTC hooks
   const { session, connect } = useSession()
-  const { stream: localStream } = useCameraStream(session, { constraints: { audio: false, video: true } });
-  const { conversation, joined } =
-    useConversation(session,
-      invitationData ? invitationData.conversation.name : undefined,
-      invitationData ? { moderationEnabled: invitationData.conversation.moderationEnabled } : undefined,
-      true);
-  const { publishedStreams, subscribedStreams } =
-    useConversationStreams(conversation,
-      joined && localStream ? [localStream] : []);
+  const { stream: localStream } = useCameraStream(session,
+    { constraints: { audio: false, video: true } })
+  const { conversation, joined } = useConversation(session,
+    invitationData ? invitationData.conversation.name : undefined,
+    invitationData ? { moderationEnabled: invitationData.conversation.moderationEnabled } : undefined,
+    true)
+  const { publishedStreams, subscribedStreams } = useConversationStreams(conversation,
+    joined && localStream ? [localStream] : [])
 
   useEffect(() => {
     if (params.sessionData) {
@@ -104,44 +99,3 @@ function App() {
 }
 
 export default App;
-
-      // userAgent?.createStream({
-      //   constraints: { audio: false, video: true }
-      // }).then((localStream: Stream) => {
-      //   console.info(COMPONENT_NAME + "|createStream", localStream)
-      //   setLocalStream(localStream);
-      // }).catch((error: any) => {
-      //   console.error(COMPONENT_NAME + "|createStream", error)
-      // });
-
-  // useEffect(() => {
-  //   if (conversation)
-  //     join();
-  // }, [conversation]);
-  // useEffect(() => {
-  //   if (joined && localStream)
-  //     publish(localStream)
-  // }, [joined, localStream]);
-
-// return () => {
-//   if (joined && localStream)
-//     unpublish(localStream)
-// }
-
-// useEffect(() => {
-//   if (session && invitationData) {
-//     // , { moderationEnabled: true }
-//     const conversation = session.getOrCreateConversation(invitationData.conversation.name,
-//       { moderationEnabled: invitationData.conversation.moderationEnabled });
-//     if (!conversation.isJoined()) {
-//       conversation.join().then(() => {
-//         // local user successfully joined the conversation.
-//         console.log(COMPONENT_NAME + "|joined", conversation.getName())
-//         setConversation(conversation);
-//       }).catch((error: any) => {
-//         // local user could not join the conversation.
-//         console.error(COMPONENT_NAME + "|join", error)
-//       });
-//     }
-//   }
-// }, [session, invitationData]);
