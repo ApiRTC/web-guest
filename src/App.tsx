@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { UAParser } from 'ua-parser-js'
 import { RegisterInformation, Stream, UserAgent, UserData } from '@apirtc/apirtc';
@@ -15,6 +15,7 @@ interface InvitationData {
   user: {
     firstname: string, lastname: string
   }
+  constraints: any
 }
 
 const COMPONENT_NAME = "App";
@@ -22,10 +23,12 @@ function App() {
   const params = useParams()
   const [invitationData, setInvitationData] = useState<InvitationData | undefined>(undefined)
 
+  const [constraints, setConstraints] = useState()
+
   // ApiRTC hooks
   const { session, connect } = useSession()
   const { stream: localStream } = useCameraStream(session,
-    { constraints: { audio: false, video: true } })
+    { constraints: constraints })
   const { conversation, joined } = useConversation(session,
     invitationData ? invitationData.conversation.name : undefined,
     invitationData ? { moderationEnabled: invitationData.conversation.moderationEnabled } : undefined,
@@ -37,6 +40,7 @@ function App() {
     if (params.sessionData) {
       const l_data: InvitationData = JSON.parse(base64_decode(params.sessionData)) as InvitationData;
       setInvitationData(l_data)
+      setConstraints(l_data.constraints)
 
       // TODO: specifyThis : The customer-side app shall join the <sessionId>-guests group
       // this will allow to share customer side specific info with userData for example
@@ -99,3 +103,42 @@ function App() {
 }
 
 export default App;
+
+
+  // useEffect(() => {
+  //   if (localStream) {
+  //     localStream.getCapabilities().then(capabilities => {
+  //       console.info("localStream|getCapabilities", localStream, capabilities)
+  //     }).catch((error) => {
+  //       console.error("localStream|getCapabilities", localStream, error)
+  //     });
+  //     localStream.getConstraints().then(obj => {
+  //       console.info("localStream|getConstraints", localStream, obj)
+  //     }).catch((error) => {
+  //       console.error("localStream|getConstraints", localStream, error)
+  //     });
+  //     localStream.getSettings().then(obj => {
+  //       console.info("localStream|getSettings", localStream, obj)
+  //     }).catch((error) => {
+  //       console.error("localStream|getSettings", localStream, error)
+  //     });
+  //   }
+  // }, [localStream]);
+
+  // useEffect(() => {
+  //   const on_contactData = (contactDataEvent: any) => {
+  //     console.log('received data from sender', contactDataEvent.sender, contactDataEvent.content)
+  //     if (contactDataEvent.content.constraints) {
+  //       setConstraints(contactDataEvent.content.constraints)
+  //     }
+  //   }
+
+  //   if (session && localStream) {
+  //     session.on('contactData', on_contactData)
+  //   }
+  //   return () => {
+  //     if (session && localStream) {
+  //       session.removeListener('contactData', on_contactData);
+  //     }
+  //   }
+  // }, [localStream])
