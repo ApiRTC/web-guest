@@ -29,12 +29,12 @@ function App() {
   const { session, connect } = useSession()
   const { stream: localStream } = useCameraStream(session,
     { constraints: constraints })
-  const { conversation, joined } = useConversation(session,
+  const { conversation } = useConversation(session,
     invitationData ? invitationData.conversation.name : undefined,
     invitationData ? { moderationEnabled: invitationData.conversation.moderationEnabled } : undefined,
     true)
   const { publishedStreams, subscribedStreams } = useConversationStreams(conversation,
-    joined && localStream ? [localStream] : [])
+    localStream ? [localStream] : [])
 
   useEffect(() => {
     if (params.sessionData) {
