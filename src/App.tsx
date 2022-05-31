@@ -5,6 +5,10 @@ import { Stream, UserAgent, UserData } from '@apirtc/apirtc'
 import { useSession, useCameraStream, useConversation, useConversationStreams, VideoStream } from '@apirtc/react-lib'
 import { decode as base64_decode } from 'base-64'
 
+import Button from '@mui/material/Button'
+
+import { loginKeyCloakJS } from './auth/keycloak'
+
 import logo from './logo.svg';
 import './App.css';
 
@@ -34,12 +38,12 @@ function App() {
     true)
   const { publishedStreams, subscribedStreams } = useConversationStreams(conversation, [localStream])
 
-  const getInvitationData = async (invitationId: string) => {
+  const getInvitationData = async (invitationId: string, token?: string) => {
     return fetch(`http://localhost:3007/invitations/${invitationId}`,
       {
         method: 'GET',
         headers: {
-          //Authorization: `Bearer ${g_token.get(JSON.stringify(apirtc))}`,
+          Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
         }
       }).then(response => {
@@ -59,10 +63,15 @@ function App() {
         setInvitationData(l_data)
       } catch (error) {
         if (error instanceof SyntaxError) {
-          getInvitationData(params.sessionData).then((data) => {
-            console.log('getInvitationData', data)
-            setInvitationData(data)
-          })
+          const invitationId = params.sessionData;
+          loginKeyCloakJS().then((keycloak) => {
+            console.log('keycloak.token', keycloak.token)
+            // TODO : use the token to make authenticated call to the API :
+            getInvitationData(invitationId).then((data) => {
+              console.log('getInvitationData', data)
+              setInvitationData(data)
+            })
+          }).catch((error) => { console.error('loginKeyCloakJS error', error) })
         }
       }
     }
@@ -109,6 +118,11 @@ function App() {
   return (
     <div className="App">
       <div className="App-header">
+        {/* CANT make a call from button, because this is not called back when redirected... */}
+        {/* <Button variant="contained" onClick={(e: any) => {
+          e.preventDefault();
+          loginKeyCloakJS();
+        }}>Login with Keycloak</Button> */}
         {invitationData ?
           <>
             <div>
