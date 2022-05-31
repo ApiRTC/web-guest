@@ -1,21 +1,21 @@
-import { useState, useEffect, useCallback } from 'react';
-import { useParams } from 'react-router-dom';
+import { useState, useEffect } from 'react'
+import { useParams } from 'react-router-dom'
 import { UAParser } from 'ua-parser-js'
-import { RegisterInformation, Stream, UserAgent, UserData } from '@apirtc/apirtc';
+import { Stream, UserAgent, UserData } from '@apirtc/apirtc'
 import { useSession, useCameraStream, useConversation, useConversationStreams, VideoStream } from '@apirtc/react-lib'
-import { decode as base64_decode } from 'base-64';
+import { decode as base64_decode } from 'base-64'
 
 import logo from './logo.svg';
 import './App.css';
 
-interface InvitationData {
+type InvitationData = {
   cloudUrl?: string
   apiKey?: string
   conversation: { name: string, moderationEnabled?: boolean }
   user: {
     firstname: string, lastname: string
   }
-  constraints: any
+  constraints?: any
 }
 
 const COMPONENT_NAME = "App";
@@ -27,56 +27,84 @@ function App() {
 
   // ApiRTC hooks
   const { session, connect } = useSession()
-  const { stream: localStream } = useCameraStream(session,
-    { constraints: constraints })
+  const { stream: localStream } = useCameraStream(session, { constraints: constraints })
   const { conversation } = useConversation(session,
     invitationData ? invitationData.conversation.name : undefined,
     invitationData ? { moderationEnabled: invitationData.conversation.moderationEnabled } : undefined,
     true)
-  const { publishedStreams, subscribedStreams } = useConversationStreams(conversation,
-    localStream ? [localStream] : [])
+  const { publishedStreams, subscribedStreams } = useConversationStreams(conversation, [localStream])
+
+  const getInvitationData = async (invitationId: string) => {
+    return fetch(`http://localhost:3007/invitations/${invitationId}`,
+      {
+        method: 'GET',
+        headers: {
+          //Authorization: `Bearer ${g_token.get(JSON.stringify(apirtc))}`,
+          'Content-Type': 'application/json',
+        }
+      }).then(response => {
+        if (response.status !== 200) {
+          return null
+        }
+        return response.json()
+      }).catch((error) => {
+        console.error('getInvitationData', error);
+      });
+  }
 
   useEffect(() => {
     if (params.sessionData) {
-      const l_data: InvitationData = JSON.parse(base64_decode(params.sessionData)) as InvitationData;
-      setInvitationData(l_data)
-      setConstraints(l_data.constraints)
+      try {
+        const l_data: InvitationData = JSON.parse(base64_decode(params.sessionData)) as InvitationData;
+        setInvitationData(l_data)
+      } catch (error) {
+        if (error instanceof SyntaxError) {
+          getInvitationData(params.sessionData).then((data) => {
+            console.log('getInvitationData', data)
+            setInvitationData(data)
+          })
+        }
+      }
+    }
+  }, [])
 
+  useEffect(() => {
+    if (invitationData) {
+      setConstraints(invitationData.constraints)
       // TODO: specifyThis : The customer-side app shall join the <sessionId>-guests group
       // this will allow to share customer side specific info with userData for example
-      const registerInformation: RegisterInformation = {
-        cloudUrl: l_data.cloudUrl ? l_data.cloudUrl : 'https://cloud.apirtc.com',
-      };
-      registerInformation.groups = [l_data.conversation.name + "-guests"];
-      registerInformation.userData = new UserData({ firstname: l_data.user.firstname, lastname: l_data.user.lastname })
-
-      if (l_data.apiKey)
-        connect({ apiKey: l_data.apiKey }, registerInformation)
+      if (invitationData.apiKey) {
+        connect({ apiKey: invitationData.apiKey }, {
+          cloudUrl: invitationData.cloudUrl ? invitationData.cloudUrl : 'https://cloud.apirtc.com',
+          groups: [invitationData.conversation.name + "-guests"],
+          userData: new UserData({ firstname: invitationData.user.firstname, lastname: invitationData.user.lastname })
+        })
+      }
     }
-  }, []);
+  }, [invitationData])
 
   useEffect(() => {
     if (session) {
-      const userAgent: UserAgent = session.getUserAgent();
-      const parser = new UAParser();
+      const userAgent: UserAgent = session.getUserAgent()
+      const parser = new UAParser()
       console.log(COMPONENT_NAME + "|UAParser", parser.getResult())
-      const userData: UserData = userAgent.getUserData();
-      userData.setToSession();
+      const userData: UserData = userAgent.getUserData()
+      userData.setToSession()
       userData.setProp('systemInfo', JSON.stringify(parser.getResult()));
       // TODO : I was forced to call setUserData again to make it work : check why and how
       // could the api be enhanced regarding userData usage (setToSession is also a pain)
-      userAgent.setUserData(userData);
+      userAgent.setUserData(userData)
     }
-  }, [session]);
+  }, [session])
 
   const _publishedStreams = publishedStreams.map((stream: Stream) => {
-    console.log(COMPONENT_NAME + "|_publishedStreams", publishedStreams, stream);
-    return <VideoStream key={stream.getId()} stream={stream}></VideoStream>;
-  });
+    console.log(COMPONENT_NAME + "|_publishedStreams", publishedStreams, stream)
+    return <VideoStream key={stream.getId()} stream={stream}></VideoStream>
+  })
   const _subscribedStreams = subscribedStreams.map((stream: Stream) => {
     console.log(COMPONENT_NAME + "|_subscribedStreams", subscribedStreams, stream)
-    return <VideoStream key={stream.getId()} stream={stream}></VideoStream>;
-  });
+    return <VideoStream key={stream.getId()} stream={stream}></VideoStream>
+  })
 
   return (
     <div className="App">
@@ -99,11 +127,16 @@ function App() {
           </div> : <div><img src={logo} className="App-logo" alt="logo" /></div>}
       </div>
     </div>
-  );
+  )
 }
 
 export default App;
 
+      // const registerInformation: RegisterInformation = {
+      //   cloudUrl: l_data.cloudUrl ? l_data.cloudUrl : 'https://cloud.apirtc.com',
+      // }
+      // registerInformation.groups = [l_data.conversation.name + "-guests"];
+      // registerInformation.userData = new UserData({ firstname: l_data.user.firstname, lastname: l_data.user.lastname })
 
   // useEffect(() => {
   //   if (localStream) {
