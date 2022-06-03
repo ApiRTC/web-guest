@@ -15,7 +15,10 @@ import './App.css';
 type InvitationData = {
   cloudUrl?: string
   apiKey?: string
-  conversation: { name: string, moderationEnabled?: boolean }
+  conversation: {
+    name: string, moderationEnabled?: boolean,
+    friendlyName?: string
+  }
   user: {
     firstname: string, lastname: string
   }
@@ -127,7 +130,7 @@ function App() {
           <>
             <div>
               <h1>Hello {invitationData.user.firstname}</h1>
-              <span>Conversation {invitationData.conversation.name}</span>
+              {invitationData.conversation.friendlyName && <span>Conversation {invitationData.conversation.friendlyName}</span>}
             </div>
           </> : <div>no invitationData</div>}
         {conversation ?
