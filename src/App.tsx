@@ -5,7 +5,9 @@ import { Stream, UserAgent, UserData } from '@apirtc/apirtc'
 import { useSession, useCameraStream, useConversation, useConversationStreams, VideoStream } from '@apirtc/react-lib'
 import { decode as base64_decode } from 'base-64'
 
-import Button from '@mui/material/Button'
+import Box from '@mui/material/Box'
+import Grid from '@mui/material/Grid'
+// import Button from '@mui/material/Button'
 
 import { loginKeyCloakJS } from './auth/keycloak'
 
@@ -109,10 +111,20 @@ function App() {
     }
   }, [session])
 
-  const _publishedStreams = publishedStreams.map((stream: Stream) => {
-    console.log(COMPONENT_NAME + "|_publishedStreams", publishedStreams, stream)
-    return <VideoStream key={stream.getId()} stream={stream}></VideoStream>
-  })
+  // const _publishedStreams = publishedStreams.map((stream: Stream) => {
+  //   console.log(COMPONENT_NAME + "|_publishedStreams", publishedStreams, stream)
+  //   return <VideoStream key={stream.getId()} stream={stream}></VideoStream>
+  // })
+
+  const _publishedStreams = <Grid container direction="row" justifyContent="flex-start"
+    sx={{
+      position: 'absolute',
+      bottom: 0,
+      opacity: [0.9, 0.8, 0.7],
+    }}>
+    {publishedStreams.map((stream, index) => <Grid key={index} item xs={2}><VideoStream stream={stream}></VideoStream></Grid>)}
+  </Grid>
+
   const _subscribedStreams = subscribedStreams.map((stream: Stream) => {
     console.log(COMPONENT_NAME + "|_subscribedStreams", subscribedStreams, stream)
     return <VideoStream key={stream.getId()} stream={stream}></VideoStream>
@@ -134,10 +146,14 @@ function App() {
             </div>
           </> : <div>no invitationData</div>}
         {conversation ?
-          <>
-            <div id="published">{_publishedStreams}</div>
-            <div id="subscribed">{_subscribedStreams}</div>
-          </> : <div><img src={logo} className="App-logo" alt="logo" /></div>}
+          <Box sx={{
+            width: "100%",
+            position: 'relative',
+          }}>
+            {_subscribedStreams}
+            {_publishedStreams}
+          </Box>
+          : <div><img src={logo} className="App-logo" alt="logo" /></div>}
         {session ?
           <div>
             <p>{session.getUserAgent().getUserData().get('systemInfo')}</p>
