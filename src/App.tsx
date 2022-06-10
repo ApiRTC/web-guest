@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import { UAParser } from 'ua-parser-js'
 import { Stream, UserAgent, UserData } from '@apirtc/apirtc'
-import { useSession, useCameraStream, useConversation, useConversationStreams, VideoStream } from '@apirtc/react-lib'
+import { useSession, useCameraStream, useConversation, useConversationStreams, VideoStream, Credentials } from '@apirtc/react-lib'
 import { decode as base64_decode } from 'base-64'
 
 import Box from '@mui/material/Box'
@@ -35,7 +35,7 @@ function App() {
   const [constraints, setConstraints] = useState()
 
   // ApiRTC hooks
-  const { session, connect } = useSession()
+  const { session, connect, disconnect } = useSession()
   const { stream: localStream } = useCameraStream(session, { constraints: constraints })
   const { conversation } = useConversation(session,
     invitationData ? invitationData.conversation.name : undefined,
@@ -57,9 +57,22 @@ function App() {
         }
         return response.json()
       }).catch((error) => {
-        console.error('getInvitationData', error);
-      });
+        console.error('getInvitationData', error)
+      })
   }
+
+  useEffect(() => {
+    const handleTabClose = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      console.log(COMPONENT_NAME + '|beforeunload event triggered');
+      disconnect()
+      //return (event.returnValue = 'Are you sure you want to exit?')
+    }
+    window.addEventListener('beforeunload', handleTabClose);
+    return () => {
+      window.removeEventListener('beforeunload', handleTabClose);
+    }
+  }, [disconnect])
 
   useEffect(() => {
     if (params.sessionData) {
@@ -80,7 +93,7 @@ function App() {
         }
       }
     }
-  }, [])
+  }, [params.sessionData])
 
   useEffect(() => {
     if (invitationData) {
@@ -95,7 +108,7 @@ function App() {
         })
       }
     }
-  }, [invitationData])
+  }, [invitationData]) // adding connect triggers issues so don't
 
   useEffect(() => {
     if (session) {
@@ -122,7 +135,10 @@ function App() {
       bottom: 0,
       opacity: [0.9, 0.8, 0.7],
     }}>
-    {publishedStreams.map((stream, index) => <Grid key={index} item xs={2}><VideoStream stream={stream}></VideoStream></Grid>)}
+    {publishedStreams.map((stream, index) =>
+      <Grid key={index} item xs={2}>
+        <VideoStream stream={stream} muted={true}></VideoStream>
+      </Grid>)}
   </Grid>
 
   const _subscribedStreams = subscribedStreams.map((stream: Stream) => {
