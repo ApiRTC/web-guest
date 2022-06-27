@@ -7,7 +7,6 @@ import { decode as base64_decode } from 'base-64'
 
 import Box from '@mui/material/Box'
 import Grid from '@mui/material/Grid'
-// import Button from '@mui/material/Button'
 
 import { loginKeyCloakJS } from './auth/keycloak'
 
@@ -30,12 +29,21 @@ type InvitationData = {
 const COMPONENT_NAME = "App";
 function App() {
   const params = useParams()
-  const [invitationData, setInvitationData] = useState<InvitationData | undefined>(undefined)
 
+  const [invitationData, setInvitationData] = useState<InvitationData | undefined>(undefined)
+  const [apirtcCredentials, setApirtcCredentials] = useState<Credentials | undefined>(undefined)
   const [constraints, setConstraints] = useState()
 
   // ApiRTC hooks
-  const { session, connect, disconnect } = useSession()
+  const { session } = useSession(
+    apirtcCredentials,
+    invitationData ? {
+      cloudUrl: invitationData.cloudUrl ? invitationData.cloudUrl : 'https://cloud.apirtc.com',
+      // SpecifyThis : The customer-side app shall join the <sessionId>-guests group
+      // this will allow to share customer side specific info with userData for example
+      groups: [invitationData.conversation.name + "-guests"],
+      userData: new UserData({ firstname: invitationData.user.firstname, lastname: invitationData.user.lastname })
+    } : undefined)
   const { stream: localStream } = useCameraStream(session, { constraints: constraints })
   const { conversation } = useConversation(session,
     invitationData ? invitationData.conversation.name : undefined,
@@ -63,16 +71,14 @@ function App() {
 
   useEffect(() => {
     const handleTabClose = (event: BeforeUnloadEvent) => {
-      event.preventDefault();
-      console.log(COMPONENT_NAME + '|beforeunload event triggered');
-      disconnect()
-      //return (event.returnValue = 'Are you sure you want to exit?')
+      event.preventDefault()
+      setApirtcCredentials(undefined)
     }
-    window.addEventListener('beforeunload', handleTabClose);
+    window.addEventListener('beforeunload', handleTabClose)
     return () => {
-      window.removeEventListener('beforeunload', handleTabClose);
+      window.removeEventListener('beforeunload', handleTabClose)
     }
-  }, [disconnect])
+  }, [])
 
   useEffect(() => {
     if (params.sessionData) {
@@ -98,14 +104,8 @@ function App() {
   useEffect(() => {
     if (invitationData) {
       setConstraints(invitationData.constraints)
-      // TODO: specifyThis : The customer-side app shall join the <sessionId>-guests group
-      // this will allow to share customer side specific info with userData for example
       if (invitationData.apiKey) {
-        connect({ apiKey: invitationData.apiKey }, {
-          cloudUrl: invitationData.cloudUrl ? invitationData.cloudUrl : 'https://cloud.apirtc.com',
-          groups: [invitationData.conversation.name + "-guests"],
-          userData: new UserData({ firstname: invitationData.user.firstname, lastname: invitationData.user.lastname })
-        })
+        setApirtcCredentials({ apiKey: invitationData.apiKey })
       }
     }
   }, [invitationData]) // adding connect triggers issues so don't
@@ -123,11 +123,6 @@ function App() {
       userAgent.setUserData(userData)
     }
   }, [session])
-
-  // const _publishedStreams = publishedStreams.map((stream: Stream) => {
-  //   console.log(COMPONENT_NAME + "|_publishedStreams", publishedStreams, stream)
-  //   return <VideoStream key={stream.getId()} stream={stream}></VideoStream>
-  // })
 
   const _publishedStreams = <Grid container direction="row" justifyContent="flex-start"
     sx={{
@@ -180,47 +175,3 @@ function App() {
 }
 
 export default App;
-
-      // const registerInformation: RegisterInformation = {
-      //   cloudUrl: l_data.cloudUrl ? l_data.cloudUrl : 'https://cloud.apirtc.com',
-      // }
-      // registerInformation.groups = [l_data.conversation.name + "-guests"];
-      // registerInformation.userData = new UserData({ firstname: l_data.user.firstname, lastname: l_data.user.lastname })
-
-  // useEffect(() => {
-  //   if (localStream) {
-  //     localStream.getCapabilities().then(capabilities => {
-  //       console.info("localStream|getCapabilities", localStream, capabilities)
-  //     }).catch((error) => {
-  //       console.error("localStream|getCapabilities", localStream, error)
-  //     });
-  //     localStream.getConstraints().then(obj => {
-  //       console.info("localStream|getConstraints", localStream, obj)
-  //     }).catch((error) => {
-  //       console.error("localStream|getConstraints", localStream, error)
-  //     });
-  //     localStream.getSettings().then(obj => {
-  //       console.info("localStream|getSettings", localStream, obj)
-  //     }).catch((error) => {
-  //       console.error("localStream|getSettings", localStream, error)
-  //     });
-  //   }
-  // }, [localStream]);
-
-  // useEffect(() => {
-  //   const on_contactData = (contactDataEvent: any) => {
-  //     console.log('received data from sender', contactDataEvent.sender, contactDataEvent.content)
-  //     if (contactDataEvent.content.constraints) {
-  //       setConstraints(contactDataEvent.content.constraints)
-  //     }
-  //   }
-
-  //   if (session && localStream) {
-  //     session.on('contactData', on_contactData)
-  //   }
-  //   return () => {
-  //     if (session && localStream) {
-  //       session.removeListener('contactData', on_contactData);
-  //     }
-  //   }
-  // }, [localStream])
