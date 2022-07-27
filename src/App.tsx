@@ -6,8 +6,10 @@ import { useSession, useCameraStream, useConversation, useConversationStreams, V
 import { decode as base64_decode } from 'base-64'
 
 import Box from '@mui/material/Box'
+import Button from '@mui/material/Button'
 import Grid from '@mui/material/Grid'
 
+import Keycloak from 'keycloak-js'
 import { loginKeyCloakJS } from './auth/keycloak'
 
 import logo from './logo.svg';
@@ -25,6 +27,13 @@ type InvitationData = {
   }
   constraints?: any
 }
+
+// Keycloak
+// const keycloak = new Keycloak({
+//   url: 'https://idp.apizee.com/auth', realm: 'APIZEE-POC-DGPN', clientId: 'visio-assisted'
+// })
+const keycloak = new Keycloak(window.location.origin + '/visio-assisted/keycloak.json')
+// console.log(window.location.origin + '/visio-assisted/silent-check-sso.html')
 
 const COMPONENT_NAME = "App";
 function App() {
@@ -71,13 +80,32 @@ function App() {
 
   useEffect(() => {
     const handleTabClose = (event: BeforeUnloadEvent) => {
-      event.preventDefault()
+      //event.preventDefault()
       setApirtcCredentials(undefined)
+      return undefined
     }
     window.addEventListener('beforeunload', handleTabClose)
     return () => {
       window.removeEventListener('beforeunload', handleTabClose)
     }
+  }, [])
+
+  useEffect(() => {
+    keycloak.init({
+      //onLoad: 'login-required', // Loops on refreshs
+      // onLoad: 'check-sso', // does not seem to change anything
+      // silentCheckSsoRedirectUri: window.location.origin + '/visio-assisted/silent-check-sso.html',
+      //silentCheckSsoFallback: false
+    }).then((auth) => {
+      console.log("Keycloak.init", auth)
+      if (!auth) {
+        console.log("Keycloak NOT authenticated...")
+      } else {
+        console.log("Keycloak authenticated", auth, keycloak.token)
+      }
+    }).catch((error: any) => {
+      console.error('keycloak.init', error)
+    });
   }, [])
 
   useEffect(() => {
@@ -143,12 +171,26 @@ function App() {
 
   return (
     <div className="App">
+
+      <Button variant="contained" onClick={(e: any) => {
+        e.preventDefault();
+        //loginKeyCloakJS();
+        keycloak.login().then(
+          (auth: any) => {
+            console.log("Keycloak.login", auth)
+            alert("auth" + JSON.stringify(auth))
+            if (!auth) {
+              console.log("Keycloak NOT authenticated...")
+            } else {
+              console.log("Keycloak authenticated", auth)
+            }
+          }
+        )
+      }}>Login with Keycloak</Button>
+
       <div className="App-header">
         {/* CANT make a call from button, because this is not called back when redirected... */}
-        {/* <Button variant="contained" onClick={(e: any) => {
-          e.preventDefault();
-          loginKeyCloakJS();
-        }}>Login with Keycloak</Button> */}
+
         {invitationData ?
           <>
             <div>

@@ -4,7 +4,7 @@
   "homepage": "https://apirtc.github.io/visio-assisted",
   "private": true,
   "dependencies": {
-    "@apirtc/apirtc": "^4.7.3",
+    "@apirtc/apirtc": "^4.7.6",
     "@emotion/react": "^11.9.0",
     "@emotion/styled": "^11.8.1",
     "@mui/material": "^5.8.1",
