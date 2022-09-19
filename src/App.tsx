@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import { UAParser } from 'ua-parser-js'
-import { Stream, UserAgent, UserData } from '@apirtc/apirtc'
+import { Contact, Stream, UserAgent, UserData } from '@apirtc/apirtc' //INVITATION_STATUS_ENDED
 import { useSession, useCameraStream, useConversation, useConversationStreams, VideoStream, Credentials } from '@apirtc/react-lib'
 import { decode as base64_decode } from 'base-64'
 
@@ -26,6 +26,12 @@ type InvitationData = {
     firstname: string, lastname: string
   }
   constraints?: any
+}
+
+type TakeSnapshot = { takeSnapshot: Object }
+function isInstanceOfTakeSnapshot(object: any): object is TakeSnapshot {
+  if (typeof object !== 'object') return false;
+  return 'takeSnapshot' in object;
 }
 
 // Keycloak
@@ -92,7 +98,7 @@ function App() {
 
   useEffect(() => {
     keycloak.init({
-      //onLoad: 'login-required', // Loops on refreshs
+      //onLoad: 'login-required', // Loops on refreshes
       // onLoad: 'check-sso', // does not seem to change anything
       // silentCheckSsoRedirectUri: window.location.origin + '/visio-assisted/silent-check-sso.html',
       //silentCheckSsoFallback: false
@@ -140,17 +146,51 @@ function App() {
 
   useEffect(() => {
     if (session) {
-      const userAgent: UserAgent = session.getUserAgent()
-      const parser = new UAParser()
+      const userAgent: UserAgent = session.getUserAgent();
+      const parser = new UAParser();
       console.log(COMPONENT_NAME + "|UAParser", parser.getResult())
-      const userData: UserData = userAgent.getUserData()
+      const userData: UserData = userAgent.getUserData();
       userData.setToSession()
-      userData.setProp('systemInfo', JSON.stringify(parser.getResult()));
+      userData.setProp('systemInfo', JSON.stringify(parser.getResult()))
       // TODO : I was forced to call setUserData again to make it work : check why and how
       // could the api be enhanced regarding userData usage (setToSession is also a pain)
       userAgent.setUserData(userData)
     }
   }, [session])
+
+  useEffect(() => {
+    if (session && localStream) {
+      // To receive data from contacts
+      const onData = (contactDataInfo: any) => {
+        const sender: Contact = contactDataInfo.sender;
+        const content: Object = contactDataInfo.content;
+        console.log("on data", sender, content)
+        if (isInstanceOfTakeSnapshot(content)) {
+          localStream.takeSnapshot(content.takeSnapshot)
+            .then((snapshot: any) => {
+              console.log("takeSnapshot OK :", localStream, snapshot);
+              //$('#timeline').append('<a><img src="' + snapshot + '" /></a>');
+
+              const fileTransferInvitation = sender.sendFile({ name: `snapshot_${(new Date()).toISOString()}.png`, type: 'image/png' }, snapshot)
+              fileTransferInvitation.on('statusChange', (statusChangeInfo: any) => {
+                console.log('statusChange :', statusChangeInfo.status);
+                // To learn about constants look at https://dev.apirtc.com/reference/Constants.html
+                //if (statusChangeInfo.status === ) {//INVITATION_STATUS_ENDED
+                console.log('statusChangeInfo', statusChangeInfo);
+                //}
+              });
+            }).catch((error: any) => {
+              // error
+              console.error('takeSnapshot error :', error);
+            });
+        }
+      }
+      session.on('contactData', onData)
+      return () => {
+        session.removeListener('data', onData)
+      }
+    }
+  }, [session, localStream])
 
   const _publishedStreams = <Grid container direction="row" justifyContent="flex-start"
     sx={{
@@ -171,8 +211,7 @@ function App() {
 
   return (
     <div className="App">
-
-      <Button variant="contained" onClick={(e: any) => {
+      <Button variant="contained" onClick={(e: React.SyntheticEvent) => {
         e.preventDefault();
         //loginKeyCloakJS();
         keycloak.login().then(
@@ -187,10 +226,8 @@ function App() {
           }
         )
       }}>Login with Keycloak</Button>
-
       <div className="App-header">
         {/* CANT make a call from button, because this is not called back when redirected... */}
-
         {invitationData ?
           <>
             <div>
