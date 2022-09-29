@@ -23,31 +23,37 @@ type InvitationData = {
     friendlyName?: string
   }
   user: {
-    firstname: string, lastname: string
+    firstName: string, lastName: string
   }
   constraints?: any
-}
+};
 
-type TakeSnapshot = { takeSnapshot: Object }
+type TakeSnapshot = { takeSnapshot: Object };
 function isInstanceOfTakeSnapshot(object: any): object is TakeSnapshot {
   if (typeof object !== 'object') return false;
   return 'takeSnapshot' in object;
+}
+
+type FileShared = { fileShared: { link: string, jwt: string } };
+function isInstanceOfFileShared(object: any): object is FileShared {
+  if (typeof object !== 'object') return false;
+  return 'fileShared' in object;
 }
 
 // Keycloak
 // const keycloak = new Keycloak({
 //   url: 'https://idp.apizee.com/auth', realm: 'APIZEE-POC-DGPN', clientId: 'visio-assisted'
 // })
-const keycloak = new Keycloak(window.location.origin + '/visio-assisted/keycloak.json')
+const keycloak = new Keycloak(window.location.origin + '/visio-assisted/keycloak.json');
 // console.log(window.location.origin + '/visio-assisted/silent-check-sso.html')
 
 const COMPONENT_NAME = "App";
 function App() {
-  const params = useParams()
+  const params = useParams();
 
-  const [invitationData, setInvitationData] = useState<InvitationData | undefined>(undefined)
-  const [apirtcCredentials, setApirtcCredentials] = useState<Credentials | undefined>(undefined)
-  const [constraints, setConstraints] = useState()
+  const [invitationData, setInvitationData] = useState<InvitationData | undefined>(undefined);
+  const [apirtcCredentials, setApirtcCredentials] = useState<Credentials | undefined>(undefined);
+  const [constraints, setConstraints] = useState();
 
   // ApiRTC hooks
   const { session } = useSession(
@@ -57,14 +63,14 @@ function App() {
       // SpecifyThis : The customer-side app shall join the <sessionId>-guests group
       // this will allow to share customer side specific info with userData for example
       groups: [invitationData.conversation.name + "-guests"],
-      userData: new UserData({ firstname: invitationData.user.firstname, lastname: invitationData.user.lastname })
-    } : undefined)
-  const { stream: localStream } = useCameraStream(session, { constraints: constraints })
+      userData: new UserData({ firstName: invitationData.user.firstName, lastName: invitationData.user.lastName })
+    } : undefined);
+  const { stream: localStream } = useCameraStream(session, { constraints: constraints });
   const { conversation } = useConversation(session,
     invitationData ? invitationData.conversation.name : undefined,
     invitationData ? { moderationEnabled: invitationData.conversation.moderationEnabled } : undefined,
-    true)
-  const { publishedStreams, subscribedStreams } = useConversationStreams(conversation, [localStream])
+    true);
+  const { publishedStreams, subscribedStreams } = useConversationStreams(conversation, [localStream]);
 
   const getInvitationData = async (invitationId: string, token?: string) => {
     return fetch(`http://localhost:3007/invitations/${invitationId}`,
@@ -161,36 +167,70 @@ function App() {
   useEffect(() => {
     if (session && localStream) {
       // To receive data from contacts
-      const onData = (contactDataInfo: any) => {
+      const onContactData = (contactDataInfo: any) => {
         const sender: Contact = contactDataInfo.sender;
         const content: Object = contactDataInfo.content;
         console.log("on data", sender, content)
         if (isInstanceOfTakeSnapshot(content)) {
           localStream.takeSnapshot(content.takeSnapshot)
             .then((snapshot: any) => {
-              console.log("takeSnapshot OK :", localStream, snapshot);
+              console.log("takeSnapshot OK :", localStream, snapshot)
               //$('#timeline').append('<a><img src="' + snapshot + '" /></a>');
 
-              const fileTransferInvitation = sender.sendFile({ name: `snapshot_${(new Date()).toISOString()}.png`, type: 'image/png' }, snapshot)
+              const fileTransferInvitation = sender.sendFile({ name: `snapshot_${(new Date()).toISOString()}.png`, type: 'image/png' }, snapshot);
               fileTransferInvitation.on('statusChange', (statusChangeInfo: any) => {
-                console.log('statusChange :', statusChangeInfo.status);
+                console.log('statusChange :', statusChangeInfo.status)
                 // To learn about constants look at https://dev.apirtc.com/reference/Constants.html
                 //if (statusChangeInfo.status === ) {//INVITATION_STATUS_ENDED
-                console.log('statusChangeInfo', statusChangeInfo);
+                console.log('statusChangeInfo', statusChangeInfo)
                 //}
               });
             }).catch((error: any) => {
               // error
-              console.error('takeSnapshot error :', error);
+              console.error('takeSnapshot error :', error)
             });
         }
-      }
-      session.on('contactData', onData)
+      };
+      session.on('contactData', onContactData)
       return () => {
-        session.removeListener('data', onData)
+        session.removeListener('contactData', onContactData)
       }
     }
   }, [session, localStream])
+
+  const [imgSrc, setImgSrc] = useState<string>();
+
+  useEffect(() => {
+    if (session && conversation) {
+      // To receive data from contacts
+      const onData = (contactDataInfo: any) => {
+        const sender: Contact = contactDataInfo.sender;
+        const content: Object = contactDataInfo.content;
+        console.log("Conversation::on data", sender, content)
+        if (isInstanceOfFileShared(content)) {
+          console.log("fileShared", content)
+          fetch(content.fileShared.link,
+            {
+              method: 'get',
+              mode: 'cors',
+              headers: new Headers({
+                'Authorization': 'Bearer ' + content.fileShared.jwt // session?.getId()
+              })
+            }
+          ).then((res) => { return res.blob() }).then(blob => {
+            const url = window.URL.createObjectURL(blob);
+            setImgSrc(url)
+            // force a state update
+            //forceUpdate()
+          }).catch((error) => { console.error(COMPONENT_NAME + "|fetch ", content.fileShared.link, error) })
+        }
+      };
+      conversation.on('data', onData)
+      return () => {
+        conversation.removeListener('data', onData)
+      }
+    }
+  }, [conversation, session])
 
   const _publishedStreams = <Grid container direction="row" justifyContent="flex-start"
     sx={{
@@ -202,12 +242,12 @@ function App() {
       <Grid key={index} item xs={2}>
         <VideoStream stream={stream} muted={true}></VideoStream>
       </Grid>)}
-  </Grid>
+  </Grid>;
 
   const _subscribedStreams = subscribedStreams.map((stream: Stream) => {
     console.log(COMPONENT_NAME + "|_subscribedStreams", subscribedStreams, stream)
     return <VideoStream key={stream.getId()} stream={stream}></VideoStream>
-  })
+  });
 
   return (
     <div className="App">
@@ -231,7 +271,7 @@ function App() {
         {invitationData ?
           <>
             <div>
-              <h1>Hello {invitationData.user.firstname}</h1>
+              <h1>Hello {invitationData.user.firstName}</h1>
               {invitationData.conversation.friendlyName && <span>Conversation {invitationData.conversation.friendlyName}</span>}
             </div>
           </> : <div>no invitationData</div>}
@@ -248,6 +288,7 @@ function App() {
           <div>
             <p>{session.getUserAgent().getUserData().get('systemInfo')}</p>
           </div> : <div><img src={logo} className="App-logo" alt="logo" /></div>}
+        {imgSrc && <img src={imgSrc} alt="sharedImg"></img>}
       </div>
     </div>
   )
