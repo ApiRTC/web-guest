@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import { UAParser } from 'ua-parser-js'
 import { Contact, Stream, UserAgent, UserData } from '@apirtc/apirtc' //INVITATION_STATUS_ENDED
-import { useSession, useCameraStream, useConversation, useConversationStreams, VideoStream, Credentials } from '@apirtc/react-lib'
+import { useSession, useCameraStream, useConversation, useConversationStreams, Credentials } from '@apirtc/react-lib'
+import { AudioEnableButton, Stream as StreamComponent, Grid as RemoteStreamsGrid } from '@apirtc/mui-react-lib'
 import { decode as base64_decode } from 'base-64'
 
 import Box from '@mui/material/Box'
@@ -232,23 +233,6 @@ function App() {
     }
   }, [conversation, session])
 
-  const _publishedStreams = <Grid container direction="row" justifyContent="flex-start"
-    sx={{
-      position: 'absolute',
-      bottom: 0,
-      opacity: [0.9, 0.8, 0.7],
-    }}>
-    {publishedStreams.map((stream, index) =>
-      <Grid key={index} item xs={2}>
-        <VideoStream stream={stream} muted={true}></VideoStream>
-      </Grid>)}
-  </Grid>;
-
-  const _subscribedStreams = subscribedStreams.map((stream: Stream) => {
-    console.log(COMPONENT_NAME + "|_subscribedStreams", subscribedStreams, stream)
-    return <VideoStream key={stream.getId()} stream={stream}></VideoStream>
-  });
-
   return (
     <div className="App">
       <Button variant="contained" onClick={(e: React.SyntheticEvent) => {
@@ -280,14 +264,33 @@ function App() {
             width: "100%",
             position: 'relative',
           }}>
-            {_subscribedStreams}
-            {_publishedStreams}
+            <RemoteStreamsGrid>
+              {subscribedStreams.map((stream: Stream, index: number) =>
+                <StreamComponent id={'subscribed-stream-' + index} key={index}
+                  stream={stream}
+                  name={stream.getContact().getUserData().get('firstName') + ' ' + stream.getContact().getUserData().get('lastName')}
+                  muted={false} withMuteToggle={true}></StreamComponent>
+              )}
+            </RemoteStreamsGrid>
+            <Grid container direction="row" justifyContent="flex-start"
+              sx={{
+                position: 'absolute',
+                bottom: 0, left: 0,
+                opacity: [0.9, 0.8, 0.7],
+              }}>
+              {publishedStreams.map((stream, index) =>
+                <Grid item id={'published-stream-' + index} key={index} xs={2}>
+                  <StreamComponent stream={stream} muted={true}
+                    controls={<AudioEnableButton />}></StreamComponent>
+                </Grid>)}
+            </Grid>
           </Box>
           : <div><img src={logo} className="App-logo" alt="logo" /></div>}
-        {session ?
+        {/* {session &&
           <div>
             <p>{session.getUserAgent().getUserData().get('systemInfo')}</p>
-          </div> : <div><img src={logo} className="App-logo" alt="logo" /></div>}
+          </div>} */}
+        {!session && <div><img src={logo} className="App-logo" alt="logo" /></div>}
         {imgSrc && <img src={imgSrc} alt="sharedImg"></img>}
       </div>
     </div>

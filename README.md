@@ -2,6 +2,10 @@
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
+## DEV
+
+`npm link @apirtc/react-lib @apirtc/mui-react-lib`
+
 ## Available Scripts
 
 In the project directory, you can run:
