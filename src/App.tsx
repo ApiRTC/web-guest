@@ -269,7 +269,8 @@ function App() {
                 <StreamComponent id={'subscribed-stream-' + index} key={index}
                   stream={stream}
                   name={stream.getContact().getUserData().get('firstName') + ' ' + stream.getContact().getUserData().get('lastName')}
-                  muted={false} withMuteToggle={true}></StreamComponent>
+                  muted={false} withMuteToggle={true}
+                  controls={<AudioEnableButton disabled={true} />}></StreamComponent>
               )}
             </RemoteStreamsGrid>
             <Grid container direction="row" justifyContent="flex-start"
