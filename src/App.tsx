@@ -3,7 +3,10 @@ import { useParams } from 'react-router-dom'
 import { UAParser } from 'ua-parser-js'
 import { Contact, Stream, UserAgent, UserData } from '@apirtc/apirtc' //INVITATION_STATUS_ENDED
 import { useSession, useCameraStream, useConversation, useConversationStreams, Credentials } from '@apirtc/react-lib'
-import { AudioEnableButton, Stream as StreamComponent, Grid as RemoteStreamsGrid } from '@apirtc/mui-react-lib'
+import {
+  AudioEnableButton, VideoEnableButton, MuteButton,
+  Stream as StreamComponent, Grid as RemoteStreamsGrid
+} from '@apirtc/mui-react-lib'
 import { decode as base64_decode } from 'base-64'
 
 import Box from '@mui/material/Box'
@@ -269,8 +272,11 @@ function App() {
                 <StreamComponent id={'subscribed-stream-' + index} key={index}
                   stream={stream}
                   name={stream.getContact().getUserData().get('firstName') + ' ' + stream.getContact().getUserData().get('lastName')}
-                  muted={false} withMuteToggle={true}
-                  controls={<AudioEnableButton disabled={true} />}></StreamComponent>
+                  muted={false}
+                  controls={<>
+                    <MuteButton />
+                    <AudioEnableButton disabled={true} />
+                    <VideoEnableButton disabled={true} /></>} />
               )}
             </RemoteStreamsGrid>
             <Grid container direction="row" justifyContent="flex-start"
@@ -282,7 +288,7 @@ function App() {
               {publishedStreams.map((stream, index) =>
                 <Grid item id={'published-stream-' + index} key={index} xs={2}>
                   <StreamComponent stream={stream} muted={true}
-                    controls={<AudioEnableButton />}></StreamComponent>
+                    controls={<><AudioEnableButton /><VideoEnableButton /></>} />
                 </Grid>)}
             </Grid>
           </Box>
