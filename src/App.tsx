@@ -74,7 +74,7 @@ function App() {
     invitationData ? invitationData.conversation.name : undefined,
     invitationData ? { moderationEnabled: invitationData.conversation.moderationEnabled } : undefined,
     true);
-  const { publishedStreams, subscribedStreams } = useConversationStreams(conversation, [localStream]);
+  const { publishedStreams, subscribedStreams } = useConversationStreams(conversation, localStream ? [{ stream: localStream }] : []);
 
   const getInvitationData = async (invitationId: string, token?: string) => {
     return fetch(`http://localhost:3007/invitations/${invitationId}`,
@@ -272,7 +272,7 @@ function App() {
                 <StreamComponent id={'subscribed-stream-' + index} key={index}
                   stream={stream}
                   name={stream.getContact().getUserData().get('firstName') + ' ' + stream.getContact().getUserData().get('lastName')}
-                  muted={false}
+                  autoPlay={true} muted={false}
                   controls={<>
                     <MuteButton />
                     <AudioEnableButton disabled={true} />
@@ -286,8 +286,10 @@ function App() {
                 opacity: [0.9, 0.8, 0.7],
               }}>
               {publishedStreams.map((stream, index) =>
-                <Grid item id={'published-stream-' + index} key={index} xs={2}>
-                  <StreamComponent stream={stream} muted={true}
+                <Grid item key={index} xs={2}>
+                  <StreamComponent id={'published-stream-' + index}
+                    stream={stream}
+                    autoPlay={true} muted={true}
                     controls={<><AudioEnableButton /><VideoEnableButton /></>} />
                 </Grid>)}
             </Grid>
