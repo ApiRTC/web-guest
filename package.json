@@ -4,10 +4,10 @@
   "homepage": "https://apirtc.github.io/visio-assisted",
   "private": true,
   "dependencies": {
-    "@apirtc/apirtc": "^5.0.3-rc.0",
+    "@apirtc/apirtc": "^5.0.3",
     "@emotion/react": "^11.10.5",
     "@emotion/styled": "^11.10.5",
-    "@mui/material": "^5.10.12",
+    "@mui/material": "^5.11.8",
     "base-64": "^1.0.0",
     "keycloak-js": "^18.0.0",
     "react": "^17",

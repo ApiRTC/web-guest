@@ -1,35 +1,40 @@
-import React, { useState, useEffect } from 'react'
-import { useParams } from 'react-router-dom'
-import { UAParser } from 'ua-parser-js'
-import { Contact, Stream, UserAgent, UserData } from '@apirtc/apirtc' //INVITATION_STATUS_ENDED
-import { useSession, useCameraStream, useConversation, useConversationStreams, Credentials } from '@apirtc/react-lib'
+import React, { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
+
+import { UAParser } from 'ua-parser-js';
+
+import { decode as base64_decode } from 'base-64';
+
+import { Contact, PublishOptions, Stream, UserAgent, UserData } from '@apirtc/apirtc'; //INVITATION_STATUS_ENDED
 import {
-  AudioEnableButton, VideoEnableButton, MuteButton,
-  Stream as StreamComponent, Grid as RemoteStreamsGrid
-} from '@apirtc/mui-react-lib'
-import { decode as base64_decode } from 'base-64'
+  AudioEnableButton, Grid as RemoteStreamsGrid, MuteButton,
+  Stream as StreamComponent, VideoEnableButton
+} from '@apirtc/mui-react-lib';
+import { Credentials, useCameraStream, useConversation, useConversationStreams, useSession } from '@apirtc/react-lib';
 
-import Box from '@mui/material/Box'
-import Button from '@mui/material/Button'
-import Grid from '@mui/material/Grid'
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import Grid from '@mui/material/Grid';
 
-import Keycloak from 'keycloak-js'
-import { loginKeyCloakJS } from './auth/keycloak'
+import Keycloak from 'keycloak-js';
+import { loginKeyCloakJS } from './auth/keycloak';
 
-import logo from './logo.svg';
 import './App.css';
+import logo from './logo.svg';
 
+// WARN: Keep in Sync with m-visio-assist
 type InvitationData = {
   cloudUrl?: string
   apiKey?: string
   conversation: {
-    name: string, moderationEnabled?: boolean,
-    friendlyName?: string
+    name: string, friendlyName?: string,
+    moderationEnabled?: boolean,
+    publishOptions?: PublishOptions
   }
   user: {
     firstName: string, lastName: string
   }
-  constraints?: any
+  constraints?: MediaStreamConstraints
 };
 
 type TakeSnapshot = { takeSnapshot: Object };
@@ -56,12 +61,10 @@ function App() {
   const params = useParams();
 
   const [invitationData, setInvitationData] = useState<InvitationData | undefined>(undefined);
-  const [apirtcCredentials, setApirtcCredentials] = useState<Credentials | undefined>(undefined);
-  const [constraints, setConstraints] = useState();
 
   // ApiRTC hooks
   const { session } = useSession(
-    apirtcCredentials,
+    invitationData ? { apiKey: invitationData.apiKey } as Credentials : undefined,
     invitationData ? {
       cloudUrl: invitationData.cloudUrl ? invitationData.cloudUrl : 'https://cloud.apirtc.com',
       // SpecifyThis : The customer-side app shall join the <sessionId>-guests group
@@ -69,12 +72,13 @@ function App() {
       groups: [invitationData.conversation.name + "-guests"],
       userData: new UserData({ firstName: invitationData.user.firstName, lastName: invitationData.user.lastName })
     } : undefined);
-  const { stream: localStream } = useCameraStream(session, { constraints: constraints });
+  const { stream: localStream } = useCameraStream(session, { constraints: invitationData?.constraints });
   const { conversation } = useConversation(session,
     invitationData ? invitationData.conversation.name : undefined,
     invitationData ? { moderationEnabled: invitationData.conversation.moderationEnabled } : undefined,
     true);
-  const { publishedStreams, subscribedStreams } = useConversationStreams(conversation, localStream ? [{ stream: localStream }] : []);
+  const { publishedStreams, subscribedStreams } = useConversationStreams(conversation,
+    localStream ? [{ stream: localStream, options: invitationData?.conversation.publishOptions }] : []);
 
   const getInvitationData = async (invitationId: string, token?: string) => {
     return fetch(`http://localhost:3007/invitations/${invitationId}`,
@@ -97,7 +101,7 @@ function App() {
   useEffect(() => {
     const handleTabClose = (event: BeforeUnloadEvent) => {
       //event.preventDefault()
-      setApirtcCredentials(undefined)
+      setInvitationData(undefined)
       return undefined
     }
     window.addEventListener('beforeunload', handleTabClose)
@@ -128,6 +132,7 @@ function App() {
     if (params.sessionData) {
       try {
         const l_data: InvitationData = JSON.parse(base64_decode(params.sessionData)) as InvitationData;
+        console.info("InvitationData", l_data);
         setInvitationData(l_data)
       } catch (error) {
         if (error instanceof SyntaxError) {
@@ -144,15 +149,6 @@ function App() {
       }
     }
   }, [params.sessionData])
-
-  useEffect(() => {
-    if (invitationData) {
-      setConstraints(invitationData.constraints)
-      if (invitationData.apiKey) {
-        setApirtcCredentials({ apiKey: invitationData.apiKey })
-      }
-    }
-  }, [invitationData]) // adding connect triggers issues so don't
 
   useEffect(() => {
     if (session) {
