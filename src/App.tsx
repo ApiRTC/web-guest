@@ -28,13 +28,15 @@ type InvitationData = {
   apiKey?: string
   conversation: {
     name: string, friendlyName?: string,
-    moderationEnabled?: boolean,
-    publishOptions?: PublishOptions
+    moderationEnabled?: boolean
   }
   user: {
     firstName: string, lastName: string
   }
-  constraints?: MediaStreamConstraints
+  camera: {
+    constraints?: MediaStreamConstraints,
+    publishOptions?: PublishOptions
+  }
 };
 
 type TakeSnapshot = { takeSnapshot: Object };
@@ -72,13 +74,13 @@ function App() {
       groups: [invitationData.conversation.name + "-guests"],
       userData: new UserData({ firstName: invitationData.user.firstName, lastName: invitationData.user.lastName })
     } : undefined);
-  const { stream: localStream } = useCameraStream(session, { constraints: invitationData?.constraints });
+  const { stream: localStream } = useCameraStream(session, { constraints: invitationData?.camera.constraints });
   const { conversation } = useConversation(session,
     invitationData ? invitationData.conversation.name : undefined,
     invitationData ? { moderationEnabled: invitationData.conversation.moderationEnabled } : undefined,
     true);
   const { publishedStreams, subscribedStreams } = useConversationStreams(conversation,
-    localStream ? [{ stream: localStream, options: invitationData?.conversation.publishOptions }] : []);
+    localStream ? [{ stream: localStream, options: invitationData?.camera.publishOptions }] : []);
 
   const getInvitationData = async (invitationId: string, token?: string) => {
     return fetch(`http://localhost:3007/invitations/${invitationId}`,
