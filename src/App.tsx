@@ -5,10 +5,10 @@ import { UAParser } from 'ua-parser-js';
 
 import { decode as base64_decode } from 'base-64';
 
-import { Contact, PublishOptions, Stream, UserAgent, UserData } from '@apirtc/apirtc'; //INVITATION_STATUS_ENDED
+import { Contact, GetOrCreateConversationOptions, PublishOptions, Stream, UserAgent, UserData } from '@apirtc/apirtc'; //INVITATION_STATUS_ENDED
 import {
-  AudioEnableButton, Grid as RemoteStreamsGrid, MuteButton,
-  Stream as StreamComponent, VideoEnableButton
+  Audio, AudioEnableButton, Grid as RemoteStreamsGrid, MuteButton,
+  Stream as StreamComponent, Video, VideoEnableButton
 } from '@apirtc/mui-react-lib';
 import { Credentials, useCameraStream, useConversation, useConversationStreams, useSession } from '@apirtc/react-lib';
 
@@ -28,7 +28,7 @@ type InvitationData = {
   apiKey?: string
   conversation: {
     name: string, friendlyName?: string,
-    moderationEnabled?: boolean
+    getOrCreateOptions?: GetOrCreateConversationOptions
   }
   user: {
     firstName: string, lastName: string
@@ -77,7 +77,7 @@ function App() {
   const { stream: localStream } = useCameraStream(session, { constraints: invitationData?.camera.constraints });
   const { conversation } = useConversation(session,
     invitationData ? invitationData.conversation.name : undefined,
-    invitationData ? { moderationEnabled: invitationData.conversation.moderationEnabled } : undefined,
+    invitationData ? invitationData.conversation.getOrCreateOptions : undefined,
     true);
   const { publishedStreams, subscribedStreams } = useConversationStreams(conversation,
     localStream ? [{ stream: localStream, options: invitationData?.camera.publishOptions }] : []);
@@ -270,11 +270,12 @@ function App() {
                 <StreamComponent id={'subscribed-stream-' + index} key={index}
                   stream={stream}
                   name={stream.getContact().getUserData().get('firstName') + ' ' + stream.getContact().getUserData().get('lastName')}
-                  autoPlay={true} muted={false}
                   controls={<>
                     <MuteButton />
                     <AudioEnableButton disabled={true} />
-                    <VideoEnableButton disabled={true} /></>} />
+                    <VideoEnableButton disabled={true} /></>} >
+                  {stream.hasVideo() ? <Video /> : <Audio />}
+                </StreamComponent>
               )}
             </RemoteStreamsGrid>
             <Grid container direction="row" justifyContent="flex-start"
@@ -286,9 +287,10 @@ function App() {
               {publishedStreams.map((stream, index) =>
                 <Grid item key={index} xs={2}>
                   <StreamComponent id={'published-stream-' + index}
-                    stream={stream}
-                    autoPlay={true} muted={true}
-                    controls={<><AudioEnableButton /><VideoEnableButton /></>} />
+                    stream={stream} muted={true}
+                    controls={<><AudioEnableButton /><VideoEnableButton /></>} >
+                    {stream.hasVideo() ? <Video /> : <Audio />}
+                  </StreamComponent>
                 </Grid>)}
             </Grid>
           </Box>
