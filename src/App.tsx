@@ -12,6 +12,7 @@ import {
 } from '@apirtc/mui-react-lib';
 import { Credentials, useCameraStream, useConversation, useConversationStreams, useSession } from '@apirtc/react-lib';
 
+import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid';
 
@@ -20,7 +21,7 @@ import { loginKeyCloakJS } from './auth/keycloak';
 
 import Container from '@mui/material/Container';
 import './App.css';
-import logo from './logo.svg';
+import logo from './logo.png';
 
 // WARN: Keep in Sync with m-visio-assist
 type InvitationData = {
@@ -51,6 +52,12 @@ function isInstanceOfFileShared(object: any): object is FileShared {
   return 'fileShared' in object;
 }
 
+type HangUp = { hangUp: boolean };
+function isInstanceOfHangup(object: any): object is HangUp {
+  if (typeof object !== 'object') return false;
+  return 'hangUp' in object;
+}
+
 // Keycloak
 // const keycloak = new Keycloak({
 //   url: 'https://idp.apizee.com/auth', realm: 'APIZEE-POC-DGPN', clientId: 'visio-assisted'
@@ -65,7 +72,7 @@ function App() {
   const [invitationData, setInvitationData] = useState<InvitationData | undefined>(undefined);
 
   // ApiRTC hooks
-  const { session } = useSession(
+  const { session, disconnect } = useSession(
     invitationData ? { apiKey: invitationData.apiKey } as Credentials : undefined,
     invitationData ? {
       cloudUrl: invitationData.cloudUrl ? invitationData.cloudUrl : 'https://cloud.apirtc.com',
@@ -202,6 +209,8 @@ function App() {
 
   const [imgSrc, setImgSrc] = useState<string>();
 
+  const [hangedUp, setHangedUp] = useState<boolean>(false);
+
   useEffect(() => {
     if (session && conversation) {
       // To receive data from contacts
@@ -225,6 +234,13 @@ function App() {
             // force a state update
             //forceUpdate()
           }).catch((error) => { console.error(COMPONENT_NAME + "|fetch ", content.fileShared.link, error) })
+        } else if (isInstanceOfHangup(content)) {
+          conversation.leave().then().catch((error) => {
+            console.error('conversation.leave()', error)
+          }).finally(() => {
+            disconnect()
+          });
+          setHangedUp(true)
         }
       };
       conversation.on('data', onData)
@@ -232,7 +248,7 @@ function App() {
         conversation.removeListener('data', onData)
       }
     }
-  }, [conversation, session])
+  }, [conversation, session, disconnect])
 
   return (
     <Container maxWidth="md" sx={{ mt: 5 }}>
@@ -319,10 +335,12 @@ function App() {
           <div>
             <p>{session.getUserAgent().getUserData().get('systemInfo')}</p>
           </div>} */}
-          {!session && <div><img src={logo} className="App-logo" alt="logo" /></div>}
+          {/* className="App-logo" */}
+          {!session && <div><img src={logo}  alt="logo" /></div>}
           {imgSrc && <img src={imgSrc} alt="sharedImg"></img>}
         </Grid>
       </Grid>
+      {hangedUp && <Alert severity="info">The agent hanged up. Bye!</Alert>}
     </Container>
   )
 }
