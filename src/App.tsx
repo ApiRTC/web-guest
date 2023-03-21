@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
 import { UAParser } from 'ua-parser-js';
@@ -13,12 +13,12 @@ import {
 import { Credentials, useCameraStream, useConversation, useConversationStreams, useSession } from '@apirtc/react-lib';
 
 import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
 import Grid from '@mui/material/Grid';
 
 import Keycloak from 'keycloak-js';
 import { loginKeyCloakJS } from './auth/keycloak';
 
+import Container from '@mui/material/Container';
 import './App.css';
 import logo from './logo.svg';
 
@@ -235,10 +235,9 @@ function App() {
   }, [conversation, session])
 
   return (
-    <div className="App">
-      <Button variant="contained" onClick={(e: React.SyntheticEvent) => {
+    <Container maxWidth="md" sx={{ mt: 5 }}>
+      {/* <Button variant="contained" onClick={(e: React.SyntheticEvent) => {
         e.preventDefault();
-        //loginKeyCloakJS();
         keycloak.login().then(
           (auth: any) => {
             console.log("Keycloak.login", auth)
@@ -250,59 +249,81 @@ function App() {
             }
           }
         )
-      }}>Login with Keycloak</Button>
-      <div className="App-header">
-        {/* CANT make a call from button, because this is not called back when redirected... */}
-        {invitationData ?
-          <>
-            <div>
-              <h1>Hello {invitationData.user.firstName}</h1>
-              {invitationData.conversation.friendlyName && <span>Conversation {invitationData.conversation.friendlyName}</span>}
-            </div>
-          </> : <div>no invitationData</div>}
-        {conversation ?
-          <Box sx={{
-            width: "100%",
-            position: 'relative',
-          }}>
-            <RemoteStreamsGrid>
-              {subscribedStreams.map((stream: Stream, index: number) =>
-                <StreamComponent id={'subscribed-stream-' + index} key={index}
-                  stream={stream}
-                  name={stream.getContact().getUserData().get('firstName') + ' ' + stream.getContact().getUserData().get('lastName')}
-                  controls={<>
-                    <MuteButton />
-                    <AudioEnableButton disabled={true} />
-                    <VideoEnableButton disabled={true} /></>} >
-                  {stream.hasVideo() ? <Video /> : <Audio />}
-                </StreamComponent>
-              )}
-            </RemoteStreamsGrid>
-            <Grid container direction="row" justifyContent="flex-start"
-              sx={{
-                position: 'absolute',
-                bottom: 0, left: 0,
-                opacity: [0.9, 0.8, 0.7],
-              }}>
-              {publishedStreams.map((stream, index) =>
-                <Grid item key={index} xs={2}>
-                  <StreamComponent id={'published-stream-' + index}
-                    stream={stream} muted={true}
-                    controls={<><AudioEnableButton /><VideoEnableButton /></>} >
+      }}>Login with Keycloak</Button> */}
+      {/* CANT make a call from button, because this is not called back when redirected... */}
+
+      {/* {invitationData &&
+        <Typography align='center' variant='h2'>Hello {invitationData.user.firstName}</Typography>
+      } */}
+
+      {/* <Grid container spacing={0}
+        direction="column"
+        alignItems="center"
+        justifyContent="center">
+        <Grid item xs={3}>
+          {invitationData ?
+            <>
+              <div>
+                {invitationData.conversation.friendlyName && <span>Conversation {invitationData.conversation.friendlyName}</span>}
+              </div>
+            </> : <div>no invitationData</div>}
+        </Grid>
+      </Grid> */}
+
+      {/* Put in Grid to center */}
+      <Grid container spacing={0} direction="column" alignItems="center" justifyContent="center">
+        <Grid item>
+          {conversation &&
+            <Box sx={{
+              position: 'relative',
+              minHeight: '208px'
+            }}
+            // style={{ border: '1px solid red' }}
+            >
+              <RemoteStreamsGrid
+                sx={{
+                  width: 'fit-content',
+                  height: 'fit-content',
+                }}>
+                {subscribedStreams.map((stream: Stream, index: number) =>
+                  <StreamComponent id={'subscribed-stream-' + index} key={index}
+                    stream={stream}
+                    name={stream.getContact().getUserData().get('firstName') + ' ' + stream.getContact().getUserData().get('lastName')}
+                    controls={<>
+                      <MuteButton />
+                      <AudioEnableButton disabled={true} />
+                      <VideoEnableButton disabled={true} /></>} >
                     {stream.hasVideo() ? <Video /> : <Audio />}
                   </StreamComponent>
-                </Grid>)}
-            </Grid>
-          </Box>
-          : <div><img src={logo} className="App-logo" alt="logo" /></div>}
-        {/* {session &&
+                )}
+              </RemoteStreamsGrid>
+              <Grid container direction="row" justifyContent="flex-start"
+                sx={{
+                  position: 'absolute',
+                  bottom: 4, left: 4,
+                  opacity: [0.9, 0.8, 0.7],
+                }}>
+                {publishedStreams.map((stream, index) =>
+                  <Grid item key={index}>
+                    <StreamComponent id={'published-stream-' + index}
+                      // sx={{ maxHeight: 200 }}
+                      stream={stream} muted={true}
+                      controls={<><AudioEnableButton /><VideoEnableButton /></>} >
+                      {/* border: '1px solid red', */}
+                      {stream.hasVideo() ? <Video style={{ width: '200px' }} /> : <Audio />}
+                    </StreamComponent>
+                  </Grid>)}
+              </Grid>
+            </Box>}
+          {/* {session &&
           <div>
             <p>{session.getUserAgent().getUserData().get('systemInfo')}</p>
           </div>} */}
-        {!session && <div><img src={logo} className="App-logo" alt="logo" /></div>}
-        {imgSrc && <img src={imgSrc} alt="sharedImg"></img>}
-      </div>
-    </div>
+          {!session && <div><img src={logo} className="App-logo" alt="logo" /></div>}
+          {imgSrc && <img src={imgSrc} alt="sharedImg"></img>}
+        </Grid>
+      </Grid>
+    </Container>
   )
 }
 
