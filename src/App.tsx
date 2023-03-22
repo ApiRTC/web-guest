@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 
 import { UAParser } from 'ua-parser-js';
 
@@ -23,7 +23,7 @@ import Container from '@mui/material/Container';
 import './App.css';
 import logo from './logo.png';
 
-// WARN: Keep in Sync with m-visio-assist
+// WARN: Keep in Sync with m-visio-assist and z-visio
 type InvitationData = {
   cloudUrl?: string
   apiKey?: string
@@ -44,6 +44,13 @@ type TakeSnapshot = { takeSnapshot: Object };
 function isInstanceOfTakeSnapshot(object: any): object is TakeSnapshot {
   if (typeof object !== 'object') return false;
   return 'takeSnapshot' in object;
+}
+
+//type FACING_MODES = 'user' | 'environment';
+type SwitchFacingMode = { switchFacingMode: boolean };
+function isInstanceOfSwitchFacingMode(object: any): object is SwitchFacingMode {
+  if (typeof object !== 'object') return false;
+  return 'switchFacingMode' in object;
 }
 
 type FileShared = { fileShared: { link: string, jwt: string } };
@@ -68,6 +75,7 @@ const keycloak = new Keycloak(window.location.origin + '/visio-assisted/keycloak
 const COMPONENT_NAME = "App";
 function App() {
   const params = useParams();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const [invitationData, setInvitationData] = useState<InvitationData | undefined>(undefined);
 
@@ -81,7 +89,8 @@ function App() {
       groups: [invitationData.conversation.name + "-guests"],
       userData: new UserData({ firstName: invitationData.user.firstName, lastName: invitationData.user.lastName })
     } : undefined);
-  const { stream: localStream } = useCameraStream(session, { constraints: invitationData?.camera.constraints });
+  const [cameraConstraints, setCameraConstraints] = useState<MediaStreamConstraints | undefined>(invitationData?.camera.constraints);
+  const { stream: localStream } = useCameraStream(session, { constraints: cameraConstraints });
   const { conversation } = useConversation(session,
     invitationData ? invitationData.conversation.name : undefined,
     invitationData ? invitationData.conversation.getOrCreateOptions : undefined,
@@ -138,14 +147,14 @@ function App() {
   }, [])
 
   useEffect(() => {
-    if (params.sessionData) {
+    if (params.invitationData) {
       try {
-        const l_data: InvitationData = JSON.parse(base64_decode(params.sessionData)) as InvitationData;
+        const l_data: InvitationData = JSON.parse(base64_decode(params.invitationData)) as InvitationData;
         console.info("InvitationData", l_data);
         setInvitationData(l_data)
       } catch (error) {
         if (error instanceof SyntaxError) {
-          const invitationId = params.sessionData;
+          const invitationId = params.invitationData;
           loginKeyCloakJS().then((keycloak) => {
             console.log('keycloak.token', keycloak.token)
             // TODO : use the token to make authenticated call to the API :
@@ -157,7 +166,26 @@ function App() {
         }
       }
     }
-  }, [params.sessionData])
+  }, [params.invitationData])
+
+  useEffect(() => {
+    const i: string | null = searchParams.get("i");
+    if (i) {
+      try {
+        const l_data: InvitationData = JSON.parse(base64_decode(i)) as InvitationData;
+        console.info("InvitationData", l_data);
+        setInvitationData(l_data)
+      } catch (error) {
+        console.error("parsing i search parameter error", error)
+      }
+    }
+  }, [searchParams])
+
+  useEffect(() => {
+    if (invitationData) {
+      setCameraConstraints(invitationData.camera.constraints)
+    }
+  }, [invitationData])
 
   useEffect(() => {
     if (session) {
@@ -185,7 +213,6 @@ function App() {
             .then((snapshot: any) => {
               console.log("takeSnapshot OK :", localStream, snapshot)
               //$('#timeline').append('<a><img src="' + snapshot + '" /></a>');
-
               const fileTransferInvitation = sender.sendFile({ name: `snapshot_${(new Date()).toISOString()}.png`, type: 'image/png' }, snapshot);
               fileTransferInvitation.on('statusChange', (statusChangeInfo: any) => {
                 console.log('statusChange :', statusChangeInfo.status)
@@ -198,6 +225,29 @@ function App() {
               // error
               console.error('takeSnapshot error :', error)
             });
+        } else if (isInstanceOfSwitchFacingMode(content)) {
+          console.log('switchFacingMode', cameraConstraints?.video)
+
+          if (cameraConstraints && cameraConstraints.video && cameraConstraints?.video instanceof Object) {
+            const videoMediaTrackConstraints: MediaTrackConstraints = cameraConstraints.video;
+            let advanced;
+            if (videoMediaTrackConstraints.advanced) {
+              advanced = videoMediaTrackConstraints.advanced.map((item: any) => {
+                if (item.facingMode) {
+                  return { facingMode: item.facingMode === 'user' ? 'environment' : 'user' }
+                } else {
+                  return item;
+                }
+              });
+            } else {
+              advanced = [{ facingMode: 'environment' }];
+            }
+            cameraConstraints.video.advanced = advanced;
+            const video = { ...cameraConstraints.video, advanced };
+            // 
+            console.log('setCameraConstraints with video', video)
+            setCameraConstraints({ ...cameraConstraints, video })
+          }
         }
       };
       session.on('contactData', onContactData)
@@ -205,7 +255,7 @@ function App() {
         session.removeListener('contactData', onContactData)
       }
     }
-  }, [session, localStream])
+  }, [session, localStream, cameraConstraints])
 
   const [imgSrc, setImgSrc] = useState<string>();
 
@@ -251,7 +301,7 @@ function App() {
   }, [conversation, session, disconnect])
 
   return (
-    <Container maxWidth="md" sx={{ mt: 5 }}>
+    <Container maxWidth={false} sx={{ mt: 5 }}>
       {/* <Button variant="contained" onClick={(e: React.SyntheticEvent) => {
         e.preventDefault();
         keycloak.login().then(
@@ -326,7 +376,7 @@ function App() {
                       stream={stream} muted={true}
                       controls={<><AudioEnableButton /><VideoEnableButton /></>} >
                       {/* border: '1px solid red', */}
-                      {stream.hasVideo() ? <Video style={{ width: '200px' }} /> : <Audio />}
+                      {stream.hasVideo() ? <Video style={{ maxHeight: '200px', maxWidth: '164px' }} /> : <Audio />}
                     </StreamComponent>
                   </Grid>)}
               </Grid>
@@ -336,7 +386,7 @@ function App() {
             <p>{session.getUserAgent().getUserData().get('systemInfo')}</p>
           </div>} */}
           {/* className="App-logo" */}
-          {!session && <div><img src={logo}  alt="logo" /></div>}
+          {!session && <div><img src={logo} alt="logo" /></div>}
           {imgSrc && <img src={imgSrc} alt="sharedImg"></img>}
         </Grid>
       </Grid>

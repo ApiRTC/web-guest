@@ -9,7 +9,10 @@ ReactDOM.render(
   <React.StrictMode>
     <BrowserRouter basename="/visio-assisted" >
       <Routes>
-        <Route path="/:sessionData" element={<App />} />
+        {/* will try to get invitation data from search parameter */}
+        <Route path="/" element={<App />} />
+        {/* will try to get invitation data from path parameter */}
+        <Route path="/:invitationData" element={<App />} />
       </Routes>
     </BrowserRouter>
   </React.StrictMode>,
