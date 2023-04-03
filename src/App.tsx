@@ -7,7 +7,9 @@ import { decode as base64_decode } from 'base-64';
 
 import { Contact, GetOrCreateConversationOptions, PublishOptions, Stream, UserAgent, UserData } from '@apirtc/apirtc'; //INVITATION_STATUS_ENDED
 import {
-  Audio, AudioEnableButton, Grid as RemoteStreamsGrid, MuteButton,
+  Audio, AudioEnableButton,
+  MuteButton,
+  Grid as RemoteStreamsGrid,
   Stream as StreamComponent, Video, VideoEnableButton
 } from '@apirtc/mui-react-lib';
 import { Credentials, useCameraStream, useConversation, useConversationStreams, useSession } from '@apirtc/react-lib';
@@ -16,7 +18,7 @@ import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid';
 
-import Keycloak from 'keycloak-js';
+//import Keycloak from 'keycloak-js';
 import { loginKeyCloakJS } from './auth/keycloak';
 
 import Container from '@mui/material/Container';
@@ -69,13 +71,14 @@ function isInstanceOfHangup(object: any): object is HangUp {
 // const keycloak = new Keycloak({
 //   url: 'https://idp.apizee.com/auth', realm: 'APIZEE-POC-DGPN', clientId: 'visio-assisted'
 // })
-const keycloak = new Keycloak(window.location.origin + '/visio-assisted/keycloak.json');
+//const keycloak = new Keycloak(window.location.origin + '/visio-assisted/keycloak.json');
 // console.log(window.location.origin + '/visio-assisted/silent-check-sso.html')
 
 const COMPONENT_NAME = "App";
 function App() {
+
   const params = useParams();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
 
   const [invitationData, setInvitationData] = useState<InvitationData | undefined>(undefined);
 
@@ -121,30 +124,30 @@ function App() {
       //event.preventDefault()
       setInvitationData(undefined)
       return undefined
-    }
+    };
     window.addEventListener('beforeunload', handleTabClose)
     return () => {
       window.removeEventListener('beforeunload', handleTabClose)
     }
   }, [])
 
-  useEffect(() => {
-    keycloak.init({
-      //onLoad: 'login-required', // Loops on refreshes
-      // onLoad: 'check-sso', // does not seem to change anything
-      // silentCheckSsoRedirectUri: window.location.origin + '/visio-assisted/silent-check-sso.html',
-      //silentCheckSsoFallback: false
-    }).then((auth) => {
-      console.log("Keycloak.init", auth)
-      if (!auth) {
-        console.log("Keycloak NOT authenticated...")
-      } else {
-        console.log("Keycloak authenticated", auth, keycloak.token)
-      }
-    }).catch((error: any) => {
-      console.error('keycloak.init', error)
-    });
-  }, [])
+  // useEffect(() => {
+  //   keycloak.init({
+  //     //onLoad: 'login-required', // Loops on refreshes
+  //     // onLoad: 'check-sso', // does not seem to change anything
+  //     // silentCheckSsoRedirectUri: window.location.origin + '/visio-assisted/silent-check-sso.html',
+  //     //silentCheckSsoFallback: false
+  //   }).then((auth) => {
+  //     console.log("Keycloak.init", auth)
+  //     if (!auth) {
+  //       console.log("Keycloak NOT authenticated...")
+  //     } else {
+  //       console.log("Keycloak authenticated", auth, keycloak.token)
+  //     }
+  //   }).catch((error: any) => {
+  //     console.error('keycloak.init', error)
+  //   });
+  // }, [])
 
   useEffect(() => {
     if (params.invitationData) {
