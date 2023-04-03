@@ -23,7 +23,7 @@ import { loginKeyCloakJS } from './auth/keycloak';
 
 import Container from '@mui/material/Container';
 import './App.css';
-import logo from './logo.png';
+import logo from './logo.svg';
 
 // WARN: Keep in Sync with m-visio-assist and z-visio
 type InvitationData = {
@@ -389,7 +389,7 @@ function App() {
             <p>{session.getUserAgent().getUserData().get('systemInfo')}</p>
           </div>} */}
           {/* className="App-logo" */}
-          {!session && <div><img src={logo} alt="logo" /></div>}
+          {!session && <div><img height='320px' width='320px' src={logo} alt="logo" /></div>}
           {imgSrc && <img src={imgSrc} alt="sharedImg"></img>}
         </Grid>
       </Grid>
