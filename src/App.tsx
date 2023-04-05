@@ -10,7 +10,7 @@ import {
   Audio, AudioEnableButton,
   MuteButton,
   Grid as RemoteStreamsGrid,
-  Stream as StreamComponent, Video, VideoEnableButton
+  Stream as StreamComponent, Video, VideoEnableButton, useToggle
 } from '@apirtc/mui-react-lib';
 import { Credentials, useCameraStream, useConversation, useConversationStreams, useSession } from '@apirtc/react-lib';
 
@@ -24,6 +24,10 @@ import { loginKeyCloakJS } from './auth/keycloak';
 import Container from '@mui/material/Container';
 import './App.css';
 import logo from './logo.svg';
+import Button from '@mui/material/Button';
+import Tooltip from '@mui/material/Tooltip';
+import IconButton from '@mui/material/IconButton';
+import Icon from '@mui/material/Icon';
 
 // WARN: Keep in Sync with m-visio-assist and z-visio
 type InvitationData = {
@@ -101,6 +105,10 @@ function App() {
   const { publishedStreams, subscribedStreams } = useConversationStreams(conversation,
     localStream ? [{ stream: localStream, options: invitationData?.camera.publishOptions }] : []);
 
+  const { value: isSelfDisplay, toggle: toggleIsSelfDisplay } = useToggle(false);
+
+  const [pointer, setPointer] = useState<any>(undefined);
+
   const getInvitationData = async (invitationId: string, token?: string) => {
     return fetch(`http://localhost:3007/invitations/${invitationId}`,
       {
@@ -118,7 +126,6 @@ function App() {
         console.error('getInvitationData', error)
       })
   }
-
   useEffect(() => {
     const handleTabClose = (event: BeforeUnloadEvent) => {
       //event.preventDefault()
@@ -303,6 +310,63 @@ function App() {
     }
   }, [conversation, session, disconnect])
 
+  useEffect(() => {
+    if (conversation) {
+      const on_pointerSharingEnabled = (data: any) => {
+        console.log("pointerSharingEnabled", data)
+      };
+      conversation.on('pointerSharingEnabled', on_pointerSharingEnabled)
+
+      const on_pointerLocationChanged = (data: any) => {
+        console.log("pointerLocationChanged", data)
+
+        setPointer(data);
+        setTimeout(() => {
+          setPointer(undefined)
+        }, 3000)
+      };
+      conversation.on('pointerLocationChanged', on_pointerLocationChanged)
+
+      //conversation.enablePointerSharing(true)
+
+      return () => {
+        conversation.removeListener('pointerSharingEnabled', on_pointerSharingEnabled)
+        conversation.removeListener('pointerLocationChanged', on_pointerLocationChanged)
+      }
+    }
+  }, [conversation])
+
+  const _subscribed = <RemoteStreamsGrid
+    sx={{
+      width: 'fit-content',
+      height: 'fit-content',
+    }}>
+    {subscribedStreams.map((stream: Stream, index: number) =>
+      <StreamComponent id={'subscribed-stream-' + index} key={index}
+        stream={stream}
+        name={stream.getContact().getUserData().get('firstName') + ' ' + stream.getContact().getUserData().get('lastName')}
+        controls={<>
+          <MuteButton />
+          <AudioEnableButton disabled={true} />
+          <VideoEnableButton disabled={true} /></>} >
+        {stream.hasVideo() ? <Video style={isSelfDisplay ? { maxHeight: '200px', maxWidth: '164px' } : {}} /> : <Audio />}
+      </StreamComponent>
+    )}
+  </RemoteStreamsGrid>;
+
+  const _published = <Grid container direction="row" justifyContent="flex-start">
+    {publishedStreams.map((stream, index) =>
+      <Grid item key={index}>
+        <StreamComponent id={'published-stream-' + index}
+          // sx={{ maxHeight: 200 }}
+          stream={stream} muted={true}
+          controls={<><AudioEnableButton /><VideoEnableButton /></>} >
+          {/* border: '1px solid red', */}
+          {stream.hasVideo() ? <Video style={isSelfDisplay ? {} : { maxHeight: '200px', maxWidth: '164px' }} /> : <Audio />}
+        </StreamComponent>
+      </Grid>)}
+  </Grid>;
+
   return (
     <Container maxWidth={false} sx={{ mt: 5 }}>
       {/* <Button variant="contained" onClick={(e: React.SyntheticEvent) => {
@@ -349,40 +413,35 @@ function App() {
             }}
             // style={{ border: '1px solid red' }}
             >
-              <RemoteStreamsGrid
-                sx={{
-                  width: 'fit-content',
-                  height: 'fit-content',
-                }}>
-                {subscribedStreams.map((stream: Stream, index: number) =>
-                  <StreamComponent id={'subscribed-stream-' + index} key={index}
-                    stream={stream}
-                    name={stream.getContact().getUserData().get('firstName') + ' ' + stream.getContact().getUserData().get('lastName')}
-                    controls={<>
-                      <MuteButton />
-                      <AudioEnableButton disabled={true} />
-                      <VideoEnableButton disabled={true} /></>} >
-                    {stream.hasVideo() ? <Video /> : <Audio />}
-                  </StreamComponent>
-                )}
-              </RemoteStreamsGrid>
-              <Grid container direction="row" justifyContent="flex-start"
-                sx={{
-                  position: 'absolute',
-                  bottom: 4, left: 4,
-                  opacity: [0.9, 0.8, 0.7],
-                }}>
-                {publishedStreams.map((stream, index) =>
-                  <Grid item key={index}>
-                    <StreamComponent id={'published-stream-' + index}
-                      // sx={{ maxHeight: 200 }}
-                      stream={stream} muted={true}
-                      controls={<><AudioEnableButton /><VideoEnableButton /></>} >
-                      {/* border: '1px solid red', */}
-                      {stream.hasVideo() ? <Video style={{ maxHeight: '200px', maxWidth: '164px' }} /> : <Audio />}
-                    </StreamComponent>
-                  </Grid>)}
-              </Grid>
+              {isSelfDisplay ? _published : _subscribed}
+              <Box sx={{
+                position: 'absolute',
+                bottom: 4, left: 4,
+                opacity: [0.9, 0.8, 0.7],
+              }}>
+                {isSelfDisplay ? _subscribed : _published}
+              </Box>
+              <Box sx={{
+                position: 'absolute',
+                top: 4, left: 4,
+                opacity: [0.9, 0.8, 0.7],
+                zIndex: 1
+              }}>
+                <Tooltip title='switch'>
+                  <span>{/*required by mui tooltip in case button is disabled */}
+                    <IconButton color='primary'
+                      onClick={toggleIsSelfDisplay}>
+                      <Icon>cameraswitch</Icon>
+                    </IconButton>
+                  </span>
+                </Tooltip>
+              </Box>
+              {pointer && <Icon sx={{
+                position: 'absolute',
+                top: pointer.y - 12, left: pointer.x - 12, // icon is 24x24px, so offset to mid
+                opacity: [0.9, 0.8, 0.7],
+                zIndex: 1
+              }} color='primary'>adjust</Icon>}
             </Box>}
           {/* {session &&
           <div>
@@ -393,6 +452,7 @@ function App() {
           {imgSrc && <img src={imgSrc} alt="sharedImg"></img>}
         </Grid>
       </Grid>
+      {pointer && <span>{JSON.stringify(pointer)}</span>}
       {hangedUp && <Alert severity="info">The agent hanged up. Bye!</Alert>}
     </Container>
   )
