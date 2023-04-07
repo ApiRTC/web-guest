@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 
 import { UAParser } from 'ua-parser-js';
@@ -7,27 +7,25 @@ import { decode as base64_decode } from 'base-64';
 
 import { Contact, GetOrCreateConversationOptions, PublishOptions, Stream, UserAgent, UserData } from '@apirtc/apirtc'; //INVITATION_STATUS_ENDED
 import {
+  Grid as ApiRtcGrid,
   Audio, AudioEnableButton,
   MuteButton,
-  Grid as RemoteStreamsGrid,
   Stream as StreamComponent, Video, VideoEnableButton, useToggle
 } from '@apirtc/mui-react-lib';
 import { Credentials, useCameraStream, useConversation, useConversationStreams, useSession } from '@apirtc/react-lib';
 
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
-import Grid from '@mui/material/Grid';
 
 //import Keycloak from 'keycloak-js';
 import { loginKeyCloakJS } from './auth/keycloak';
 
-import Container from '@mui/material/Container';
+import Button from '@mui/material/Button';
+import Icon from '@mui/material/Icon';
+import IconButton from '@mui/material/IconButton';
+import Tooltip from '@mui/material/Tooltip';
 import './App.css';
 import logo from './logo.svg';
-import Button from '@mui/material/Button';
-import Tooltip from '@mui/material/Tooltip';
-import IconButton from '@mui/material/IconButton';
-import Icon from '@mui/material/Icon';
 
 // WARN: Keep in Sync with m-visio-assist and z-visio
 type InvitationData = {
@@ -102,8 +100,22 @@ function App() {
     invitationData ? invitationData.conversation.name : undefined,
     invitationData ? invitationData.conversation.getOrCreateOptions : undefined,
     true);
-  const { publishedStreams, subscribedStreams } = useConversationStreams(conversation,
+  const { publishedStreams, subscribedStreams: t_subscribedStreams } = useConversationStreams(conversation,
     localStream ? [{ stream: localStream, options: invitationData?.camera.publishOptions }] : []);
+
+  // For testing purpose
+  const [localStreams, setLocalStreams] = useState<Stream[]>(localStream ? [localStream] : []);
+  const more = () => {
+    if (localStream) {
+      localStreams.push(localStream)
+      setLocalStreams(Array.from(localStreams))
+    }
+  };
+  const less = () => {
+    localStreams.pop()
+    setLocalStreams(Array.from(localStreams))
+  };
+  const subscribedStreams = useMemo(() => [...t_subscribedStreams, ...localStreams], [t_subscribedStreams, localStreams]);
 
   const { value: isSelfDisplay, toggle: toggleIsSelfDisplay } = useToggle(false);
 
@@ -336,40 +348,93 @@ function App() {
     }
   }, [conversation])
 
-  const _subscribed = <RemoteStreamsGrid
-    sx={{
-      width: 'fit-content',
-      height: 'fit-content',
-    }}>
-    {subscribedStreams.map((stream: Stream, index: number) =>
-      <StreamComponent id={'subscribed-stream-' + index} key={index}
-        stream={stream}
-        name={stream.getContact().getUserData().get('firstName') + ' ' + stream.getContact().getUserData().get('lastName')}
-        controls={<>
-          <MuteButton />
-          <AudioEnableButton disabled={true} />
-          <VideoEnableButton disabled={true} /></>} >
-        {stream.hasVideo() ? <Video style={isSelfDisplay ? { maxHeight: '200px', maxWidth: '164px' } : {}} /> : <Audio />}
-      </StreamComponent>
-    )}
-  </RemoteStreamsGrid>;
+  const _subscribed = subscribedStreams && subscribedStreams.map((stream: Stream, index: number) =>
+    <StreamComponent id={'subscribed-stream-' + index} key={index}
+      sx={{ height: '100%' }}
+      stream={stream}
+      name={stream.getContact()?.getUserData().get('firstName') + ' ' + stream.getContact()?.getUserData().get('lastName')}
+      controls={<>
+        <MuteButton />
+        <AudioEnableButton disabled={true} />
+        <VideoEnableButton disabled={true} /></>} >
+      {stream.hasVideo() ? <Video sx={{ height: '100%' }} style={{ height: '100%', width: '100%', objectFit: 'cover' }} /> : <Audio />}
+      {/* isSelfDisplay ? { maxHeight: '200px', maxWidth: '164px' } : { objectFit: 'cover', maxWidth: '100%', height: '100%' } */}
+    </StreamComponent>);
 
-  const _published = <Grid container direction="row" justifyContent="flex-start">
-    {publishedStreams.map((stream, index) =>
-      <Grid item key={index}>
-        <StreamComponent id={'published-stream-' + index}
-          // sx={{ maxHeight: 200 }}
-          stream={stream} muted={true}
-          controls={<><AudioEnableButton /><VideoEnableButton /></>} >
-          {/* border: '1px solid red', */}
-          {stream.hasVideo() ? <Video style={isSelfDisplay ? {} : { maxHeight: '200px', maxWidth: '164px' }} /> : <Audio />}
-        </StreamComponent>
-      </Grid>)}
-  </Grid>;
+  const _published = publishedStreams && publishedStreams.map((stream, index) =>
+    <StreamComponent id={'published-stream-' + index} key={index}
+      sx={{ height: '100%' }}
+      stream={stream} muted={true}
+      controls={<><AudioEnableButton /><VideoEnableButton /></>} >
+      {/* border: '1px solid red', */}
+      {stream.hasVideo() ? <Video sx={{ height: '100%' }} style={{ height: '100%', objectFit: 'cover' }} /> : <Audio />}
+    </StreamComponent>
+  );
 
-  return (
-    <Container maxWidth={false} sx={{ mt: 5 }}>
-      {/* <Button variant="contained" onClick={(e: React.SyntheticEvent) => {
+  return <>
+    {!session && <Box display="flex" alignItems="center" justifyContent="center"
+      sx={{ mt: 5 }}><img height='320px' width='320px' src={logo} alt="logo" /></Box>}
+    {conversation &&
+      <Box sx={{
+        position: 'relative',
+        minHeight: '208px',
+        width: '100%'
+      }}
+      // style={{ border: '1px solid red' }}
+      >
+        <ApiRtcGrid
+          sx={{
+            height: '100vh'
+          }}>
+          {isSelfDisplay ? _published : _subscribed}
+        </ApiRtcGrid>
+        <Box sx={{
+          position: 'absolute',
+          bottom: 4, left: 4,
+          opacity: [0.9, 0.8, 0.7],
+        }}>
+          <ApiRtcGrid
+            sx={{
+              height: '164px', width: '200px'
+            }}>
+            {isSelfDisplay ? _subscribed : _published}
+          </ApiRtcGrid>
+        </Box>
+        <Box sx={{
+          position: 'absolute',
+          top: 4, left: 4,
+          opacity: [0.9, 0.8, 0.7],
+          zIndex: 1
+        }}>
+          <Tooltip title='switch'>
+            <span>{/*required by mui tooltip in case button is disabled */}
+              <IconButton color='primary'
+                onClick={toggleIsSelfDisplay}>
+                <Icon>cameraswitch</Icon>
+              </IconButton>
+            </span>
+          </Tooltip>
+        </Box>
+        {pointer && <Icon sx={{
+          position: 'absolute',
+          top: pointer.y - 12, left: pointer.x - 12, // icon is 24x24px, so offset to mid
+          opacity: [0.9, 0.8, 0.7],
+          zIndex: 1
+        }} color='primary'>adjust</Icon>}
+      </Box>}
+
+    <Button onClick={more}>+</Button>
+    <Button onClick={less}>-</Button>
+
+    {imgSrc && <img src={imgSrc} alt="sharedImg"></img>}
+
+    {hangedUp && <Alert severity="info">The agent hanged up. Bye!</Alert>}
+
+    {/* {session &&
+          <div>
+            <p>{session.getUserAgent().getUserData().get('systemInfo')}</p>
+          </div>} */}
+    {/* <Button variant="contained" onClick={(e: React.SyntheticEvent) => {
         e.preventDefault();
         keycloak.login().then(
           (auth: any) => {
@@ -383,13 +448,13 @@ function App() {
           }
         )
       }}>Login with Keycloak</Button> */}
-      {/* CANT make a call from button, because this is not called back when redirected... */}
+    {/* CANT make a call from button, because this is not called back when redirected... */}
 
-      {/* {invitationData &&
+    {/* {invitationData &&
         <Typography align='center' variant='h2'>Hello {invitationData.user.firstName}</Typography>
       } */}
 
-      {/* <Grid container spacing={0}
+    {/* <Grid container spacing={0}
         direction="column"
         alignItems="center"
         justifyContent="center">
@@ -402,60 +467,7 @@ function App() {
             </> : <div>no invitationData</div>}
         </Grid>
       </Grid> */}
-
-      {/* Put in Grid to center */}
-      <Grid container spacing={0} direction="column" alignItems="center" justifyContent="center">
-        <Grid item>
-          {conversation &&
-            <Box sx={{
-              position: 'relative',
-              minHeight: '208px'
-            }}
-            // style={{ border: '1px solid red' }}
-            >
-              {isSelfDisplay ? _published : _subscribed}
-              <Box sx={{
-                position: 'absolute',
-                bottom: 4, left: 4,
-                opacity: [0.9, 0.8, 0.7],
-              }}>
-                {isSelfDisplay ? _subscribed : _published}
-              </Box>
-              <Box sx={{
-                position: 'absolute',
-                top: 4, left: 4,
-                opacity: [0.9, 0.8, 0.7],
-                zIndex: 1
-              }}>
-                <Tooltip title='switch'>
-                  <span>{/*required by mui tooltip in case button is disabled */}
-                    <IconButton color='primary'
-                      onClick={toggleIsSelfDisplay}>
-                      <Icon>cameraswitch</Icon>
-                    </IconButton>
-                  </span>
-                </Tooltip>
-              </Box>
-              {pointer && <Icon sx={{
-                position: 'absolute',
-                top: pointer.y - 12, left: pointer.x - 12, // icon is 24x24px, so offset to mid
-                opacity: [0.9, 0.8, 0.7],
-                zIndex: 1
-              }} color='primary'>adjust</Icon>}
-            </Box>}
-          {/* {session &&
-          <div>
-            <p>{session.getUserAgent().getUserData().get('systemInfo')}</p>
-          </div>} */}
-          {/* className="App-logo" */}
-          {!session && <div><img height='320px' width='320px' src={logo} alt="logo" /></div>}
-          {imgSrc && <img src={imgSrc} alt="sharedImg"></img>}
-        </Grid>
-      </Grid>
-      {pointer && <span>{JSON.stringify(pointer)}</span>}
-      {hangedUp && <Alert severity="info">The agent hanged up. Bye!</Alert>}
-    </Container>
-  )
+  </>
 }
 
 export default App;
