@@ -10,7 +10,8 @@ import {
   Grid as ApiRtcGrid,
   Audio, AudioEnableButton,
   MuteButton,
-  Stream as StreamComponent, Video, VideoEnableButton, useToggle
+  Stream as StreamComponent,
+  Video, VideoEnableButton, useToggle
 } from '@apirtc/mui-react-lib';
 import { Credentials, useCameraStream, useConversation, useConversationStreams, useSession } from '@apirtc/react-lib';
 
@@ -21,9 +22,6 @@ import Box from '@mui/material/Box';
 import { loginKeyCloakJS } from './auth/keycloak';
 
 import Button from '@mui/material/Button';
-import Icon from '@mui/material/Icon';
-import IconButton from '@mui/material/IconButton';
-import Tooltip from '@mui/material/Tooltip';
 import './App.css';
 import logo from './logo.svg';
 
@@ -332,14 +330,14 @@ function App() {
       const on_pointerLocationChanged = (data: any) => {
         console.log("pointerLocationChanged", data)
 
-        setPointer(data);
+        setPointer(data.data);
         setTimeout(() => {
           setPointer(undefined)
         }, 3000)
       };
       conversation.on('pointerLocationChanged', on_pointerLocationChanged)
 
-      //conversation.enablePointerSharing(true)
+      conversation.enablePointerSharing(true)
 
       return () => {
         conversation.removeListener('pointerSharingEnabled', on_pointerSharingEnabled)
@@ -348,26 +346,34 @@ function App() {
     }
   }, [conversation])
 
+  const sx_main = { height: '100%' };
+  const style_main = { height: '100%', width: '100%', objectFit: 'cover' as any };
+  const sx_over = { maxWidth: '100%', maxHeight: '100%' };
+  const style_over = { maxWidth: '100%', maxHeight: '100%', objectFit: 'cover' as any };
+
+  // isSelfDisplay corresponds to published in main
+
   const _subscribed = subscribedStreams && subscribedStreams.map((stream: Stream, index: number) =>
     <StreamComponent id={'subscribed-stream-' + index} key={index}
-      sx={{ height: '100%' }}
+      sx={isSelfDisplay ? sx_over : sx_main}
       stream={stream}
       name={stream.getContact()?.getUserData().get('firstName') + ' ' + stream.getContact()?.getUserData().get('lastName')}
       controls={<>
         <MuteButton />
         <AudioEnableButton disabled={true} />
-        <VideoEnableButton disabled={true} /></>} >
-      {stream.hasVideo() ? <Video sx={{ height: '100%' }} style={{ height: '100%', width: '100%', objectFit: 'cover' }} /> : <Audio />}
+        <VideoEnableButton disabled={true} /></>}>
+      {stream.hasVideo() ? <Video sx={isSelfDisplay ? sx_over : sx_main} style={isSelfDisplay ? style_over : style_main} /> : <Audio />}
       {/* isSelfDisplay ? { maxHeight: '200px', maxWidth: '164px' } : { objectFit: 'cover', maxWidth: '100%', height: '100%' } */}
     </StreamComponent>);
 
   const _published = publishedStreams && publishedStreams.map((stream, index) =>
     <StreamComponent id={'published-stream-' + index} key={index}
-      sx={{ height: '100%' }}
+      sx={isSelfDisplay ? sx_main : sx_over}
       stream={stream} muted={true}
-      controls={<><AudioEnableButton /><VideoEnableButton /></>} >
+      controls={<><AudioEnableButton /><VideoEnableButton /></>}>
       {/* border: '1px solid red', */}
-      {stream.hasVideo() ? <Video sx={{ height: '100%' }} style={{ height: '100%', objectFit: 'cover' }} /> : <Audio />}
+      {stream.hasVideo() ? <Video sx={isSelfDisplay ? sx_main : sx_over} style={isSelfDisplay ? style_main : style_over}
+        pointer={pointer} /> : <Audio />}
     </StreamComponent>
   );
 
@@ -384,7 +390,8 @@ function App() {
       >
         <ApiRtcGrid
           sx={{
-            height: '100vh'
+            height: '100vh', width: '100vw',
+            maxHeight: '100vh'
           }}>
           {isSelfDisplay ? _published : _subscribed}
         </ApiRtcGrid>
@@ -392,35 +399,29 @@ function App() {
           position: 'absolute',
           bottom: 4, left: 4,
           opacity: [0.9, 0.8, 0.7],
-        }}>
+        }} onClick={toggleIsSelfDisplay}>
           <ApiRtcGrid
             sx={{
-              height: '164px', width: '200px'
+              maxWidth: '200px', maxHeight: '250px'
             }}>
             {isSelfDisplay ? _subscribed : _published}
           </ApiRtcGrid>
         </Box>
-        <Box sx={{
+        {/* <Box sx={{
           position: 'absolute',
           top: 4, left: 4,
           opacity: [0.9, 0.8, 0.7],
           zIndex: 1
         }}>
           <Tooltip title='switch'>
-            <span>{/*required by mui tooltip in case button is disabled */}
+            <span>
               <IconButton color='primary'
                 onClick={toggleIsSelfDisplay}>
                 <Icon>cameraswitch</Icon>
               </IconButton>
             </span>
           </Tooltip>
-        </Box>
-        {pointer && <Icon sx={{
-          position: 'absolute',
-          top: pointer.y - 12, left: pointer.x - 12, // icon is 24x24px, so offset to mid
-          opacity: [0.9, 0.8, 0.7],
-          zIndex: 1
-        }} color='primary'>adjust</Icon>}
+        </Box> */}
       </Box>}
 
     <Button onClick={more}>+</Button>
