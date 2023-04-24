@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 
 import { UAParser } from 'ua-parser-js';
@@ -8,21 +8,24 @@ import { decode as base64_decode } from 'base-64';
 import { Contact, GetOrCreateConversationOptions, PublishOptions, Stream, UserAgent, UserData } from '@apirtc/apirtc'; //INVITATION_STATUS_ENDED
 import {
   Grid as ApiRtcGrid,
+  frFR as ApiRtcMuiReactLib_frFR,
   Audio, AudioEnableButton,
   MuteButton,
   Stream as StreamComponent,
-  Video, VideoEnableButton, useToggle
+  useToggle,
+  Video, VideoEnableButton
 } from '@apirtc/mui-react-lib';
 import { Credentials, useCameraStream, useConversation, useConversationStreams, useSession } from '@apirtc/react-lib';
 
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import { createTheme, ThemeProvider as MuiThemeProvider } from '@mui/material/styles';
 
 //import Keycloak from 'keycloak-js';
-import { loginKeyCloakJS } from './auth/keycloak';
-
-import Button from '@mui/material/Button';
 import './App.css';
+import { loginKeyCloakJS } from './auth/keycloak';
+import { ROOM_THEME_OPTIONS } from './contants';
 import logo from './logo.svg';
 
 // WARN: Keep in Sync with m-visio-assist and z-visio
@@ -74,11 +77,32 @@ function isInstanceOfHangup(object: any): object is HangUp {
 //const keycloak = new Keycloak(window.location.origin + '/visio-assisted/keycloak.json');
 // console.log(window.location.origin + '/visio-assisted/silent-check-sso.html')
 
+const languageToLocale = (language: string) => {
+  switch (language) {
+    case 'fr':
+      return 'fr-FR'
+    default:
+      return 'en-US'
+  }
+};
+
 const COMPONENT_NAME = "App";
 function App() {
 
   const params = useParams();
   const [searchParams] = useSearchParams();
+
+  const [locale, setLocale] = React.useState<string>(languageToLocale(navigator.language));
+
+  const roomTheme = useMemo(() => {
+    switch (locale) {
+      case 'fr':
+      case 'fr-FR':
+        return createTheme(ROOM_THEME_OPTIONS, ApiRtcMuiReactLib_frFR);
+      default:
+        return createTheme(ROOM_THEME_OPTIONS);
+    }
+  }, [locale]);
 
   const [invitationData, setInvitationData] = useState<InvitationData | undefined>(undefined);
 
@@ -329,7 +353,6 @@ function App() {
 
       const on_pointerLocationChanged = (data: any) => {
         console.log("pointerLocationChanged", data)
-
         setPointer(data.data);
         setTimeout(() => {
           setPointer(undefined)
@@ -363,7 +386,6 @@ function App() {
         <AudioEnableButton disabled={true} />
         <VideoEnableButton disabled={true} /></>}>
       {stream.hasVideo() ? <Video sx={isSelfDisplay ? sx_over : sx_main} style={isSelfDisplay ? style_over : style_main} /> : <Audio />}
-      {/* isSelfDisplay ? { maxHeight: '200px', maxWidth: '164px' } : { objectFit: 'cover', maxWidth: '100%', height: '100%' } */}
     </StreamComponent>);
 
   const _published = publishedStreams && publishedStreams.map((stream, index) =>
@@ -381,48 +403,35 @@ function App() {
     {!session && <Box display="flex" alignItems="center" justifyContent="center"
       sx={{ mt: 5 }}><img height='320px' width='320px' src={logo} alt="logo" /></Box>}
     {conversation &&
-      <Box sx={{
-        position: 'relative',
-        minHeight: '208px',
-        width: '100%'
-      }}
-      // style={{ border: '1px solid red' }}
-      >
-        <ApiRtcGrid
-          sx={{
-            height: '100vh', width: '100vw',
-            maxHeight: '100vh'
-          }}>
-          {isSelfDisplay ? _published : _subscribed}
-        </ApiRtcGrid>
+      <MuiThemeProvider theme={roomTheme}>
         <Box sx={{
-          position: 'absolute',
-          bottom: 4, left: 4,
-          opacity: [0.9, 0.8, 0.7],
-        }} onClick={toggleIsSelfDisplay}>
+          position: 'relative',
+          minHeight: '208px',
+          width: '100%'
+        }}
+        // style={{ border: '1px solid red' }}
+        >
           <ApiRtcGrid
             sx={{
-              maxWidth: '200px', maxHeight: '250px'
+              height: '100vh', width: '100vw',
+              maxHeight: '100vh'
             }}>
-            {isSelfDisplay ? _subscribed : _published}
+            {isSelfDisplay ? _published : _subscribed}
           </ApiRtcGrid>
+          <Box sx={{
+            position: 'absolute',
+            bottom: 4, left: 4,
+            opacity: 0.9,
+          }} onClick={toggleIsSelfDisplay}>
+            <ApiRtcGrid
+              sx={{
+                maxWidth: '200px', maxHeight: '250px'
+              }}>
+              {isSelfDisplay ? _subscribed : _published}
+            </ApiRtcGrid>
+          </Box>
         </Box>
-        {/* <Box sx={{
-          position: 'absolute',
-          top: 4, left: 4,
-          opacity: [0.9, 0.8, 0.7],
-          zIndex: 1
-        }}>
-          <Tooltip title='switch'>
-            <span>
-              <IconButton color='primary'
-                onClick={toggleIsSelfDisplay}>
-                <Icon>cameraswitch</Icon>
-              </IconButton>
-            </span>
-          </Tooltip>
-        </Box> */}
-      </Box>}
+      </MuiThemeProvider>}
 
     <Button onClick={more}>+</Button>
     <Button onClick={less}>-</Button>
@@ -450,11 +459,9 @@ function App() {
         )
       }}>Login with Keycloak</Button> */}
     {/* CANT make a call from button, because this is not called back when redirected... */}
-
     {/* {invitationData &&
         <Typography align='center' variant='h2'>Hello {invitationData.user.firstName}</Typography>
       } */}
-
     {/* <Grid container spacing={0}
         direction="column"
         alignItems="center"
