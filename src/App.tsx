@@ -25,7 +25,7 @@ import { createTheme, ThemeProvider as MuiThemeProvider } from '@mui/material/st
 //import Keycloak from 'keycloak-js';
 import './App.css';
 import { loginKeyCloakJS } from './auth/keycloak';
-import { ROOM_THEME_OPTIONS } from './contants';
+import { ROOM_THEME_OPTIONS, VIDEO_ROUNDED_CORNERS } from './contants';
 import logo from './logo.svg';
 
 // WARN: Keep in Sync with m-visio-assist and z-visio
@@ -86,13 +86,15 @@ const languageToLocale = (language: string) => {
   }
 };
 
+const video_sizing = { height: '100%', width: '100%' };
+
 const COMPONENT_NAME = "App";
 function App() {
 
   const params = useParams();
   const [searchParams] = useSearchParams();
 
-  const [locale, setLocale] = React.useState<string>(languageToLocale(navigator.language));
+  const [locale] = React.useState<string>(languageToLocale(navigator.language));
 
   const roomTheme = useMemo(() => {
     switch (locale) {
@@ -369,35 +371,57 @@ function App() {
     }
   }, [conversation])
 
-  const sx_main = { height: '100%' };
-  const style_main = { height: '100%', width: '100%', objectFit: 'cover' as any };
-  const sx_over = { maxWidth: '100%', maxHeight: '100%' };
-  const style_over = { maxWidth: '100%', maxHeight: '100%', objectFit: 'cover' as any };
-
   // isSelfDisplay corresponds to published in main
+
+  const getName = (stream: Stream) => {
+    const firstName = stream.getContact()?.getUserData().get('firstName');
+    const lastName = stream.getContact()?.getUserData().get('lastName');
+    if (!firstName && !lastName) {
+      return undefined
+    }
+    return `${firstName ?? ''} ${lastName ?? ''}`
+  };
 
   const _subscribed = subscribedStreams && subscribedStreams.map((stream: Stream, index: number) =>
     <StreamComponent id={'subscribed-stream-' + index} key={index}
-      sx={isSelfDisplay ? sx_over : sx_main}
+      sx={{
+        ...(stream.hasVideo() ? video_sizing : { backgroundColor: 'grey' })
+      }}
       stream={stream}
-      name={stream.getContact()?.getUserData().get('firstName') + ' ' + stream.getContact()?.getUserData().get('lastName')}
+      name={getName(stream)}
       controls={<>
         <MuteButton />
         <AudioEnableButton disabled={true} />
         <VideoEnableButton disabled={true} /></>}>
-      {stream.hasVideo() ? <Video sx={isSelfDisplay ? sx_over : sx_main} style={isSelfDisplay ? style_over : style_main} /> : <Audio />}
+      {stream.hasVideo() ?
+        <Video
+          sx={video_sizing}
+          style={{
+            ...video_sizing, objectFit: 'cover' as any,
+            ...VIDEO_ROUNDED_CORNERS
+          }}
+        /> :
+        <Audio />}
     </StreamComponent>);
 
   const _published = publishedStreams && publishedStreams.map((stream, index) =>
     <StreamComponent id={'published-stream-' + index} key={index}
-      sx={isSelfDisplay ? sx_main : sx_over}
+      sx={{
+        ...(stream.hasVideo() ? video_sizing : { backgroundColor: 'grey' })
+      }}
       stream={stream} muted={true}
       controls={<><AudioEnableButton /><VideoEnableButton /></>}>
-      {/* border: '1px solid red', */}
-      {stream.hasVideo() ? <Video sx={isSelfDisplay ? sx_main : sx_over} style={isSelfDisplay ? style_main : style_over}
-        pointer={pointer} /> : <Audio />}
-    </StreamComponent>
-  );
+      {stream.hasVideo() ?
+        <Video
+          sx={video_sizing}
+          style={{
+            ...video_sizing, objectFit: 'cover' as any,
+            ...VIDEO_ROUNDED_CORNERS
+          }}
+          pointer={pointer}
+        /> :
+        <Audio />}
+    </StreamComponent>);
 
   return <>
     {!session && <Box display="flex" alignItems="center" justifyContent="center"
@@ -406,30 +430,20 @@ function App() {
       <MuiThemeProvider theme={roomTheme}>
         <Box sx={{
           position: 'relative',
-          minHeight: '208px',
-          width: '100%'
-        }}
-        // style={{ border: '1px solid red' }}
-        >
-          <ApiRtcGrid
-            sx={{
-              height: '100vh', width: '100vw',
-              maxHeight: '100vh'
-            }}>
+          height: '100vh', width: '100vw'
+        }}>
+          <ApiRtcGrid sx={{ height: '100%', width: '100%' }}>
             {isSelfDisplay ? _published : _subscribed}
           </ApiRtcGrid>
-          <Box sx={{
+          <ApiRtcGrid sx={{
             position: 'absolute',
             bottom: 4, left: 4,
             opacity: 0.9,
-          }} onClick={toggleIsSelfDisplay}>
-            <ApiRtcGrid
-              sx={{
-                maxWidth: '200px', maxHeight: '250px'
-              }}>
-              {isSelfDisplay ? _subscribed : _published}
-            </ApiRtcGrid>
-          </Box>
+            height: '34%', width: { xs: '50%', sm: '40%', md: '30%', lg: '20%' },
+          }}
+            onClick={toggleIsSelfDisplay}>
+            {isSelfDisplay ? _subscribed : _published}
+          </ApiRtcGrid>
         </Box>
       </MuiThemeProvider>}
 

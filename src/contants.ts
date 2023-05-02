@@ -53,3 +53,5 @@ export const ROOM_THEME_OPTIONS = {
         },
     }
 };
+
+export const VIDEO_ROUNDED_CORNERS = { borderRadius: '4px', overflow: 'hidden' };
