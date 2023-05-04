@@ -6,17 +6,37 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import ThemeProvider from '@mui/material/styles/ThemeProvider';
 import createTheme from '@mui/material/styles/createTheme';
 
-import { frFR } from '@apirtc/mui-react-lib';
+import { frFR as ApiRtcMuiReactLib_frFR } from '@apirtc/mui-react-lib';
 
+import { ROOM_THEME_OPTIONS } from './contants';
 import './index.css';
+import { frFR } from './locale/frFR';
 
-const APZ_ORANGE = "#F76B40";
+function languageToLocale(language: string) {
+  switch (language) {
+    case 'fr':
+      return 'fr-FR'
+    default:
+      return 'en-US'
+  }
+}
 
+function getLangFiles(locale: string) {
+  switch (locale) {
+    case 'fr':
+    case 'fr-FR':
+      return [frFR, ApiRtcMuiReactLib_frFR];
+    default:
+      return [];
+  }
+}
+
+const locale = languageToLocale(navigator.language);
 const theme = createTheme({
   palette: {
     mode: "light",
     primary: {
-      main: APZ_ORANGE,
+      main: "#F76B40",
       light: "#ba3108",
       dark: "#f88562"
     },
@@ -25,22 +45,9 @@ const theme = createTheme({
       light: "#8eabc7",
       dark: "#2e455c"
     }
-  }
-}, frFR);
-
-// ReactDOM.render(
-// <ThemeProvider theme={theme}>
-//   <BrowserRouter basename="/visio-assisted" >
-//     <Routes>
-//       {/* will try to get invitation data from search parameter */}
-//       <Route path="/" element={<App />} />
-//       {/* will try to get invitation data from path parameter */}
-//       <Route path="/:invitationData" element={<App />} />
-//     </Routes>
-//   </BrowserRouter>
-// </ThemeProvider >,
-//   document.getElementById('root')
-// );
+  },
+  ...ROOM_THEME_OPTIONS,
+}, ...getLangFiles(locale));
 
 const container = document.getElementById('root');
 if (container) {

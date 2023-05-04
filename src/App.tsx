@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 
 import { UAParser } from 'ua-parser-js';
@@ -8,7 +8,6 @@ import { decode as base64_decode } from 'base-64';
 import { Contact, GetOrCreateConversationOptions, PublishOptions, Stream, UserAgent, UserData } from '@apirtc/apirtc'; //INVITATION_STATUS_ENDED
 import {
   Grid as ApiRtcGrid,
-  frFR as ApiRtcMuiReactLib_frFR,
   Audio, AudioEnableButton,
   MuteButton,
   Stream as StreamComponent,
@@ -20,13 +19,24 @@ import { Credentials, useCameraStream, useConversation, useConversationStreams, 
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
-import { createTheme, ThemeProvider as MuiThemeProvider } from '@mui/material/styles';
+import Container from '@mui/material/Container';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import FormGroup from '@mui/material/FormGroup';
+import Link from '@mui/material/Link';
+import { useThemeProps } from '@mui/material/styles';
+import Switch from '@mui/material/Switch';
+import Typography from '@mui/material/Typography';
 
 //import Keycloak from 'keycloak-js';
 import './App.css';
 import { loginKeyCloakJS } from './auth/keycloak';
-import { ROOM_THEME_OPTIONS, VIDEO_ROUNDED_CORNERS } from './contants';
+import { VIDEO_ROUNDED_CORNERS } from './contants';
 import logo from './logo.svg';
+
+import Card from '@mui/material/Card';
+import CardActions from '@mui/material/CardActions';
+import CardContent from '@mui/material/CardContent';
+import CardHeader from '@mui/material/CardHeader';
 
 // WARN: Keep in Sync with m-visio-assist and z-visio
 type InvitationData = {
@@ -77,36 +87,38 @@ function isInstanceOfHangup(object: any): object is HangUp {
 //const keycloak = new Keycloak(window.location.origin + '/visio-assisted/keycloak.json');
 // console.log(window.location.origin + '/visio-assisted/silent-check-sso.html')
 
-const languageToLocale = (language: string) => {
-  switch (language) {
-    case 'fr':
-      return 'fr-FR'
-    default:
-      return 'en-US'
-  }
-};
-
 const video_sizing = { height: '100%', width: '100%' };
 
+export type AppProps = {
+  acceptTitleText?: string,
+  accept01PrefixText?: string,
+  accept01LinkText?: string,
+  accept01AriaLabel?: string,
+  accept02PrefixText?: string,
+  accept02LinkText?: string,
+  accept02AriaLabel?: string,
+  confirmButtonText?: string,
+  hangedUpText?: string
+};
 const COMPONENT_NAME = "App";
-function App() {
+function App(inProps: AppProps) {
+
+  const props = useThemeProps({ props: inProps, name: `${COMPONENT_NAME}` });
+  const { acceptTitleText = "Legals", accept01PrefixText = "I agree to the ", accept01LinkText = "General Terms of Sale", accept01AriaLabel = "accept-terms-conditions",
+    accept02PrefixText = "I agree to the ", accept02LinkText = "Privacy Policy", accept02AriaLabel = "accept-privacy-policy",
+    confirmButtonText = "Confirm",
+    hangedUpText = "The agent hanged up. Bye!"
+  } = props;
 
   const params = useParams();
   const [searchParams] = useSearchParams();
 
-  const [locale] = React.useState<string>(languageToLocale(navigator.language));
-
-  const roomTheme = useMemo(() => {
-    switch (locale) {
-      case 'fr':
-      case 'fr-FR':
-        return createTheme(ROOM_THEME_OPTIONS, ApiRtcMuiReactLib_frFR);
-      default:
-        return createTheme(ROOM_THEME_OPTIONS);
-    }
-  }, [locale]);
-
   const [invitationData, setInvitationData] = useState<InvitationData | undefined>(undefined);
+
+  // opt-in
+  const { value: accepted01, toggle: toggleAccepted01 } = useToggle(false);
+  const { value: accepted02, toggle: toggleAccepted02 } = useToggle(false);
+  const { value: accepted, toggle: toggleAccepted } = useToggle(false);
 
   // ApiRTC hooks
   const { session, disconnect } = useSession(
@@ -119,8 +131,8 @@ function App() {
       userData: new UserData({ firstName: invitationData.user.firstName, lastName: invitationData.user.lastName })
     } : undefined);
   const [cameraConstraints, setCameraConstraints] = useState<MediaStreamConstraints | undefined>(invitationData?.camera.constraints);
-  const { stream: localStream } = useCameraStream(session, { constraints: cameraConstraints });
-  const { conversation } = useConversation(session,
+  const { stream: localStream } = useCameraStream(accepted ? session : undefined, { constraints: cameraConstraints });
+  const { conversation } = useConversation(accepted ? session : undefined,
     invitationData ? invitationData.conversation.name : undefined,
     invitationData ? invitationData.conversation.getOrCreateOptions : undefined,
     true);
@@ -382,7 +394,7 @@ function App() {
     return `${firstName ?? ''} ${lastName ?? ''}`
   };
 
-  const _subscribed = subscribedStreams && subscribedStreams.map((stream: Stream, index: number) =>
+  const _subscribed = subscribedStreams.map((stream: Stream, index: number) =>
     <StreamComponent id={'subscribed-stream-' + index} key={index}
       sx={{
         ...(stream.hasVideo() ? video_sizing : { backgroundColor: 'grey' })
@@ -404,7 +416,7 @@ function App() {
         <Audio />}
     </StreamComponent>);
 
-  const _published = publishedStreams && publishedStreams.map((stream, index) =>
+  const _published = publishedStreams.map((stream, index) =>
     <StreamComponent id={'published-stream-' + index} key={index}
       sx={{
         ...(stream.hasVideo() ? video_sizing : { backgroundColor: 'grey' })
@@ -426,33 +438,60 @@ function App() {
   return <>
     {!session && <Box display="flex" alignItems="center" justifyContent="center"
       sx={{ mt: 5 }}><img height='320px' width='320px' src={logo} alt="logo" /></Box>}
-    {conversation &&
-      <MuiThemeProvider theme={roomTheme}>
-        <Box sx={{
-          position: 'relative',
-          height: '100vh', width: '100vw'
-        }}>
-          <ApiRtcGrid sx={{ height: '100%', width: '100%' }}>
-            {isSelfDisplay ? _published : _subscribed}
-          </ApiRtcGrid>
-          <ApiRtcGrid sx={{
-            position: 'absolute',
-            bottom: 4, left: 4,
-            opacity: 0.9,
-            height: '34%', width: { xs: '50%', sm: '40%', md: '30%', lg: '20%' },
-          }}
-            onClick={toggleIsSelfDisplay}>
-            {isSelfDisplay ? _subscribed : _published}
-          </ApiRtcGrid>
+    {session && !accepted &&
+      <Container maxWidth="sm" sx={{ height: '100vh' }}>
+        <Box sx={{ height: '100%' }} display="flex" alignItems="center" justifyContent="center">
+          <Card>
+            <CardHeader sx={{ textAlign: 'center' }} title={acceptTitleText} />
+            <CardContent>
+              <FormGroup>
+                <FormControlLabel required control={<Switch
+                  checked={accepted01}
+                  onChange={toggleAccepted01}
+                  inputProps={{ 'aria-label': accept01AriaLabel }}
+                />} label={<Typography variant="body1" component="span">
+                  {accept01PrefixText}<Link href="#">{accept01LinkText}</Link>
+                </Typography>} />
+                <FormControlLabel required control={<Switch
+                  checked={accepted02}
+                  onChange={toggleAccepted02}
+                  inputProps={{ 'aria-label': accept02AriaLabel }}
+                />} label={<Typography variant="body1" component="span">
+                  {accept02PrefixText}<Link href="#">{accept02LinkText}</Link>
+                </Typography>} />
+              </FormGroup>
+            </CardContent>
+            <CardActions sx={{ display: 'flex', alignItems: "center", justifyContent: "center" }}>
+              <Button disabled={!accepted01 || !accepted02} onClick={toggleAccepted}>{confirmButtonText}</Button>
+            </CardActions>
+          </Card>
         </Box>
-      </MuiThemeProvider>}
+      </Container>}
+    {conversation && accepted &&
+      <Box sx={{
+        position: 'relative',
+        height: '100vh', width: '100vw'
+      }}>
+        <ApiRtcGrid sx={{ height: '100%', width: '100%' }}>
+          {isSelfDisplay ? _published : _subscribed}
+        </ApiRtcGrid>
+        <ApiRtcGrid sx={{
+          position: 'absolute',
+          bottom: 4, left: 4,
+          opacity: 0.9,
+          height: '34%', width: { xs: '50%', sm: '40%', md: '30%', lg: '20%' },
+        }}
+          onClick={toggleIsSelfDisplay}>
+          {isSelfDisplay ? _subscribed : _published}
+        </ApiRtcGrid>
+      </Box>}
 
     <Button onClick={more}>+</Button>
     <Button onClick={less}>-</Button>
 
     {imgSrc && <img src={imgSrc} alt="sharedImg"></img>}
 
-    {hangedUp && <Alert severity="info">The agent hanged up. Bye!</Alert>}
+    {hangedUp && <Alert severity="info">{hangedUpText}</Alert>}
 
     {/* {session &&
           <div>
