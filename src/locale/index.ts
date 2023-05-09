@@ -6,7 +6,8 @@ export default interface Localization {
             defaultProps: Pick<AppProps, 'acceptTitleText' |
                 'accept01PrefixText' | 'accept01LinkText' | 'accept01AriaLabel' |
                 'accept02PrefixText' | 'accept02LinkText' | 'accept02AriaLabel' |
-                'confirmButtonText' |
+                'optInButtonText' | 'backButtonText' | 'readyButtonText' |
+                'selectDeviceText' | 'selectDeviceHelperText' |
                 'hangedUpText'>;
         };
     };

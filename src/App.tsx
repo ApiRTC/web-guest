@@ -9,34 +9,39 @@ import { Contact, GetOrCreateConversationOptions, PublishOptions, Stream, UserAg
 import {
   Grid as ApiRtcGrid,
   Audio, AudioEnableButton,
+  MediaDeviceSelect,
   MuteButton,
   Stream as StreamComponent,
-  useToggle,
-  Video, VideoEnableButton
+  Video, VideoEnableButton,
+  useToggle
 } from '@apirtc/mui-react-lib';
-import { Credentials, useCameraStream, useConversation, useConversationStreams, useSession } from '@apirtc/react-lib';
+import { Credentials, useCameraStream, useConversation, useConversationStreams, useSession, useUserMediaDevices } from '@apirtc/react-lib';
 
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
+import Card from '@mui/material/Card';
+import CardContent from '@mui/material/CardContent';
 import Container from '@mui/material/Container';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import FormGroup from '@mui/material/FormGroup';
+import Icon from '@mui/material/Icon';
 import Link from '@mui/material/Link';
-import { useThemeProps } from '@mui/material/styles';
+import Skeleton from '@mui/material/Skeleton';
+import Stack from '@mui/material/Stack';
+import Step from '@mui/material/Step';
+import StepContent from '@mui/material/StepContent';
+import StepLabel from '@mui/material/StepLabel';
+import Stepper from '@mui/material/Stepper';
 import Switch from '@mui/material/Switch';
 import Typography from '@mui/material/Typography';
+import { useThemeProps } from '@mui/material/styles';
 
 //import Keycloak from 'keycloak-js';
 import './App.css';
 import { loginKeyCloakJS } from './auth/keycloak';
 import { VIDEO_ROUNDED_CORNERS } from './contants';
 import logo from './logo.svg';
-
-import Card from '@mui/material/Card';
-import CardActions from '@mui/material/CardActions';
-import CardContent from '@mui/material/CardContent';
-import CardHeader from '@mui/material/CardHeader';
 
 // WARN: Keep in Sync with m-visio-assist and z-visio
 type InvitationData = {
@@ -97,7 +102,13 @@ export type AppProps = {
   accept02PrefixText?: string,
   accept02LinkText?: string,
   accept02AriaLabel?: string,
-  confirmButtonText?: string,
+  optInButtonText?: string,
+  backButtonText?: string,
+  readyButtonText?: string,
+  selectDeviceText?: string,
+  selectDeviceHelperText?: string,
+  audioInLabel?: string,
+  videoInLabel?: string,
   hangedUpText?: string
 };
 const COMPONENT_NAME = "App";
@@ -106,7 +117,11 @@ function App(inProps: AppProps) {
   const props = useThemeProps({ props: inProps, name: `${COMPONENT_NAME}` });
   const { acceptTitleText = "Legals", accept01PrefixText = "I agree to the ", accept01LinkText = "General Terms of Sale", accept01AriaLabel = "accept-terms-conditions",
     accept02PrefixText = "I agree to the ", accept02LinkText = "Privacy Policy", accept02AriaLabel = "accept-privacy-policy",
-    confirmButtonText = "Confirm",
+    optInButtonText = "Confirm",
+    backButtonText = "Back",
+    readyButtonText = "Enter",
+    selectDeviceText = "Select devices", selectDeviceHelperText = "avant d'entrer en communication, vérifiez ce que vous partagerez avec votre interlocuteur",
+    audioInLabel = "Audio In", videoInLabel = "Video In",
     hangedUpText = "The agent hanged up. Bye!"
   } = props;
 
@@ -120,6 +135,8 @@ function App(inProps: AppProps) {
   const { value: accepted02, toggle: toggleAccepted02 } = useToggle(false);
   const { value: accepted, toggle: toggleAccepted } = useToggle(false);
 
+  const { value: ready, toggle: toggleReady } = useToggle(false);
+
   // ApiRTC hooks
   const { session, disconnect } = useSession(
     invitationData ? { apiKey: invitationData.apiKey } as Credentials : undefined,
@@ -130,9 +147,13 @@ function App(inProps: AppProps) {
       groups: [invitationData.conversation.name + "-guests"],
       userData: new UserData({ firstName: invitationData.user.firstName, lastName: invitationData.user.lastName })
     } : undefined);
+  const { userMediaDevices,
+    selectedAudioIn, setSelectedAudioIn,
+    selectedVideoIn, setSelectedVideoIn } = useUserMediaDevices(
+      session);
   const [cameraConstraints, setCameraConstraints] = useState<MediaStreamConstraints | undefined>(invitationData?.camera.constraints);
   const { stream: localStream } = useCameraStream(accepted ? session : undefined, { constraints: cameraConstraints });
-  const { conversation } = useConversation(accepted ? session : undefined,
+  const { conversation } = useConversation(ready ? session : undefined,
     invitationData ? invitationData.conversation.name : undefined,
     invitationData ? invitationData.conversation.getOrCreateOptions : undefined,
     true);
@@ -435,39 +456,115 @@ function App(inProps: AppProps) {
         <Audio />}
     </StreamComponent>);
 
+  const [activeStep, setActiveStep] = useState(0);
+  const handleNext = () => {
+    setActiveStep((prevActiveStep) => prevActiveStep + 1);
+  };
+
+  const handleBack = () => {
+    setActiveStep((prevActiveStep) => prevActiveStep - 1);
+  };
+
+  useEffect(() => {
+    if (activeStep === 1 && !accepted) {
+      toggleAccepted()
+    }
+  }, [activeStep, accepted, toggleAccepted])
+
   return <>
     {!session && <Box display="flex" alignItems="center" justifyContent="center"
       sx={{ mt: 5 }}><img height='320px' width='320px' src={logo} alt="logo" /></Box>}
-    {session && !accepted &&
+    {session && !ready &&
       <Container maxWidth="sm" sx={{ height: '100vh' }}>
         <Box sx={{ height: '100%' }} display="flex" alignItems="center" justifyContent="center">
           <Card>
-            <CardHeader sx={{ textAlign: 'center' }} title={acceptTitleText} />
+            {/* <CardHeader sx={{ textAlign: 'center' }} title={acceptTitleText} /> */}
             <CardContent>
-              <FormGroup>
-                <FormControlLabel required control={<Switch
-                  checked={accepted01}
-                  onChange={toggleAccepted01}
-                  inputProps={{ 'aria-label': accept01AriaLabel }}
-                />} label={<Typography variant="body1" component="span">
-                  {accept01PrefixText}<Link href="#">{accept01LinkText}</Link>
-                </Typography>} />
-                <FormControlLabel required control={<Switch
-                  checked={accepted02}
-                  onChange={toggleAccepted02}
-                  inputProps={{ 'aria-label': accept02AriaLabel }}
-                />} label={<Typography variant="body1" component="span">
-                  {accept02PrefixText}<Link href="#">{accept02LinkText}</Link>
-                </Typography>} />
-              </FormGroup>
+              <Stepper activeStep={activeStep} orientation="vertical">
+                <Step key='legal'>
+                  <StepLabel>{acceptTitleText}</StepLabel>
+                  <StepContent>
+                    <FormGroup>
+                      <FormControlLabel required control={<Switch
+                        checked={accepted01}
+                        onChange={toggleAccepted01}
+                        inputProps={{ 'aria-label': accept01AriaLabel }}
+                      />} label={<Typography variant="body1" component="span">
+                        {accept01PrefixText}<Link href="#">{accept01LinkText}</Link>
+                      </Typography>} />
+                      <FormControlLabel required control={<Switch
+                        checked={accepted02}
+                        onChange={toggleAccepted02}
+                        inputProps={{ 'aria-label': accept02AriaLabel }}
+                      />} label={<Typography variant="body1" component="span">
+                        {accept02PrefixText}<Link href="#">{accept02LinkText}</Link>
+                      </Typography>} />
+                    </FormGroup>
+                    <Box sx={{ display: 'flex', justifyContent: 'end', mt: 1 }}>
+                      <Button
+                        variant="contained"
+                        disabled={!accepted01 || !accepted02}
+                        onClick={handleNext}>
+                        {optInButtonText}
+                      </Button>
+                    </Box>
+                  </StepContent>
+                </Step>
+                <Step key='device-selection'>
+                  <StepLabel>{selectDeviceText}</StepLabel>
+                  <StepContent>
+                    <Typography>{selectDeviceHelperText}</Typography>
+                    <Stack sx={{ mt: 1 }} direction={{ xs: 'column', sm: 'row' }}
+                      alignItems='center' justifyContent='center'
+                      spacing={1}>
+                      {localStream ? <StreamComponent sx={{
+                        maxWidth: '237px', maxHeight: '260px',
+                        ...(!localStream.hasVideo() && { width: '120px', height: '120px', backgroundColor: 'grey' })
+                      }}
+                        stream={localStream} muted={true}>
+                        {localStream.hasVideo() ? <Video style={{ maxWidth: '100%', ...VIDEO_ROUNDED_CORNERS }}
+                          data-testid={`local-video`} /> : <Audio data-testid={`local-audio`} />}
+                      </StreamComponent> : <Skeleton variant="rectangular"
+                        width={237} height={174} />}
+                      <Stack direction='column' justifyContent='center' alignItems='center'
+                        spacing={2}>
+                        {invitationData?.camera.constraints?.audio ?
+                          <MediaDeviceSelect sx={{ minWidth: '120px', maxWidth: '240px' }}
+                            id='audio-in'
+                            label={audioInLabel}
+                            // disabled={!invitationData?.camera.constraints?.audio}
+                            devices={userMediaDevices.audioinput}
+                            selectedDevice={selectedAudioIn}
+                            setSelectedDevice={setSelectedAudioIn} /> : <Icon>mic_off</Icon>}
+                        {invitationData?.camera.constraints?.video ?
+                          <MediaDeviceSelect sx={{ minWidth: '120px', maxWidth: '240px' }}
+                            id='video-in'
+                            label={videoInLabel}
+                            // disabled={!invitationData?.camera.constraints?.video}
+                            devices={userMediaDevices.videoinput}
+                            selectedDevice={selectedVideoIn}
+                            setSelectedDevice={setSelectedVideoIn} /> : <Icon>videocam_off</Icon>}
+                      </Stack>
+                    </Stack>
+                    <Box sx={{ display: 'flex', justifyContent: 'end', mt: 1 }}>
+                      <Button
+                        onClick={handleBack}>
+                        {backButtonText}
+                      </Button>
+                      <Button
+                        variant="contained"
+                        onClick={toggleReady}>
+                        {readyButtonText}
+                      </Button>
+                    </Box>
+                  </StepContent>
+                </Step>
+              </Stepper>
             </CardContent>
-            <CardActions sx={{ display: 'flex', alignItems: "center", justifyContent: "center" }}>
-              <Button disabled={!accepted01 || !accepted02} onClick={toggleAccepted}>{confirmButtonText}</Button>
-            </CardActions>
           </Card>
         </Box>
       </Container>}
-    {conversation && accepted &&
+    {conversation && ready &&
       <Box sx={{
         position: 'relative',
         height: '100vh', width: '100vw'
