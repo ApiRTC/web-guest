@@ -151,8 +151,64 @@ function App(inProps: AppProps) {
     selectedAudioIn, setSelectedAudioIn,
     selectedVideoIn, setSelectedVideoIn } = useUserMediaDevices(
       session);
-  const [cameraConstraints, setCameraConstraints] = useState<MediaStreamConstraints | undefined>(invitationData?.camera.constraints);
-  const { stream: localStream } = useCameraStream(accepted ? session : undefined, { constraints: cameraConstraints });
+
+  const [facingMode, setFacingMode] = useState<'user' | 'environment' | undefined>();
+  useEffect(() => {
+    if (invitationData) {
+      const videoMediaTrackConstraints = invitationData.camera.constraints?.video;
+      if (videoMediaTrackConstraints instanceof Object && videoMediaTrackConstraints.advanced) {
+        videoMediaTrackConstraints.advanced.forEach((item: any) => {
+          if (item.facingMode) {
+            console.log('useEffect invitationData', item.facingMode)
+            setFacingMode(item.facingMode)
+          }
+        })
+      }
+    }
+  }, [invitationData])
+
+  const constraints = useMemo(() => {
+    const new_constraints = { ...invitationData?.camera.constraints };
+
+    if (new_constraints?.audio) {
+      const audioMediaTrackConstraints = new_constraints.audio instanceof Object ? { ...new_constraints.audio } : {};
+
+      if (selectedAudioIn) {
+        audioMediaTrackConstraints.deviceId = selectedAudioIn.id;
+      }
+
+      new_constraints.audio = audioMediaTrackConstraints;
+    }
+
+    if (new_constraints?.video) {
+      const videoMediaTrackConstraints = new_constraints.video instanceof Object ? { ...new_constraints.video } : {};
+
+      if (selectedVideoIn) {
+        videoMediaTrackConstraints.deviceId = selectedVideoIn.id;
+      }
+
+      if (facingMode) {
+        if (videoMediaTrackConstraints.advanced) {
+          videoMediaTrackConstraints.advanced = videoMediaTrackConstraints.advanced.map((item: any) => {
+            if (item.facingMode) {
+              return { facingMode: facingMode }
+            }
+            return item
+          })
+        } else {
+          videoMediaTrackConstraints.advanced = [{ facingMode: facingMode }]
+        }
+      }
+
+      new_constraints.video = videoMediaTrackConstraints;
+    }
+
+    console.log('useMemo constraints', new_constraints)
+
+    return new_constraints
+  }, [invitationData, selectedAudioIn, selectedVideoIn, facingMode]);
+
+  const { stream: localStream } = useCameraStream(accepted ? session : undefined, { constraints: constraints });
   const { conversation } = useConversation(ready ? session : undefined,
     invitationData ? invitationData.conversation.name : undefined,
     invitationData ? invitationData.conversation.getOrCreateOptions : undefined,
@@ -229,7 +285,7 @@ function App(inProps: AppProps) {
     if (params.invitationData) {
       try {
         const l_data: InvitationData = JSON.parse(base64_decode(params.invitationData)) as InvitationData;
-        console.info("InvitationData", l_data);
+        console.info("InvitationData", JSON.stringify(l_data));
         setInvitationData(l_data)
       } catch (error) {
         if (error instanceof SyntaxError) {
@@ -252,19 +308,13 @@ function App(inProps: AppProps) {
     if (i) {
       try {
         const l_data: InvitationData = JSON.parse(base64_decode(i)) as InvitationData;
-        console.info("InvitationData", l_data);
+        console.info("InvitationData", JSON.stringify(l_data));
         setInvitationData(l_data)
       } catch (error) {
         console.error("parsing i search parameter error", error)
       }
     }
   }, [searchParams])
-
-  useEffect(() => {
-    if (invitationData) {
-      setCameraConstraints(invitationData.camera.constraints)
-    }
-  }, [invitationData])
 
   useEffect(() => {
     if (session) {
@@ -305,28 +355,8 @@ function App(inProps: AppProps) {
               console.error('takeSnapshot error :', error)
             });
         } else if (isInstanceOfSwitchFacingMode(content)) {
-          console.log('switchFacingMode', cameraConstraints?.video)
-
-          if (cameraConstraints && cameraConstraints.video && cameraConstraints?.video instanceof Object) {
-            const videoMediaTrackConstraints: MediaTrackConstraints = cameraConstraints.video;
-            let advanced;
-            if (videoMediaTrackConstraints.advanced) {
-              advanced = videoMediaTrackConstraints.advanced.map((item: any) => {
-                if (item.facingMode) {
-                  return { facingMode: item.facingMode === 'user' ? 'environment' : 'user' }
-                } else {
-                  return item;
-                }
-              });
-            } else {
-              advanced = [{ facingMode: 'environment' }];
-            }
-            cameraConstraints.video.advanced = advanced;
-            const video = { ...cameraConstraints.video, advanced };
-            // 
-            console.log('setCameraConstraints with video', video)
-            setCameraConstraints({ ...cameraConstraints, video })
-          }
+          console.log('switchFacingMode')
+          setFacingMode((prev) => prev === 'user' ? 'environment' : 'user')
         }
       };
       session.on('contactData', onContactData)
@@ -334,7 +364,7 @@ function App(inProps: AppProps) {
         session.removeListener('contactData', onContactData)
       }
     }
-  }, [session, localStream, cameraConstraints])
+  }, [session, localStream])
 
   const [imgSrc, setImgSrc] = useState<string>();
 
