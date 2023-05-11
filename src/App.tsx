@@ -120,7 +120,7 @@ function App(inProps: AppProps) {
     optInButtonText = "Confirm",
     backButtonText = "Back",
     readyButtonText = "Enter",
-    selectDeviceText = "Select devices", selectDeviceHelperText = "avant d'entrer en communication, vérifiez ce que vous partagerez avec votre interlocuteur",
+    selectDeviceText = "Select devices", selectDeviceHelperText = "Please check what you want to share before entering the room.",
     audioInLabel = "Audio In", videoInLabel = "Video In",
     hangedUpText = "The agent hanged up. Bye!"
   } = props;
@@ -415,6 +415,7 @@ function App(inProps: AppProps) {
     return `${firstName ?? ''} ${lastName ?? ''}`
   };
 
+  const subscribedButtonsSize = !isSelfDisplay && subscribedStreams.length <= 2 ? 'large' : undefined;
   const _subscribed = subscribedStreams.map((stream: Stream, index: number) =>
     <StreamComponent id={'subscribed-stream-' + index} key={index}
       sx={{
@@ -423,9 +424,9 @@ function App(inProps: AppProps) {
       stream={stream}
       name={getName(stream)}
       controls={<>
-        <MuteButton />
-        <AudioEnableButton disabled={true} />
-        <VideoEnableButton disabled={true} /></>}>
+        <MuteButton size={subscribedButtonsSize} />
+        <AudioEnableButton size={subscribedButtonsSize} disabled={true} />
+        <VideoEnableButton size={subscribedButtonsSize} disabled={true} /></>}>
       {stream.hasVideo() ?
         <Video
           sx={video_sizing}
@@ -437,13 +438,14 @@ function App(inProps: AppProps) {
         <Audio />}
     </StreamComponent>);
 
+  const publishedButtonsSize = isSelfDisplay && publishedStreams.length <= 2 ? 'large' : undefined;
   const _published = publishedStreams.map((stream, index) =>
     <StreamComponent id={'published-stream-' + index} key={index}
       sx={{
         ...(stream.hasVideo() ? video_sizing : { backgroundColor: 'grey' })
       }}
       stream={stream} muted={true}
-      controls={<><AudioEnableButton /><VideoEnableButton /></>}>
+      controls={<><AudioEnableButton size={publishedButtonsSize} /><VideoEnableButton size={publishedButtonsSize} /></>}>
       {stream.hasVideo() ?
         <Video
           sx={video_sizing}
@@ -516,9 +518,11 @@ function App(inProps: AppProps) {
                     <Typography>{selectDeviceHelperText}</Typography>
                     <Stack sx={{ mt: 1 }} direction={{ xs: 'column', sm: 'row' }}
                       alignItems='center' justifyContent='center'
+                      useFlexGap flexWrap="wrap"
                       spacing={1}>
                       {localStream ? <StreamComponent sx={{
-                        maxWidth: '237px', maxHeight: '260px',
+                        // maxWidth: '237px', maxHeight: '260px',
+                        maxWidth: { xs: '100%', sm: '70%' },
                         ...(!localStream.hasVideo() && { width: '120px', height: '120px', backgroundColor: 'grey' })
                       }}
                         stream={localStream} muted={true}>
@@ -567,7 +571,10 @@ function App(inProps: AppProps) {
     {conversation && ready &&
       <Box sx={{
         position: 'relative',
-        height: '100vh', width: '100vw'
+        height: '99vh', // to prevent vertical scrollbar on Chrome
+        // maxHeight: '-webkit-fill-available',
+        width: '100vw',
+        maxWidth: '100%' // to prevent horizontal scrollbar on Chrome
       }}>
         <ApiRtcGrid sx={{ height: '100%', width: '100%' }}>
           {isSelfDisplay ? _published : _subscribed}
@@ -582,50 +589,48 @@ function App(inProps: AppProps) {
           {isSelfDisplay ? _subscribed : _published}
         </ApiRtcGrid>
       </Box>}
-
+    {/* 
     <Button onClick={more}>+</Button>
-    <Button onClick={less}>-</Button>
-
+    <Button onClick={less}>-</Button> */}
     {imgSrc && <img src={imgSrc} alt="sharedImg"></img>}
-
     {hangedUp && <Alert severity="info">{hangedUpText}</Alert>}
-
-    {/* {session &&
-          <div>
-            <p>{session.getUserAgent().getUserData().get('systemInfo')}</p>
-          </div>} */}
-    {/* <Button variant="contained" onClick={(e: React.SyntheticEvent) => {
-        e.preventDefault();
-        keycloak.login().then(
-          (auth: any) => {
-            console.log("Keycloak.login", auth)
-            alert("auth" + JSON.stringify(auth))
-            if (!auth) {
-              console.log("Keycloak NOT authenticated...")
-            } else {
-              console.log("Keycloak authenticated", auth)
-            }
-          }
-        )
-      }}>Login with Keycloak</Button> */}
-    {/* CANT make a call from button, because this is not called back when redirected... */}
-    {/* {invitationData &&
-        <Typography align='center' variant='h2'>Hello {invitationData.user.firstName}</Typography>
-      } */}
-    {/* <Grid container spacing={0}
-        direction="column"
-        alignItems="center"
-        justifyContent="center">
-        <Grid item xs={3}>
-          {invitationData ?
-            <>
-              <div>
-                {invitationData.conversation.friendlyName && <span>Conversation {invitationData.conversation.friendlyName}</span>}
-              </div>
-            </> : <div>no invitationData</div>}
-        </Grid>
-      </Grid> */}
   </>
 }
 
 export default App;
+
+    // {session &&
+    //       <div>
+    //         <p>{session.getUserAgent().getUserData().get('systemInfo')}</p>
+    //       </div>}
+    // <Button variant="contained" onClick={(e: React.SyntheticEvent) => {
+    //     e.preventDefault();
+    //     keycloak.login().then(
+    //       (auth: any) => {
+    //         console.log("Keycloak.login", auth)
+    //         alert("auth" + JSON.stringify(auth))
+    //         if (!auth) {
+    //           console.log("Keycloak NOT authenticated...")
+    //         } else {
+    //           console.log("Keycloak authenticated", auth)
+    //         }
+    //       }
+    //     )
+    //   }}>Login with Keycloak</Button>
+    // CANT make a call from button, because this is not called back when redirected...
+    // {invitationData &&
+    //     <Typography align='center' variant='h2'>Hello {invitationData.user.firstName}</Typography>
+    //   }
+    // <Grid container spacing={0}
+    //     direction="column"
+    //     alignItems="center"
+    //     justifyContent="center">
+    //     <Grid item xs={3}>
+    //       {invitationData ?
+    //         <>
+    //           <div>
+    //             {invitationData.conversation.friendlyName && <span>Conversation {invitationData.conversation.friendlyName}</span>}
+    //           </div>
+    //         </> : <div>no invitationData</div>}
+    //     </Grid>
+    //   </Grid> 

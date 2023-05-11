@@ -12,17 +12,8 @@ import { ROOM_THEME_OPTIONS } from './contants';
 import './index.css';
 import { frFR } from './locale/frFR';
 
-function languageToLocale(language: string) {
-  switch (language) {
-    case 'fr':
-      return 'fr-FR'
-    default:
-      return 'en-US'
-  }
-}
-
-function getLangFiles(locale: string) {
-  switch (locale) {
+function getLangFiles() {
+  switch (navigator.language) {
     case 'fr':
     case 'fr-FR':
       return [frFR, ApiRtcMuiReactLib_frFR];
@@ -31,7 +22,6 @@ function getLangFiles(locale: string) {
   }
 }
 
-const locale = languageToLocale(navigator.language);
 const theme = createTheme({
   palette: {
     mode: "light",
@@ -46,8 +36,13 @@ const theme = createTheme({
       dark: "#2e455c"
     }
   },
+  typography: {
+    button: {
+      textTransform: 'none'
+    }
+  },
   ...ROOM_THEME_OPTIONS,
-}, ...getLangFiles(locale));
+}, ...getLangFiles());
 
 const container = document.getElementById('root');
 if (container) {
