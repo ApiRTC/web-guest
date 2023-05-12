@@ -8,7 +8,7 @@ import createTheme from '@mui/material/styles/createTheme';
 
 import { frFR as ApiRtcMuiReactLib_frFR } from '@apirtc/mui-react-lib';
 
-import { ROOM_THEME_OPTIONS } from './contants';
+import { ROOM_THEME_OPTIONS } from './constants';
 import './index.css';
 import { frFR } from './locale/frFR';
 

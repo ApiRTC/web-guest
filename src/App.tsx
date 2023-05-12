@@ -40,7 +40,7 @@ import { useThemeProps } from '@mui/material/styles';
 //import Keycloak from 'keycloak-js';
 import './App.css';
 import { loginKeyCloakJS } from './auth/keycloak';
-import { VIDEO_ROUNDED_CORNERS } from './contants';
+import { VIDEO_ROUNDED_CORNERS } from './constants';
 import logo from './logo.svg';
 
 // WARN: Keep in Sync with m-visio-assist and z-visio
@@ -130,12 +130,18 @@ function App(inProps: AppProps) {
 
   const [invitationData, setInvitationData] = useState<InvitationData | undefined>(undefined);
 
+  const [facingMode, setFacingMode] = useState<'user' | 'environment' | undefined>();
+
   // opt-in
   const { value: accepted01, toggle: toggleAccepted01 } = useToggle(false);
   const { value: accepted02, toggle: toggleAccepted02 } = useToggle(false);
   const { value: accepted, toggle: toggleAccepted } = useToggle(false);
 
   const { value: ready, toggle: toggleReady } = useToggle(false);
+
+  const [imgSrc, setImgSrc] = useState<string>();
+
+  const [hangedUp, setHangedUp] = useState<boolean>(false);
 
   // ApiRTC hooks
   const { session, disconnect } = useSession(
@@ -151,21 +157,6 @@ function App(inProps: AppProps) {
     selectedAudioIn, setSelectedAudioIn,
     selectedVideoIn, setSelectedVideoIn } = useUserMediaDevices(
       session);
-
-  const [facingMode, setFacingMode] = useState<'user' | 'environment' | undefined>();
-  useEffect(() => {
-    if (invitationData) {
-      const videoMediaTrackConstraints = invitationData.camera.constraints?.video;
-      if (videoMediaTrackConstraints instanceof Object && videoMediaTrackConstraints.advanced) {
-        videoMediaTrackConstraints.advanced.forEach((item: any) => {
-          if (item.facingMode) {
-            console.log('useEffect invitationData', item.facingMode)
-            setFacingMode(item.facingMode)
-          }
-        })
-      }
-    }
-  }, [invitationData])
 
   const constraints = useMemo(() => {
     const new_constraints = { ...invitationData?.camera.constraints };
@@ -194,7 +185,7 @@ function App(inProps: AppProps) {
               return { facingMode: facingMode }
             }
             return item
-          })
+          });
         } else {
           videoMediaTrackConstraints.advanced = [{ facingMode: facingMode }]
         }
@@ -204,7 +195,6 @@ function App(inProps: AppProps) {
     }
 
     console.log('useMemo constraints', new_constraints)
-
     return new_constraints
   }, [invitationData, selectedAudioIn, selectedVideoIn, facingMode]);
 
@@ -250,7 +240,22 @@ function App(inProps: AppProps) {
       }).catch((error) => {
         console.error('getInvitationData', error)
       })
-  }
+  };
+
+  useEffect(() => {
+    if (invitationData) {
+      const videoMediaTrackConstraints = invitationData.camera.constraints?.video;
+      if (videoMediaTrackConstraints instanceof Object && videoMediaTrackConstraints.advanced) {
+        videoMediaTrackConstraints.advanced.forEach((item: any) => {
+          if (item.facingMode) {
+            console.log('useEffect invitationData', item.facingMode)
+            setFacingMode(item.facingMode)
+          }
+        })
+      }
+    }
+  }, [invitationData])
+
   useEffect(() => {
     const handleTabClose = (event: BeforeUnloadEvent) => {
       //event.preventDefault()
@@ -365,10 +370,6 @@ function App(inProps: AppProps) {
       }
     }
   }, [session, localStream])
-
-  const [imgSrc, setImgSrc] = useState<string>();
-
-  const [hangedUp, setHangedUp] = useState<boolean>(false);
 
   useEffect(() => {
     if (session && conversation) {
@@ -492,11 +493,9 @@ function App(inProps: AppProps) {
   const handleNext = () => {
     setActiveStep((prevActiveStep) => prevActiveStep + 1);
   };
-
   const handleBack = () => {
     setActiveStep((prevActiveStep) => prevActiveStep - 1);
   };
-
   useEffect(() => {
     if (activeStep === 1 && !accepted) {
       toggleAccepted()
