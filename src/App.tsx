@@ -5,7 +5,7 @@ import { UAParser } from 'ua-parser-js';
 
 import { decode as base64_decode } from 'base-64';
 
-import { Contact, GetOrCreateConversationOptions, PublishOptions, Stream, UserAgent, UserData } from '@apirtc/apirtc'; //INVITATION_STATUS_ENDED
+import { Contact, GetOrCreateConversationOptions, JoinOptions, PublishOptions, Stream, UserAgent, UserData } from '@apirtc/apirtc'; //INVITATION_STATUS_ENDED
 import {
   Grid as ApiRtcGrid,
   Audio, AudioEnableButton,
@@ -54,7 +54,8 @@ type InvitationData = {
   conversation: {
     name: string, friendlyName?: string,
     //moderationEnabled?: boolean
-    getOrCreateOptions?: GetOrCreateConversationOptions
+    getOrCreateOptions?: GetOrCreateConversationOptions,
+    joinOptions?: JoinOptions
   }
   user: {
     firstName: string, lastName: string
@@ -209,7 +210,8 @@ function App(inProps: AppProps) {
   const { conversation } = useConversation(ready ? session : undefined,
     invitationData ? invitationData.conversation.name : undefined,
     invitationData ? invitationData.conversation.getOrCreateOptions : undefined,
-    true);
+    true,
+    invitationData ? invitationData.conversation.joinOptions : undefined);
   const { publishedStreams, subscribedStreams } = useConversationStreams(conversation,
     localStream ? [{ stream: localStream, options: invitationData?.streams[0].publishOptions }] : []);
 

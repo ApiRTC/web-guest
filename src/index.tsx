@@ -19,7 +19,7 @@ import './index.css';
 import { frFR } from './locale/frFR';
 import { setLogLevel } from './logLevel';
 
-const logLevel = 'warn';
+const logLevel = 'debug';
 setLogLevel(logLevel)
 setApiRtcReactLibLogLevel(logLevel)
 setApiRtcMuiReactLibLogLevel(logLevel)
