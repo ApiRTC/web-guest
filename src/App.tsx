@@ -15,7 +15,10 @@ import {
   Video, VideoEnableButton,
   useToggle
 } from '@apirtc/mui-react-lib';
-import { Credentials, useCameraStream, useConversation, useConversationStreams, useSession, useUserMediaDevices } from '@apirtc/react-lib';
+import {
+  Credentials,
+  useCameraStream, useConversation, useConversationStreams, useSession, useUserMediaDevices
+} from '@apirtc/react-lib';
 
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
@@ -194,7 +197,9 @@ function App(inProps: AppProps) {
       new_constraints.video = videoMediaTrackConstraints;
     }
 
-    console.log('useMemo constraints', new_constraints)
+    if (globalThis.logLevel.isDebugEnabled) {
+      console.debug(`${COMPONENT_NAME}|useMemo new_constraints`, new_constraints)
+    }
     return new_constraints
   }, [invitationData, selectedAudioIn, selectedVideoIn, facingMode]);
 
@@ -203,24 +208,32 @@ function App(inProps: AppProps) {
     invitationData ? invitationData.conversation.name : undefined,
     invitationData ? invitationData.conversation.getOrCreateOptions : undefined,
     true);
-  const { publishedStreams, subscribedStreams: t_subscribedStreams } = useConversationStreams(conversation,
+  const { publishedStreams, subscribedStreams } = useConversationStreams(conversation,
     localStream ? [{ stream: localStream, options: invitationData?.camera.publishOptions }] : []);
 
   // For testing purpose
-  const [localStreams, setLocalStreams] = useState<Stream[]>(localStream ? [localStream] : []);
-  const more = () => {
-    if (localStream) {
-      localStreams.push(localStream)
-      setLocalStreams(Array.from(localStreams))
-    }
-  };
-  const less = () => {
-    localStreams.pop()
-    setLocalStreams(Array.from(localStreams))
-  };
-  const subscribedStreams = useMemo(() => [...t_subscribedStreams, ...localStreams], [t_subscribedStreams, localStreams]);
+  // const [localStreams, setLocalStreams] = useState<Stream[]>(localStream ? [localStream] : []);
+  // const more = () => {
+  //   if (localStream) {
+  //     localStreams.push(localStream)
+  //     setLocalStreams(Array.from(localStreams))
+  //   }
+  // };
+  // const less = () => {
+  //   localStreams.pop()
+  //   setLocalStreams(Array.from(localStreams))
+  // };
+  // const subscribedStreams = useMemo(() => [...t_subscribedStreams, ...localStreams], [t_subscribedStreams, localStreams]);
 
-  const { value: isSelfDisplay, toggle: toggleIsSelfDisplay } = useToggle(false);
+  const { value: u_isSelfDisplay, toggle: toggleIsSelfDisplay } = useToggle(false);
+
+  // Force isSelfDisplay to true if there are no streams to subscribe in the room
+  const isSelfDisplay = useMemo(() => {
+    if (subscribedStreams.length === 0) {
+      return true
+    }
+    return u_isSelfDisplay
+  }, [subscribedStreams, u_isSelfDisplay]);
 
   const [pointer, setPointer] = useState<any>(undefined);
 
@@ -248,7 +261,9 @@ function App(inProps: AppProps) {
       if (videoMediaTrackConstraints instanceof Object && videoMediaTrackConstraints.advanced) {
         videoMediaTrackConstraints.advanced.forEach((item: any) => {
           if (item.facingMode) {
-            console.log('useEffect invitationData', item.facingMode)
+            if (globalThis.logLevel.isDebugEnabled) {
+              console.debug(`${COMPONENT_NAME}|useEffect invitationData, facingMode`, item.facingMode)
+            }
             setFacingMode(item.facingMode)
           }
         })
@@ -290,19 +305,27 @@ function App(inProps: AppProps) {
     if (params.invitationData) {
       try {
         const l_data: InvitationData = JSON.parse(base64_decode(params.invitationData)) as InvitationData;
-        console.info("InvitationData", JSON.stringify(l_data));
+        if (globalThis.logLevel.isDebugEnabled) {
+          console.debug(`${COMPONENT_NAME}|InvitationData`, JSON.stringify(l_data))
+        }
         setInvitationData(l_data)
       } catch (error) {
         if (error instanceof SyntaxError) {
           const invitationId = params.invitationData;
           loginKeyCloakJS().then((keycloak) => {
-            console.log('keycloak.token', keycloak.token)
+            if (globalThis.logLevel.isDebugEnabled) {
+              console.debug(`${COMPONENT_NAME}|keycloak.token`, keycloak.token)
+            }
             // TODO : use the token to make authenticated call to the API :
             getInvitationData(invitationId).then((data) => {
-              console.log('getInvitationData', data)
+              if (globalThis.logLevel.isDebugEnabled) {
+                console.debug(`${COMPONENT_NAME}|getInvitationData`, invitationId, data)
+              }
               setInvitationData(data)
             })
-          }).catch((error) => { console.error('loginKeyCloakJS error', error) })
+          }).catch((error: any) => {
+            console.error(`${COMPONENT_NAME}|loginKeyCloakJS error`, error)
+          })
         }
       }
     }
@@ -313,10 +336,12 @@ function App(inProps: AppProps) {
     if (i) {
       try {
         const l_data: InvitationData = JSON.parse(base64_decode(i)) as InvitationData;
-        console.info("InvitationData", JSON.stringify(l_data));
+        if (globalThis.logLevel.isDebugEnabled) {
+          console.debug(`${COMPONENT_NAME}|InvitationData`, JSON.stringify(l_data))
+        }
         setInvitationData(l_data)
       } catch (error) {
-        console.error("parsing i search parameter error", error)
+        console.error(`${COMPONENT_NAME}|parsing i search parameter error`, error)
       }
     }
   }, [searchParams])
@@ -325,7 +350,9 @@ function App(inProps: AppProps) {
     if (session) {
       const userAgent: UserAgent = session.getUserAgent();
       const parser = new UAParser();
-      console.log(COMPONENT_NAME + "|UAParser", parser.getResult())
+      if (globalThis.logLevel.isDebugEnabled) {
+        console.debug(`${COMPONENT_NAME}|UAParser`, parser.getResult())
+      }
       const userData: UserData = userAgent.getUserData();
       userData.setToSession()
       userData.setProp('systemInfo', JSON.stringify(parser.getResult()))
@@ -339,28 +366,34 @@ function App(inProps: AppProps) {
     if (session && localStream) {
       // To receive data from contacts
       const onContactData = (contactDataInfo: any) => {
+        if (globalThis.logLevel.isDebugEnabled) {
+          console.debug(`${COMPONENT_NAME}|onContactData`, contactDataInfo)
+        }
         const sender: Contact = contactDataInfo.sender;
         const content: Object = contactDataInfo.content;
-        console.log("on data", sender, content)
         if (isInstanceOfTakeSnapshot(content)) {
           localStream.takeSnapshot(content.takeSnapshot)
             .then((snapshot: any) => {
-              console.log("takeSnapshot OK :", localStream, snapshot)
+              if (globalThis.logLevel.isDebugEnabled) {
+                console.debug(`${COMPONENT_NAME}|takeSnapshot of`, localStream, snapshot)
+              }
               //$('#timeline').append('<a><img src="' + snapshot + '" /></a>');
               const fileTransferInvitation = sender.sendFile({ name: `snapshot_${(new Date()).toISOString()}.png`, type: 'image/png' }, snapshot);
               fileTransferInvitation.on('statusChange', (statusChangeInfo: any) => {
-                console.log('statusChange :', statusChangeInfo.status)
+                if (globalThis.logLevel.isDebugEnabled) {
+                  console.debug(`${COMPONENT_NAME}|statusChange`, statusChangeInfo)
+                }
                 // To learn about constants look at https://dev.apirtc.com/reference/Constants.html
-                //if (statusChangeInfo.status === ) {//INVITATION_STATUS_ENDED
-                console.log('statusChangeInfo', statusChangeInfo)
-                //}
               });
             }).catch((error: any) => {
-              // error
-              console.error('takeSnapshot error :', error)
+              if (globalThis.logLevel.isWarnEnabled) {
+                console.warn(`${COMPONENT_NAME}|takeSnapshot error`, error)
+              }
             });
         } else if (isInstanceOfSwitchFacingMode(content)) {
-          console.log('switchFacingMode')
+          if (globalThis.logLevel.isDebugEnabled) {
+            console.debug(`${COMPONENT_NAME}|SwitchFacingMode`)
+          }
           setFacingMode((prev) => prev === 'user' ? 'environment' : 'user')
         }
       };
@@ -374,12 +407,16 @@ function App(inProps: AppProps) {
   useEffect(() => {
     if (session && conversation) {
       // To receive data from contacts
-      const onData = (contactDataInfo: any) => {
-        const sender: Contact = contactDataInfo.sender;
-        const content: Object = contactDataInfo.content;
-        console.log("Conversation::on data", sender, content)
+      const onData = (dataInfo: any) => {
+        if (globalThis.logLevel.isDebugEnabled) {
+          console.debug(`${COMPONENT_NAME}|Conversation onData`, dataInfo)
+        }
+        // const sender: Contact = dataInfo.sender;
+        const content: Object = dataInfo.content;
         if (isInstanceOfFileShared(content)) {
-          console.log("fileShared", content)
+          if (globalThis.logLevel.isDebugEnabled) {
+            console.debug(`${COMPONENT_NAME}|fileShared`, content)
+          }
           fetch(content.fileShared.link,
             {
               method: 'get',
@@ -393,10 +430,14 @@ function App(inProps: AppProps) {
             setImgSrc(url)
             // force a state update
             //forceUpdate()
-          }).catch((error) => { console.error(COMPONENT_NAME + "|fetch ", content.fileShared.link, error) })
+          }).catch((error) => {
+            console.error(`${COMPONENT_NAME}|fetch error`, content.fileShared.link, error)
+          })
         } else if (isInstanceOfHangup(content)) {
           conversation.leave().then().catch((error) => {
-            console.error('conversation.leave()', error)
+            if (globalThis.logLevel.isWarnEnabled) {
+              console.warn(`${COMPONENT_NAME}|conversation leave error`, error)
+            }
           }).finally(() => {
             disconnect()
           });
@@ -413,12 +454,16 @@ function App(inProps: AppProps) {
   useEffect(() => {
     if (conversation) {
       const on_pointerSharingEnabled = (data: any) => {
-        console.log("pointerSharingEnabled", data)
+        if (globalThis.logLevel.isDebugEnabled) {
+          console.debug(`${COMPONENT_NAME}|pointerSharingEnabled`, data)
+        }
       };
       conversation.on('pointerSharingEnabled', on_pointerSharingEnabled)
 
       const on_pointerLocationChanged = (data: any) => {
-        console.log("pointerLocationChanged", data)
+        if (globalThis.logLevel.isDebugEnabled) {
+          console.debug(`${COMPONENT_NAME}|pointerLocationChanged`, data)
+        }
         setPointer(data.data);
         setTimeout(() => {
           setPointer(undefined)
@@ -622,7 +667,9 @@ function App(inProps: AppProps) {
     <Button onClick={more}>+</Button>
     <Button onClick={less}>-</Button> */}
     {imgSrc && <img src={imgSrc} alt="sharedImg"></img>}
-    {hangedUp && <Alert severity="info">{hangedUpText}</Alert>}
+    {hangedUp && <Container maxWidth="md">
+      <Alert severity="info">{hangedUpText}</Alert>
+    </Container>}
   </>
 }
 

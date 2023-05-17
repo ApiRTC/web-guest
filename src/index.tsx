@@ -6,11 +6,23 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import ThemeProvider from '@mui/material/styles/ThemeProvider';
 import createTheme from '@mui/material/styles/createTheme';
 
-import { frFR as ApiRtcMuiReactLib_frFR } from '@apirtc/mui-react-lib';
+import {
+  frFR as ApiRtcMuiReactLib_frFR,
+  setLogLevel as setApiRtcMuiReactLibLogLevel
+} from '@apirtc/mui-react-lib';
+import {
+  setLogLevel as setApiRtcReactLibLogLevel
+} from '@apirtc/react-lib';
 
 import { ROOM_THEME_OPTIONS } from './constants';
 import './index.css';
 import { frFR } from './locale/frFR';
+import { setLogLevel } from './logLevel';
+
+const logLevel = 'warn';
+setLogLevel(logLevel)
+setApiRtcReactLibLogLevel(logLevel)
+setApiRtcMuiReactLibLogLevel(logLevel)
 
 function getLangFiles() {
   switch (navigator.language) {
