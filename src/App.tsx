@@ -46,21 +46,23 @@ import { loginKeyCloakJS } from './auth/keycloak';
 import { VIDEO_ROUNDED_CORNERS } from './constants';
 import logo from './logo.svg';
 
-// WARN: Keep in Sync with m-visio-assist and z-visio
+// WARN : Keep in Sync with m-visio-assist and z-visio
+//
 type InvitationData = {
   cloudUrl?: string
   apiKey?: string
   conversation: {
     name: string, friendlyName?: string,
+    //moderationEnabled?: boolean
     getOrCreateOptions?: GetOrCreateConversationOptions
   }
   user: {
     firstName: string, lastName: string
   }
-  camera: {
+  streams: Array<{
     constraints?: MediaStreamConstraints,
     publishOptions?: PublishOptions
-  }
+  }>
 };
 
 type TakeSnapshot = { takeSnapshot: Object };
@@ -162,7 +164,7 @@ function App(inProps: AppProps) {
       session);
 
   const constraints = useMemo(() => {
-    const new_constraints = { ...invitationData?.camera.constraints };
+    const new_constraints = { ...invitationData?.streams[0].constraints };
 
     if (new_constraints?.audio) {
       const audioMediaTrackConstraints = new_constraints.audio instanceof Object ? { ...new_constraints.audio } : {};
@@ -209,7 +211,7 @@ function App(inProps: AppProps) {
     invitationData ? invitationData.conversation.getOrCreateOptions : undefined,
     true);
   const { publishedStreams, subscribedStreams } = useConversationStreams(conversation,
-    localStream ? [{ stream: localStream, options: invitationData?.camera.publishOptions }] : []);
+    localStream ? [{ stream: localStream, options: invitationData?.streams[0].publishOptions }] : []);
 
   // For testing purpose
   // const [localStreams, setLocalStreams] = useState<Stream[]>(localStream ? [localStream] : []);
@@ -257,7 +259,7 @@ function App(inProps: AppProps) {
 
   useEffect(() => {
     if (invitationData) {
-      const videoMediaTrackConstraints = invitationData.camera.constraints?.video;
+      const videoMediaTrackConstraints = invitationData.streams[0].constraints?.video;
       if (videoMediaTrackConstraints instanceof Object && videoMediaTrackConstraints.advanced) {
         videoMediaTrackConstraints.advanced.forEach((item: any) => {
           if (item.facingMode) {
@@ -606,7 +608,7 @@ function App(inProps: AppProps) {
                         width={237} height={174} />}
                       <Stack direction='column' justifyContent='center' alignItems='center'
                         spacing={2}>
-                        {invitationData?.camera.constraints?.audio ?
+                        {invitationData?.streams[0].constraints?.audio ?
                           <MediaDeviceSelect sx={{ minWidth: '120px', maxWidth: '240px' }}
                             id='audio-in'
                             label={audioInLabel}
@@ -614,7 +616,7 @@ function App(inProps: AppProps) {
                             devices={userMediaDevices.audioinput}
                             selectedDevice={selectedAudioIn}
                             setSelectedDevice={setSelectedAudioIn} /> : <Icon>mic_off</Icon>}
-                        {invitationData?.camera.constraints?.video ?
+                        {invitationData?.streams[0].constraints?.video ?
                           <MediaDeviceSelect sx={{ minWidth: '120px', maxWidth: '240px' }}
                             id='video-in'
                             label={videoInLabel}
