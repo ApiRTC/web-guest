@@ -193,7 +193,7 @@ function App(inProps: AppProps) {
             return item
           });
         } else {
-          videoMediaTrackConstraints.advanced = [{ facingMode: facingMode }]
+          videoMediaTrackConstraints.advanced = [{ facingMode: facingMode }];
         }
       }
 

@@ -5,7 +5,7 @@ export function loginKeyCloakJS() {
     return new Promise<Keycloak>((resolve, reject) => {
         const keycloak = new Keycloak({
             url: 'https://idp.apizee.com/auth', realm: 'APIZEE-POC-DGPN', clientId: 'visio-assisted'
-        })
+        });
         keycloak.init({
             onLoad: 'login-required',
             // silentCheckSsoRedirectUri: window.location.origin + '/silent-check-sso.html',

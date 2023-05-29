@@ -12,11 +12,9 @@
     "@mui/material": "^5.12.3",
     "base-64": "^1.0.0",
     "keycloak-js": "^18.0.0",
-    "npm": "^9.6.6",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.5.0",
-    "react-scripts": "^5.0.1",
     "typescript": "^4.9.4",
     "ua-parser-js": "^1.0.2",
     "web-vitals": "^2.1.4"
@@ -31,7 +29,8 @@
     "@types/react": "^18.0.33",
     "@types/react-dom": "^18.0.11",
     "@types/ua-parser-js": "^0.7.36",
-    "gh-pages": "^3.2.3"
+    "gh-pages": "^3.2.3",
+    "react-scripts": "^5.0.1"
   },
   "scripts": {
     "predeploy": "npm run build && cp ./build/index.html ./build/404.html",
