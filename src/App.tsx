@@ -113,8 +113,8 @@ export type AppProps = {
   readyButtonText?: string,
   selectDeviceText?: string,
   selectDeviceHelperText?: string,
-  audioInLabel?: string,
-  videoInLabel?: string,
+  // audioInLabel?: string,
+  // videoInLabel?: string,
   hangedUpText?: string
 };
 const COMPONENT_NAME = "App";
@@ -127,7 +127,7 @@ function App(inProps: AppProps) {
     backButtonText = "Back",
     readyButtonText = "Enter",
     selectDeviceText = "Select devices", selectDeviceHelperText = "Please check what you want to share before entering the room.",
-    audioInLabel = "Audio In", videoInLabel = "Video In",
+    // audioInLabel = "Audio In", videoInLabel = "Video In",
     hangedUpText = "The agent hanged up. Bye!"
   } = props;
 
@@ -593,7 +593,6 @@ function App(inProps: AppProps) {
                 <Step key='device-selection'>
                   <StepLabel>{selectDeviceText}</StepLabel>
                   <StepContent>
-                    <Typography>{selectDeviceHelperText}</Typography>
                     <Stack sx={{ mt: 1 }} direction={{ xs: 'column', sm: 'row' }}
                       alignItems='center' justifyContent='center'
                       useFlexGap flexWrap="wrap"
@@ -613,7 +612,8 @@ function App(inProps: AppProps) {
                         {invitationData?.streams[0].constraints?.audio ?
                           <MediaDeviceSelect sx={{ minWidth: '120px', maxWidth: '240px' }}
                             id='audio-in'
-                            label={audioInLabel}
+                            size='small'
+                            // label={audioInLabel}
                             // disabled={!invitationData?.camera.constraints?.audio}
                             devices={userMediaDevices.audioinput}
                             selectedDevice={selectedAudioIn}
@@ -621,13 +621,15 @@ function App(inProps: AppProps) {
                         {invitationData?.streams[0].constraints?.video ?
                           <MediaDeviceSelect sx={{ minWidth: '120px', maxWidth: '240px' }}
                             id='video-in'
-                            label={videoInLabel}
+                            size='small'
+                            // label={videoInLabel}
                             // disabled={!invitationData?.camera.constraints?.video}
                             devices={userMediaDevices.videoinput}
                             selectedDevice={selectedVideoIn}
                             setSelectedDevice={setSelectedVideoIn} /> : <Icon>videocam_off</Icon>}
                       </Stack>
                     </Stack>
+                    <Typography sx={{ mt: 1 }}>{selectDeviceHelperText}</Typography>
                     <Box sx={{ display: 'flex', justifyContent: 'end', mt: 1 }}>
                       <Button
                         onClick={handleBack}>
