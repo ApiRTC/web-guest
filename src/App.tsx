@@ -26,19 +26,17 @@ import Button from '@mui/material/Button';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
 import Container from '@mui/material/Container';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import FormGroup from '@mui/material/FormGroup';
 import Icon from '@mui/material/Icon';
-import Link from '@mui/material/Link';
 import Skeleton from '@mui/material/Skeleton';
 import Stack from '@mui/material/Stack';
 import Step from '@mui/material/Step';
 import StepContent from '@mui/material/StepContent';
 import StepLabel from '@mui/material/StepLabel';
 import Stepper from '@mui/material/Stepper';
-import Switch from '@mui/material/Switch';
-import Typography from '@mui/material/Typography';
+import Typography from '@mui/material/Typography/Typography';
 import { useThemeProps } from '@mui/material/styles';
+
+import OptInList from './components/Optin/OptInList';
 
 //import Keycloak from 'keycloak-js';
 import './App.css';
@@ -102,12 +100,12 @@ const video_sizing = { height: '100%', width: '100%' };
 
 export type AppProps = {
   acceptTitleText?: string,
-  accept01PrefixText?: string,
-  accept01LinkText?: string,
-  accept01AriaLabel?: string,
-  accept02PrefixText?: string,
-  accept02LinkText?: string,
-  accept02AriaLabel?: string,
+  optInCGUPrefixText?: string,
+  optInCGULinkText?: string,
+  optInCGUAriaLabel?: string,
+  optInPrivacyPrefixText?: string,
+  optInPrivacyLinkText?: string,
+  optInPrivacyAriaLabel?: string,
   optInButtonText?: string,
   backButtonText?: string,
   readyButtonText?: string,
@@ -121,8 +119,8 @@ const COMPONENT_NAME = "App";
 function App(inProps: AppProps) {
 
   const props = useThemeProps({ props: inProps, name: `${COMPONENT_NAME}` });
-  const { acceptTitleText = "Legals", accept01PrefixText = "I agree to the ", accept01LinkText = "General Terms of Sale", accept01AriaLabel = "accept-terms-conditions",
-    accept02PrefixText = "I agree to the ", accept02LinkText = "Privacy Policy", accept02AriaLabel = "accept-privacy-policy",
+  const { acceptTitleText = "Legals", optInCGUPrefixText = "I agree to the ", optInCGULinkText = "General Terms of Sale", optInCGUAriaLabel = "accept-terms-conditions",
+    optInPrivacyPrefixText = "I agree to the ", optInPrivacyLinkText = "Privacy Policy", optInPrivacyAriaLabel = "accept-privacy-policy",
     optInButtonText = "Confirm",
     backButtonText = "Back",
     readyButtonText = "Enter",
@@ -139,8 +137,6 @@ function App(inProps: AppProps) {
   const [facingMode, setFacingMode] = useState<'user' | 'environment' | undefined>();
 
   // opt-in
-  const { value: accepted01, toggle: toggleAccepted01 } = useToggle(false);
-  const { value: accepted02, toggle: toggleAccepted02 } = useToggle(false);
   const { value: accepted, toggle: toggleAccepted } = useToggle(false);
 
   const { value: ready, toggle: toggleReady } = useToggle(false);
@@ -564,30 +560,16 @@ function App(inProps: AppProps) {
                 <Step key='legal'>
                   <StepLabel>{acceptTitleText}</StepLabel>
                   <StepContent>
-                    <FormGroup>
-                      <FormControlLabel required control={<Switch
-                        checked={accepted01}
-                        onChange={toggleAccepted01}
-                        inputProps={{ 'aria-label': accept01AriaLabel }}
-                      />} label={<Typography variant="body1" component="span">
-                        {accept01PrefixText}<Link href="#">{accept01LinkText}</Link>
-                      </Typography>} />
-                      <FormControlLabel required control={<Switch
-                        checked={accepted02}
-                        onChange={toggleAccepted02}
-                        inputProps={{ 'aria-label': accept02AriaLabel }}
-                      />} label={<Typography variant="body1" component="span">
-                        {accept02PrefixText}<Link href="#">{accept02LinkText}</Link>
-                      </Typography>} />
-                    </FormGroup>
-                    <Box sx={{ display: 'flex', justifyContent: 'end', mt: 1 }}>
-                      <Button
-                        variant="contained"
-                        disabled={!accepted01 || !accepted02}
-                        onClick={handleNext}>
-                        {optInButtonText}
-                      </Button>
-                    </Box>
+                    <OptInList optins={[
+                      {id: "CGU",
+                      labels: {aria: optInCGUAriaLabel, prefix: optInCGUPrefixText, link: optInCGULinkText},
+                      link: "https://cloud.apizee.com/attachments/b87662d7-3e82-4519-a4db-9fb6ba67b5cc/Apizee-ConditionsGeneralesUtilisation.pdf"},
+                      {id: "Privacy",
+                      labels: {aria: optInPrivacyAriaLabel, prefix: optInPrivacyPrefixText, link: optInPrivacyLinkText},
+                      link: "https://cloud.apizee.com/attachments/b87662d7-3e82-4519-a4db-9fb6ba67b5cc/Apizee-ConditionsGeneralesUtilisation.pdf"}
+                    ]}
+                    labels={{submit: optInButtonText}}
+                    onSubmit={handleNext}/>
                   </StepContent>
                 </Step>
                 <Step key='device-selection'>
