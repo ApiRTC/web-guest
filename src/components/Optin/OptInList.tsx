@@ -23,14 +23,13 @@ const OptInList: React.FC<OptInListProps> = ({ labels, optins, onSubmit }: OptIn
     })
   }
 
-  console.log(optins)
-
   return (
     <>
       <FormGroup>
         {optins.map((optin) => (
           <OptIn
             id={optin.id}
+            key={optin.id}
             checked={optinsStatus[optin.id]}
             onChange={handleChange}
             labels={optin.labels}
