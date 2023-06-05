@@ -30,19 +30,17 @@ import Icon from '@mui/material/Icon';
 import Skeleton from '@mui/material/Skeleton';
 import Stack from '@mui/material/Stack';
 import Step from '@mui/material/Step';
-import StepContent from '@mui/material/StepContent';
-import StepLabel from '@mui/material/StepLabel';
-import Stepper from '@mui/material/Stepper';
 import Typography from '@mui/material/Typography/Typography';
 import { useThemeProps } from '@mui/material/styles';
 
 import OptInList from './components/Optin/OptInList';
+import TextStepper from './components/TextStepper/TextStepper';
 
 //import Keycloak from 'keycloak-js';
 import './App.css';
 import { loginKeyCloakJS } from './auth/keycloak';
 import { VIDEO_ROUNDED_CORNERS } from './constants';
-import logo from './logo.svg';
+import logo from './assets/apizee.svg';
 
 // WARN : Keep in Sync with m-visio-assist and z-visio
 //
@@ -119,12 +117,12 @@ const COMPONENT_NAME = "App";
 function App(inProps: AppProps) {
 
   const props = useThemeProps({ props: inProps, name: `${COMPONENT_NAME}` });
-  const { acceptTitleText = "Legals", optInCGUPrefixText = "I agree to the ", optInCGULinkText = "General Terms of Sale", optInCGUAriaLabel = "accept-terms-conditions",
+  const { optInCGUPrefixText = "I agree to the ", optInCGULinkText = "General Terms of Sale", optInCGUAriaLabel = "accept-terms-conditions",
     optInPrivacyPrefixText = "I agree to the ", optInPrivacyLinkText = "Privacy Policy", optInPrivacyAriaLabel = "accept-privacy-policy",
     optInButtonText = "Confirm",
     backButtonText = "Back",
     readyButtonText = "Enter",
-    selectDeviceText = "Select devices", selectDeviceHelperText = "Please check what you want to share before entering the room.",
+    selectDeviceHelperText = "Please check what you want to share before entering the room.",
     // audioInLabel = "Audio In", videoInLabel = "Video In",
     hangedUpText = "The agent hanged up. Bye!"
   } = props;
@@ -556,10 +554,8 @@ function App(inProps: AppProps) {
           <Card>
             {/* <CardHeader sx={{ textAlign: 'center' }} title={acceptTitleText} /> */}
             <CardContent>
-              <Stepper activeStep={activeStep} orientation="vertical">
+              <TextStepper activeStep={activeStep} header={<img src={logo} alt="Apizee Logo" height={24}/>}>
                 <Step key='legal'>
-                  <StepLabel>{acceptTitleText}</StepLabel>
-                  <StepContent>
                     <OptInList optins={[
                       {id: "CGU",
                       labels: {aria: optInCGUAriaLabel, prefix: optInCGUPrefixText, link: optInCGULinkText},
@@ -570,11 +566,8 @@ function App(inProps: AppProps) {
                     ]}
                     labels={{submit: optInButtonText}}
                     onSubmit={handleNext}/>
-                  </StepContent>
                 </Step>
                 <Step key='device-selection'>
-                  <StepLabel>{selectDeviceText}</StepLabel>
-                  <StepContent>
                     <Stack sx={{ mt: 1 }} direction={{ xs: 'column', sm: 'row' }}
                       alignItems='center' justifyContent='center'
                       useFlexGap flexWrap="wrap"
@@ -623,9 +616,8 @@ function App(inProps: AppProps) {
                         {readyButtonText}
                       </Button>
                     </Box>
-                  </StepContent>
                 </Step>
-              </Stepper>
+              </TextStepper>
             </CardContent>
           </Card>
         </Box>
