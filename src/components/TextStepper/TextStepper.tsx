@@ -23,7 +23,7 @@ const TextStepper: React.FunctionComponent<TextStepperProps> = ({
       alignItems: "center"
     }}>
       {header}
-      <Typography>{activeStep + 1}/{React.Children.toArray(children).length}</Typography>
+      <Typography sx={{fontWeight: 500}}>{activeStep + 1}/{React.Children.toArray(children).length}</Typography>
     </Box>
     <Box sx={{
       padding: "16px 16px 0 16px"

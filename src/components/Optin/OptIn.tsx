@@ -38,9 +38,14 @@ const OptIn: React.FC<OptInProps> = ({
       label={
         <Typography variant="body1" component="span">
           {labels.prefix}
-          <Link target="_blank" href={link}>{labels.link}</Link>
+          <Link target="_blank" href={link} color="info.main">{labels.link}</Link>
         </Typography>
       }
+      sx={{
+        ".MuiFormControlLabel-asterisk": {
+          display: "none"
+        }
+      }}
     />
   );
 };

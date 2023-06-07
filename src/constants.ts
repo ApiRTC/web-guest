@@ -51,6 +51,20 @@ export const ROOM_THEME_OPTIONS = {
                 },
             ],
         },
+        MuiSwitch: {
+            styleOverrides: {
+                colorPrimary: {
+                  "&.Mui-checked": {
+                    color: "#17821A"
+                  }
+                },
+                track: {
+                  ".Mui-checked.Mui-checked + &": {
+                    backgroundColor: "#17821A"
+                  }
+                }
+              }
+        },
     }
 };
 

@@ -39,7 +39,7 @@ const OptInList: React.FC<OptInListProps> = ({ labels, optins, onSubmit }: OptIn
       </FormGroup>
       <Box sx={{ display: "flex", justifyContent: "end", mt: 1 }}>
         <Button
-          variant="contained"
+          variant="outlined"
           disabled={!Object.values(optinsStatus).every((data) => data)}
           onClick={onSubmit}
         >

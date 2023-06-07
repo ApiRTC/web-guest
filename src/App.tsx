@@ -27,6 +27,7 @@ import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
 import Container from '@mui/material/Container';
 import Icon from '@mui/material/Icon';
+import IconButton from '@mui/material/IconButton/IconButton';
 import Skeleton from '@mui/material/Skeleton';
 import Stack from '@mui/material/Stack';
 import Step from '@mui/material/Step';
@@ -545,6 +546,7 @@ function App(inProps: AppProps) {
     }
   }, [activeStep, accepted, toggleAccepted])
 
+  console.log(invitationData)
   return <>
     {!session && <Box display="flex" alignItems="center" justifyContent="center"
       sx={{ mt: 5 }}><img height='320px' width='320px' src={logo} alt="logo" /></Box>}
@@ -568,41 +570,63 @@ function App(inProps: AppProps) {
                     onSubmit={handleNext}/>
                 </Step>
                 <Step key='device-selection'>
-                    <Stack sx={{ mt: 1 }} direction={{ xs: 'column', sm: 'row' }}
+                    <Stack sx={{ mt: 1 }} direction={{ xs: 'column' }}
                       alignItems='center' justifyContent='center'
                       useFlexGap flexWrap="wrap"
                       spacing={1}>
-                      {localStream ? <StreamComponent sx={{
-                        // maxWidth: '237px', maxHeight: '260px',
-                        maxWidth: { xs: '100%', sm: '70%' },
-                        ...(!localStream.hasVideo() && { width: '120px', height: '120px', backgroundColor: 'grey' })
-                      }}
-                        stream={localStream} muted={true}>
-                        {localStream.hasVideo() ? <Video style={{ maxWidth: '100%', ...VIDEO_ROUNDED_CORNERS }}
-                          data-testid={`local-video`} /> : <Audio data-testid={`local-audio`} />}
-                      </StreamComponent> : <Skeleton variant="rectangular"
-                        width={237} height={174} />}
-                      <Stack direction='column' justifyContent='center' alignItems='center'
-                        spacing={2}>
-                        {invitationData?.streams[0].constraints?.audio ?
-                          <MediaDeviceSelect sx={{ minWidth: '120px', maxWidth: '240px' }}
+                      <Box sx={{ width: '100%', paddingTop: '75%', position: "relative",
+                        "& .MuiBox-root": {position: 'absolute'}}}>
+                        {localStream ? <StreamComponent sx={{
+                          top: 0, left: 0, bottom: 0, right: 0,
+                          maxWidth: { xs: '100%', sm: '100%' },
+                          ...(!localStream.hasVideo() && { position: 'absolute', inset: 0, borderRadius: '4px', backgroundColor: '#CACCCE' })
+                        }}
+                          stream={localStream} muted={true}>
+                          {localStream.hasVideo() ? 
+                          <Video style={{ maxWidth: '100%', ...VIDEO_ROUNDED_CORNERS }} data-testid={`local-video`} /> 
+                          : 
+                          <Audio data-testid={`local-audio`} />}
+                        </StreamComponent> : <Skeleton variant="rectangular"
+                          width='100%' height='100%' sx={{ position: 'absolute', top: 0, left: 0 }}/>}
+                      </Box>
+                      { localStream ? 
+                        <Box sx={{ minWidth: '120px', width: '100%', display: "flex" }}>
+                          <Box sx={{ width: '3em', height: '3em', display: 'flex', justifyContent: 'center', alignItems: 'center',
+                            border: 'solid 1px rgba(0, 0, 0, 0.23)', borderRadius: '4px', boxSizing: 'border-box', flexShrink: 0}}>
+                            <Icon>{invitationData?.streams[0].constraints?.audio   ? "mic_on" : "mic_off"}</Icon>
+                          </Box>
+
+                          <MediaDeviceSelect sx={{ marginLeft: '0.25em', minWidth: '120px', flexGrow: "1" }}
                             id='audio-in'
                             size='small'
                             // label={audioInLabel}
-                            // disabled={!invitationData?.camera.constraints?.audio}
+                            disabled={!invitationData?.streams[0].constraints?.audio}
                             devices={userMediaDevices.audioinput}
                             selectedDevice={selectedAudioIn}
-                            setSelectedDevice={setSelectedAudioIn} /> : <Icon>mic_off</Icon>}
-                        {invitationData?.streams[0].constraints?.video ?
-                          <MediaDeviceSelect sx={{ minWidth: '120px', maxWidth: '240px' }}
+                            setSelectedDevice={setSelectedAudioIn} /> 
+                        </Box>
+                        :
+                        <Skeleton variant="rectangular" width="100%" height="2.5em"/>
+                      }
+                      { localStream ? 
+                        <Box sx={{ minWidth: '120px', width: '100%', display: "flex" }}>
+                          <Box sx={{ width: '3em', height: '3em', display: 'flex', justifyContent: 'center', alignItems: 'center',
+                            border: 'solid 1px rgba(0, 0, 0, 0.23)', borderRadius: '4px', boxSizing: 'border-box', flexShrink: 0}}>
+                            <Icon>{invitationData?.streams[0].constraints?.video ? "videocam_on" : "videocam_off"}</Icon>
+                          </Box>
+                          
+                          <MediaDeviceSelect sx={{ marginLeft: '0.25em', minWidth: '120px', flexGrow: "1" }}
                             id='video-in'
                             size='small'
                             // label={videoInLabel}
-                            // disabled={!invitationData?.camera.constraints?.video}
+                            disabled={!invitationData?.streams[0].constraints?.video}
                             devices={userMediaDevices.videoinput}
                             selectedDevice={selectedVideoIn}
-                            setSelectedDevice={setSelectedVideoIn} /> : <Icon>videocam_off</Icon>}
-                      </Stack>
+                            setSelectedDevice={setSelectedVideoIn} />
+                        </Box>
+                        :
+                        <Skeleton variant="rectangular" width="100%" height="2.5em"/>
+                      }
                     </Stack>
                     <Typography sx={{ mt: 1 }}>{selectDeviceHelperText}</Typography>
                     <Box sx={{ display: 'flex', justifyContent: 'end', mt: 1 }}>
@@ -611,7 +635,7 @@ function App(inProps: AppProps) {
                         {backButtonText}
                       </Button>
                       <Button
-                        variant="contained"
+                        variant='outlined'
                         onClick={toggleReady}>
                         {readyButtonText}
                       </Button>

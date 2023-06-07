@@ -46,6 +46,14 @@ const theme = createTheme({
       main: "#5b5baf",
       light: "#8eabc7",
       dark: "#2e455c"
+    },
+    success: {
+      main: "#0F5712",
+      light: "#17821A",
+      dark: "#0A340B"
+    },
+    info: {
+      main: "#1355AE"
     }
   },
   typography: {
