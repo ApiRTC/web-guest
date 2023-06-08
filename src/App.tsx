@@ -27,7 +27,6 @@ import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
 import Container from '@mui/material/Container';
 import Icon from '@mui/material/Icon';
-import IconButton from '@mui/material/IconButton/IconButton';
 import Skeleton from '@mui/material/Skeleton';
 import Stack from '@mui/material/Stack';
 import Step from '@mui/material/Step';
@@ -506,7 +505,7 @@ function App(inProps: AppProps) {
         <Video
           sx={video_sizing}
           style={{
-            ...video_sizing, objectFit: 'cover' as any,
+            ...video_sizing, objectFit: 'contain' as any,
             ...VIDEO_ROUNDED_CORNERS
           }}
         /> :
@@ -546,7 +545,6 @@ function App(inProps: AppProps) {
     }
   }, [activeStep, accepted, toggleAccepted])
 
-  console.log(invitationData)
   return <>
     {!session && <Box display="flex" alignItems="center" justifyContent="center"
       sx={{ mt: 5 }}><img height='320px' width='320px' src={logo} alt="logo" /></Box>}
@@ -558,7 +556,7 @@ function App(inProps: AppProps) {
             <CardContent>
               <TextStepper activeStep={activeStep} header={<img src={logo} alt="Apizee Logo" height={24}/>}>
                 <Step key='legal'>
-                    <OptInList optins={[
+                    <OptInList optIns={[
                       {id: "CGU",
                       labels: {aria: optInCGUAriaLabel, prefix: optInCGUPrefixText, link: optInCGULinkText},
                       link: "https://cloud.apizee.com/attachments/b87662d7-3e82-4519-a4db-9fb6ba67b5cc/Apizee-ConditionsGeneralesUtilisation.pdf"},
@@ -649,17 +647,15 @@ function App(inProps: AppProps) {
     {conversation && ready &&
       <Box sx={{
         position: 'relative',
-        height: '99vh', // to prevent vertical scrollbar on Chrome
-        // maxHeight: '-webkit-fill-available',
-        width: '100vw',
-        maxWidth: '100%' // to prevent horizontal scrollbar on Chrome
+        height: '100%',
+        width: '100%',
       }}>
-        <ApiRtcGrid sx={{ height: '100%', width: '100%' }}>
+        <ApiRtcGrid sx={{ height: '100%', width: '100%', padding: "1em" }}>
           {isSelfDisplay ? _published : _subscribed}
         </ApiRtcGrid>
         <ApiRtcGrid sx={{
           position: 'absolute',
-          bottom: 4, left: 4,
+          bottom: "0.5em", left: "0.5em",
           opacity: 0.9,
           height: '34%', width: { xs: '50%', sm: '40%', md: '30%', lg: '20%' },
         }}

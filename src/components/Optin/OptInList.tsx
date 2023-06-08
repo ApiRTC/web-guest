@@ -9,38 +9,38 @@ export type OptInListProps = {
   labels: {
     submit: string
   }
-  optins: Omit<OptInProps, "checked" | "onChange">[];
+  optIns: Omit<OptInProps, "checked" | "onChange">[];
   onSubmit: () => void
 };
 
-const OptInList: React.FC<OptInListProps> = ({ labels, optins, onSubmit }: OptInListProps) => {
-  const [optinsStatus, setOptinsStatus] = useState( Object.assign({}, ...optins.map((optin) => ({[optin.id]: false}))) )
+const OptInList: React.FC<OptInListProps> = ({ labels, optIns, onSubmit }: OptInListProps) => {
+  const [optInsStatus, setOptInsStatus] = useState( Object.assign({}, ...optIns.map((optIn) => ({[optIn.id]: false}))) )
 
   const handleChange = (id: string) => {
-    setOptinsStatus({
-      ...optinsStatus,
-      [id]: !optinsStatus[id]
+    setOptInsStatus({
+      ...optInsStatus,
+      [id]: !optInsStatus[id]
     })
   }
 
   return (
     <>
       <FormGroup>
-        {optins.map((optin) => (
+        {optIns.map((optIn) => (
           <OptIn
-            id={optin.id}
-            key={optin.id}
-            checked={optinsStatus[optin.id]}
+            id={optIn.id}
+            key={optIn.id}
+            checked={optInsStatus[optIn.id]}
             onChange={handleChange}
-            labels={optin.labels}
-            link={optin.link}
+            labels={optIn.labels}
+            link={optIn.link}
           />
         ))}
       </FormGroup>
       <Box sx={{ display: "flex", justifyContent: "end", mt: 1 }}>
         <Button
           variant="outlined"
-          disabled={!Object.values(optinsStatus).every((data) => data)}
+          disabled={!Object.values(optInsStatus).every((data) => data)}
           onClick={onSubmit}
         >
           {labels.submit}
