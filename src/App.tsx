@@ -556,7 +556,7 @@ function App(inProps: AppProps) {
             <CardContent>
               <TextStepper activeStep={activeStep} header={<img src={logo} alt="Apizee Logo" height={24}/>}>
                 <Step key='legal'>
-                    <OptInList optins={[
+                    <OptInList optIns={[
                       {id: "CGU",
                       labels: {aria: optInCGUAriaLabel, prefix: optInCGUPrefixText, link: optInCGULinkText},
                       link: "https://cloud.apizee.com/attachments/b87662d7-3e82-4519-a4db-9fb6ba67b5cc/Apizee-ConditionsGeneralesUtilisation.pdf"},
