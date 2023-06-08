@@ -561,10 +561,10 @@ function App(inProps: AppProps) {
                     <OptInList optins={[
                       {id: "CGU",
                       labels: {aria: optInCGUAriaLabel, prefix: optInCGUPrefixText, link: optInCGULinkText},
-                      link: "https://cloud.apizee.com/attachments/b87662d7-3e82-4519-a4db-9fb6ba67b5cc/Apizee-ConditionsGeneralesUtilisation.pdf"},
+                      link: navigator.language === 'fr' || navigator.language === 'fr-FR' ? "https://cloud.apizee.com/attachments/b87662d7-3e82-4519-a4db-9fb6ba67b5cc/Apizee-ConditionsGeneralesUtilisation.pdf" : "https://cloud.apizee.com/attachments/cb744e03-182b-453e-bbdf-0d89cf42e182/Apizee-TermsOfUse.pdf"},
                       {id: "Privacy",
                       labels: {aria: optInPrivacyAriaLabel, prefix: optInPrivacyPrefixText, link: optInPrivacyLinkText},
-                      link: "https://cloud.apizee.com/attachments/b87662d7-3e82-4519-a4db-9fb6ba67b5cc/Apizee-ConditionsGeneralesUtilisation.pdf"}
+                      link: navigator.language === 'fr' || navigator.language === 'fr-FR' ? "https://cloud.apizee.com/attachments/f87493b0-483e-4723-a3ee-02d59a501b1c/Apizee-PolitiqueConfidentialite.pdf" : "https://cloud.apizee.com/attachments/ae61f778-16d1-4dd4-baa1-cd1ba568a0d6/Apizee-PrivacyPolicy.pdf"}
                     ]}
                     labels={{submit: optInButtonText}}
                     onSubmit={handleNext}/>
