@@ -34,6 +34,9 @@ function getLangFiles() {
   }
 }
 
+// To update <html lang='en'> attribute with correct language
+document.documentElement.setAttribute('lang', navigator.language.slice(0, 2))
+
 const theme = createTheme({
   palette: {
     mode: "light",
