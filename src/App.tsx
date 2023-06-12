@@ -5,7 +5,7 @@ import { UAParser } from 'ua-parser-js';
 
 import { decode as base64_decode } from 'base-64';
 
-import { Contact, GetOrCreateConversationOptions, JoinOptions, PublishOptions, Stream, UserAgent, UserData } from '@apirtc/apirtc'; //INVITATION_STATUS_ENDED
+import { Contact, GetOrCreateConversationOptions, JoinOptions, MediaStreamTrackFlowStatus, PublishOptions, Stream, UserAgent, UserData } from '@apirtc/apirtc'; //INVITATION_STATUS_ENDED
 import {
   Grid as ApiRtcGrid,
   Audio, AudioEnableButton,
@@ -208,6 +208,12 @@ function App(inProps: AppProps) {
     invitationData ? invitationData.conversation.joinOptions : undefined);
   const { publishedStreams, subscribedStreams } = useConversationStreams(conversation,
     localStream ? [{ stream: localStream, options: invitationData?.streams[0].publishOptions }] : []);
+
+    const [streamVideoMuted, setStreamVideoMuted] = useState(localStream?.isVideoMuted())
+    const [streamAudioMuted, setStreamAudioMuted] = useState(localStream?.isAudioMuted())
+
+    localStream?.on('audioFlowStatusChanged', (data: MediaStreamTrackFlowStatus) => setStreamAudioMuted(!data.enabled))
+    localStream?.on('videoFlowStatusChanged', (data: MediaStreamTrackFlowStatus) => setStreamVideoMuted(!data.enabled))
 
   // For testing purpose
   // const [localStreams, setLocalStreams] = useState<Stream[]>(localStream ? [localStream] : []);
@@ -589,10 +595,12 @@ function App(inProps: AppProps) {
                       </Box>
                       { localStream ? 
                         <Box sx={{ minWidth: '120px', width: '100%', display: "flex" }}>
-                          <Box sx={{ width: '3em', height: '3em', display: 'flex', justifyContent: 'center', alignItems: 'center',
-                            border: 'solid 1px rgba(0, 0, 0, 0.23)', borderRadius: '4px', boxSizing: 'border-box', flexShrink: 0}}>
-                            <Icon>{invitationData?.streams[0].constraints?.audio   ? "mic_on" : "mic_off"}</Icon>
-                          </Box>
+                          <Button sx={{ width: '3em', height: '3em', display: 'flex', justifyContent: 'center', alignItems: 'center',
+                            border: 'solid 1px rgba(0, 0, 0, 0.23)', borderRadius: '4px', boxSizing: 'border-box', flexShrink: 0, color: 'black'}}
+                            disabled={!invitationData?.streams[0].constraints?.audio}
+                            onClick={() => {streamAudioMuted ? localStream.enableAudio() : localStream.disableAudio()}}>
+                            <Icon>{invitationData?.streams[0].constraints?.audio && !streamAudioMuted ? "mic_on" : "mic_off"}</Icon>
+                          </Button>
 
                           <MediaDeviceSelect sx={{ marginLeft: '0.25em', minWidth: '120px', flexGrow: "1" }}
                             id='audio-in'
@@ -608,10 +616,12 @@ function App(inProps: AppProps) {
                       }
                       { localStream ? 
                         <Box sx={{ minWidth: '120px', width: '100%', display: "flex" }}>
-                          <Box sx={{ width: '3em', height: '3em', display: 'flex', justifyContent: 'center', alignItems: 'center',
-                            border: 'solid 1px rgba(0, 0, 0, 0.23)', borderRadius: '4px', boxSizing: 'border-box', flexShrink: 0}}>
-                            <Icon>{invitationData?.streams[0].constraints?.video ? "videocam_on" : "videocam_off"}</Icon>
-                          </Box>
+                          <Button sx={{ width: '3em', height: '3em', display: 'flex', justifyContent: 'center', alignItems: 'center',
+                            border: 'solid 1px rgba(0, 0, 0, 0.23)', borderRadius: '4px', boxSizing: 'border-box', flexShrink: 0, color: 'black'}}
+                            disabled={!invitationData?.streams[0].constraints?.video}
+                            onClick={() => {streamVideoMuted ? localStream.enableVideo() : localStream.disableVideo()}}>
+                            <Icon>{invitationData?.streams[0].constraints?.video && !streamVideoMuted ? "videocam_on" : "videocam_off"}</Icon>
+                          </Button>
                           
                           <MediaDeviceSelect sx={{ marginLeft: '0.25em', minWidth: '120px', flexGrow: "1" }}
                             id='video-in'
