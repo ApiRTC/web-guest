@@ -579,7 +579,7 @@ function App(inProps: AppProps) {
                       useFlexGap flexWrap="wrap"
                       spacing={1}>
                       <Box sx={{ width: '100%', paddingTop: '75%', position: "relative",
-                        "& .MuiBox-root": {position: 'absolute'}}}>
+                        "& .MuiBox-root": {position: 'absolute', height: "100%", maxWidth: "100%"}}}>
                         {localStream ? <StreamComponent sx={{
                           top: 0, left: 0, bottom: 0, right: 0,
                           maxWidth: { xs: '100%', sm: '100%' },
@@ -587,7 +587,7 @@ function App(inProps: AppProps) {
                         }}
                           stream={localStream} muted={true}>
                           {localStream.hasVideo() ? 
-                          <Video style={{ maxWidth: '100%', ...VIDEO_ROUNDED_CORNERS }} data-testid={`local-video`} /> 
+                          <Video style={{ height: '100%', ...VIDEO_ROUNDED_CORNERS }} data-testid={`local-video`} /> 
                           : 
                           <Audio data-testid={`local-audio`} />}
                         </StreamComponent> : <Skeleton variant="rectangular"
