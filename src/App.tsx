@@ -595,7 +595,7 @@ function App(inProps: AppProps) {
                       </Box>
                       { localStream ? 
                         <Box sx={{ minWidth: '120px', width: '100%', display: "flex" }}>
-                          <Button sx={{ width: '3em', height: '3em', display: 'flex', justifyContent: 'center', alignItems: 'center',
+                          <Button sx={{ minWidth: 0, width: '3em', height: '3em', display: 'flex', justifyContent: 'center', alignItems: 'center',
                             border: 'solid 1px rgba(0, 0, 0, 0.23)', borderRadius: '4px', boxSizing: 'border-box', flexShrink: 0, color: 'black'}}
                             disabled={!invitationData?.streams[0].constraints?.audio}
                             onClick={() => {streamAudioMuted ? localStream.enableAudio() : localStream.disableAudio()}}>
@@ -616,7 +616,7 @@ function App(inProps: AppProps) {
                       }
                       { localStream ? 
                         <Box sx={{ minWidth: '120px', width: '100%', display: "flex" }}>
-                          <Button sx={{ width: '3em', height: '3em', display: 'flex', justifyContent: 'center', alignItems: 'center',
+                          <Button sx={{ minWidth: 0, width: '3em', height: '3em', display: 'flex', justifyContent: 'center', alignItems: 'center',
                             border: 'solid 1px rgba(0, 0, 0, 0.23)', borderRadius: '4px', boxSizing: 'border-box', flexShrink: 0, color: 'black'}}
                             disabled={!invitationData?.streams[0].constraints?.video}
                             onClick={() => {streamVideoMuted ? localStream.enableVideo() : localStream.disableVideo()}}>
