@@ -33,6 +33,8 @@ function getLangFiles() {
       return [];
   }
 }
+// To update <html lang='en'> attribute with correct language
+document.documentElement.setAttribute('lang', navigator.language.slice(0, 2))
 
 declare module '@mui/material/styles' {
   interface Palette {
