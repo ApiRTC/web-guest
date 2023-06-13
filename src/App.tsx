@@ -27,7 +27,6 @@ import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
 import Container from '@mui/material/Container';
 import Icon from '@mui/material/Icon';
-import IconButton from '@mui/material/IconButton/IconButton';
 import Skeleton from '@mui/material/Skeleton';
 import Stack from '@mui/material/Stack';
 import Step from '@mui/material/Step';
@@ -39,9 +38,9 @@ import TextStepper from './components/TextStepper/TextStepper';
 
 //import Keycloak from 'keycloak-js';
 import './App.css';
+import logo from './assets/apizee.svg';
 import { loginKeyCloakJS } from './auth/keycloak';
 import { VIDEO_ROUNDED_CORNERS } from './constants';
-import logo from './assets/apizee.svg';
 
 // WARN : Keep in Sync with m-visio-assist and z-visio
 //
@@ -135,8 +134,8 @@ function App(inProps: AppProps) {
 
   const [facingMode, setFacingMode] = useState<'user' | 'environment' | undefined>();
 
-  const [streamVideoEnabled, setStreamVideoEnabled] = useState<boolean | undefined>(undefined)
-  const [streamAudioEnabled, setStreamAudioEnabled] = useState<boolean | undefined>(undefined)
+  const [streamAudioEnabled, setStreamAudioEnabled] = useState<boolean | undefined>(undefined);
+  const [streamVideoEnabled, setStreamVideoEnabled] = useState<boolean | undefined>(undefined);
 
   // opt-in
   const { value: accepted, toggle: toggleAccepted } = useToggle(false);
@@ -569,88 +568,98 @@ function App(inProps: AppProps) {
           <Card>
             {/* <CardHeader sx={{ textAlign: 'center' }} title={acceptTitleText} /> */}
             <CardContent>
-              <TextStepper activeStep={activeStep} header={<img src={logo} alt="Apizee Logo" height={24}/>}>
+              <TextStepper activeStep={activeStep} header={<img src={logo} alt="Apizee Logo" height={24} />}>
                 <Step key='legal'>
-                    <OptInList optIns={[
-                      {id: "CGU",
-                      labels: {aria: optInCGUAriaLabel, prefix: optInCGUPrefixText, link: optInCGULinkText},
-                      link: navigator.language === 'fr' || navigator.language === 'fr-FR' ? "https://cloud.apizee.com/attachments/b87662d7-3e82-4519-a4db-9fb6ba67b5cc/Apizee-ConditionsGeneralesUtilisation.pdf" : "https://cloud.apizee.com/attachments/cb744e03-182b-453e-bbdf-0d89cf42e182/Apizee-TermsOfUse.pdf"},
-                      {id: "Privacy",
-                      labels: {aria: optInPrivacyAriaLabel, prefix: optInPrivacyPrefixText, link: optInPrivacyLinkText},
-                      link: navigator.language === 'fr' || navigator.language === 'fr-FR' ? "https://cloud.apizee.com/attachments/f87493b0-483e-4723-a3ee-02d59a501b1c/Apizee-PolitiqueConfidentialite.pdf" : "https://cloud.apizee.com/attachments/ae61f778-16d1-4dd4-baa1-cd1ba568a0d6/Apizee-PrivacyPolicy.pdf"}
-                    ]}
-                    labels={{submit: optInButtonText}}
-                    onSubmit={handleNext}/>
+                  <OptInList optIns={[
+                    {
+                      id: "CGU",
+                      labels: { aria: optInCGUAriaLabel, prefix: optInCGUPrefixText, link: optInCGULinkText },
+                      link: navigator.language === 'fr' || navigator.language === 'fr-FR' ? "https://cloud.apizee.com/attachments/b87662d7-3e82-4519-a4db-9fb6ba67b5cc/Apizee-ConditionsGeneralesUtilisation.pdf" : "https://cloud.apizee.com/attachments/cb744e03-182b-453e-bbdf-0d89cf42e182/Apizee-TermsOfUse.pdf"
+                    },
+                    {
+                      id: "Privacy",
+                      labels: { aria: optInPrivacyAriaLabel, prefix: optInPrivacyPrefixText, link: optInPrivacyLinkText },
+                      link: navigator.language === 'fr' || navigator.language === 'fr-FR' ? "https://cloud.apizee.com/attachments/f87493b0-483e-4723-a3ee-02d59a501b1c/Apizee-PolitiqueConfidentialite.pdf" : "https://cloud.apizee.com/attachments/ae61f778-16d1-4dd4-baa1-cd1ba568a0d6/Apizee-PrivacyPolicy.pdf"
+                    }
+                  ]}
+                    labels={{ submit: optInButtonText }}
+                    onSubmit={handleNext} />
                 </Step>
                 <Step key='device-selection'>
-                    <Stack sx={{ mt: 1 }} direction={{ xs: 'column' }}
-                      alignItems='center' justifyContent='center'
-                      useFlexGap flexWrap="wrap"
-                      spacing={1}>
-                      <Box sx={{ width: '100%', paddingTop: '75%', position: "relative",
-                        "& .MuiBox-root": {position: 'absolute', height: "100%", maxWidth: "100%"}}}>
-                        {localStream ? <StreamComponent sx={{
-                          top: 0, left: 0, bottom: 0, right: 0,
-                          maxWidth: { xs: '100%', sm: '100%' },
-                          ...(!localStream.hasVideo() && { position: 'absolute', inset: 0, borderRadius: '4px', backgroundColor: '#CACCCE' })
-                        }}
-                          stream={localStream} muted={true}>
-                          {localStream.hasVideo() ? 
-                            <Video style={{ height: '100%', ...VIDEO_ROUNDED_CORNERS }} data-testid={`local-video`} /> 
-                            : 
-                            <Audio data-testid={`local-audio`} />
-                          }
-                        </StreamComponent> : <Skeleton variant="rectangular"
-                          width='100%' height='100%' sx={{ position: 'absolute', top: 0, left: 0 }}/>
+                  <Stack sx={{ mt: 1 }} direction={{ xs: 'column' }}
+                    alignItems='center' justifyContent='center'
+                    useFlexGap flexWrap="wrap"
+                    spacing={1}>
+                    <Box sx={{
+                      width: '100%', paddingTop: '75%', position: "relative",
+                      "& .MuiBox-root": { position: 'absolute', height: "100%", maxWidth: "100%" }
+                    }}>
+                      {localStream ? <StreamComponent sx={{
+                        top: 0, left: 0, bottom: 0, right: 0,
+                        maxWidth: { xs: '100%', sm: '100%' },
+                        ...(!localStream.hasVideo() && { position: 'absolute', inset: 0, borderRadius: '4px', backgroundColor: '#CACCCE' })
+                      }}
+                        stream={localStream} muted={true}>
+                        {localStream.hasVideo() ?
+                          <Video style={{ height: '100%', ...VIDEO_ROUNDED_CORNERS }} data-testid={`local-video`} />
+                          :
+                          <Audio data-testid={`local-audio`} />
                         }
-                      </Box>
-                      <Box sx={{ minWidth: '120px', width: '100%', display: "flex" }}>
-                        <Button sx={{ minWidth: 0, width: '3em', height: '3em', display: 'flex', justifyContent: 'center', alignItems: 'center',
-                          border: 'solid 1px rgba(0, 0, 0, 0.23)', borderRadius: '4px', boxSizing: 'border-box', flexShrink: 0, color: 'black'}}
-                          disabled={!invitationData?.streams[0].constraints?.audio}
-                          onClick={() => setStreamAudioEnabled(!streamAudioEnabled)}>
-                          <Icon>{constraints.audio ? "mic_on" : "mic_off"}</Icon>
-                        </Button>
-
-                        <MediaDeviceSelect sx={{ marginLeft: '0.25em', minWidth: '120px', flexGrow: "1" }}
-                          id='audio-in'
-                          size='small'
-                          // label={audioInLabel}
-                          disabled={!invitationData?.streams[0].constraints?.audio}
-                          devices={userMediaDevices.audioinput}
-                          selectedDevice={selectedAudioIn}
-                          setSelectedDevice={setSelectedAudioIn} /> 
-                      </Box>
-                      <Box sx={{ minWidth: '120px', width: '100%', display: "flex" }}>
-                        <Button sx={{ minWidth: 0, width: '3em', height: '3em', display: 'flex', justifyContent: 'center', alignItems: 'center',
-                          border: 'solid 1px rgba(0, 0, 0, 0.23)', borderRadius: '4px', boxSizing: 'border-box', flexShrink: 0, color: 'black'}}
-                          disabled={!invitationData?.streams[0].constraints?.video}
-                          onClick={() => {setStreamVideoEnabled(!streamVideoEnabled)}}>
-                          <Icon>{constraints.video ? "videocam_on" : "videocam_off"}</Icon>
-                        </Button>
-                        
-                        <MediaDeviceSelect sx={{ marginLeft: '0.25em', minWidth: '120px', flexGrow: "1" }}
-                          id='video-in'
-                          size='small'
-                          // label={videoInLabel}
-                          disabled={!invitationData?.streams[0].constraints?.video}
-                          devices={userMediaDevices.videoinput}
-                          selectedDevice={selectedVideoIn}
-                          setSelectedDevice={setSelectedVideoIn} />
-                      </Box>
-                    </Stack>
-                    <Typography sx={{ mt: 1 }}>{selectDeviceHelperText}</Typography>
-                    <Box sx={{ display: 'flex', justifyContent: 'end', mt: 1 }}>
-                      <Button
-                        onClick={handleBack}>
-                        {backButtonText}
-                      </Button>
-                      <Button
-                        variant='outlined'
-                        onClick={toggleReady}>
-                        {readyButtonText}
-                      </Button>
+                      </StreamComponent> : <Skeleton variant="rectangular"
+                        width='100%' height='100%' sx={{ position: 'absolute', top: 0, left: 0 }} />
+                      }
                     </Box>
+                    <Box sx={{ minWidth: '120px', width: '100%', display: "flex" }}>
+                      <Button sx={{
+                        minWidth: 0, width: '3em', height: '3em', display: 'flex', justifyContent: 'center', alignItems: 'center',
+                        border: 'solid 1px rgba(0, 0, 0, 0.23)', borderRadius: '4px', boxSizing: 'border-box', flexShrink: 0, color: 'black'
+                      }}
+                        disabled={!invitationData?.streams[0].constraints?.audio}
+                        onClick={() => setStreamAudioEnabled(!streamAudioEnabled)}>
+                        <Icon>{constraints.audio ? "mic_on" : "mic_off"}</Icon>
+                      </Button>
+
+                      <MediaDeviceSelect sx={{ marginLeft: '0.25em', minWidth: '120px', flexGrow: "1" }}
+                        id='audio-in'
+                        size='small'
+                        // label={audioInLabel}
+                        disabled={!constraints.audio}
+                        devices={userMediaDevices.audioinput}
+                        selectedDevice={selectedAudioIn}
+                        setSelectedDevice={setSelectedAudioIn} />
+                    </Box>
+                    <Box sx={{ minWidth: '120px', width: '100%', display: "flex" }}>
+                      <Button sx={{
+                        minWidth: 0, width: '3em', height: '3em', display: 'flex', justifyContent: 'center', alignItems: 'center',
+                        border: 'solid 1px rgba(0, 0, 0, 0.23)', borderRadius: '4px', boxSizing: 'border-box', flexShrink: 0, color: 'black'
+                      }}
+                        disabled={!invitationData?.streams[0].constraints?.video}
+                        onClick={() => { setStreamVideoEnabled(!streamVideoEnabled) }}>
+                        <Icon>{constraints.video ? "videocam_on" : "videocam_off"}</Icon>
+                      </Button>
+
+                      <MediaDeviceSelect sx={{ marginLeft: '0.25em', minWidth: '120px', flexGrow: "1" }}
+                        id='video-in'
+                        size='small'
+                        // label={videoInLabel}
+                        disabled={!constraints.video}
+                        devices={userMediaDevices.videoinput}
+                        selectedDevice={selectedVideoIn}
+                        setSelectedDevice={setSelectedVideoIn} />
+                    </Box>
+                  </Stack>
+                  <Typography sx={{ mt: 1 }}>{selectDeviceHelperText}</Typography>
+                  <Box sx={{ display: 'flex', justifyContent: 'end', mt: 1 }}>
+                    <Button
+                      onClick={handleBack}>
+                      {backButtonText}
+                    </Button>
+                    <Button
+                      variant='outlined'
+                      onClick={toggleReady}>
+                      {readyButtonText}
+                    </Button>
+                  </Box>
                 </Step>
               </TextStepper>
             </CardContent>
