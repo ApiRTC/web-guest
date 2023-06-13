@@ -14,7 +14,6 @@ const TextStepper: React.FunctionComponent<TextStepperProps> = ({
   header,
   sx = {}
 }: TextStepperProps) => {
-  console.log(React.Children.toArray(children));
   return (
   <Box sx={{...sx}}>
     <Box sx={{
