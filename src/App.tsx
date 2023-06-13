@@ -607,7 +607,7 @@ function App(inProps: AppProps) {
                         <Button sx={{ minWidth: 0, width: '3em', height: '3em', display: 'flex', justifyContent: 'center', alignItems: 'center',
                           border: 'solid 1px rgba(0, 0, 0, 0.23)', borderRadius: '4px', boxSizing: 'border-box', flexShrink: 0, color: 'black'}}
                           disabled={!invitationData?.streams[0].constraints?.audio}
-                          onClick={() => {console.log(streamAudioEnabled); setStreamAudioEnabled(!streamAudioEnabled)}}>
+                          onClick={() => setStreamAudioEnabled(!streamAudioEnabled)}>
                           <Icon>{invitationData?.streams[0].constraints?.audio && streamAudioEnabled ? "mic_on" : "mic_off"}</Icon>
                         </Button>
 
