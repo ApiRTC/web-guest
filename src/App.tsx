@@ -27,6 +27,7 @@ import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
 import Container from '@mui/material/Container';
 import Icon from '@mui/material/Icon';
+import IconButton from '@mui/material/IconButton/IconButton';
 import Skeleton from '@mui/material/Skeleton';
 import Stack from '@mui/material/Stack';
 import Step from '@mui/material/Step';
@@ -518,7 +519,7 @@ function App(inProps: AppProps) {
         <Video
           sx={video_sizing}
           style={{
-            ...video_sizing, objectFit: 'contain' as any,
+            ...video_sizing, objectFit: 'cover' as any,
             ...VIDEO_ROUNDED_CORNERS
           }}
         /> :
@@ -558,6 +559,7 @@ function App(inProps: AppProps) {
     }
   }, [activeStep, accepted, toggleAccepted])
 
+  console.log(invitationData)
   return <>
     {!session && <Box display="flex" alignItems="center" justifyContent="center"
       sx={{ mt: 5 }}><img height='320px' width='320px' src={logo} alt="logo" /></Box>}
@@ -658,15 +660,17 @@ function App(inProps: AppProps) {
     {conversation && ready &&
       <Box sx={{
         position: 'relative',
-        height: '100%',
-        width: '100%',
+        height: '99vh', // to prevent vertical scrollbar on Chrome
+        // maxHeight: '-webkit-fill-available',
+        width: '100vw',
+        maxWidth: '100%' // to prevent horizontal scrollbar on Chrome
       }}>
-        <ApiRtcGrid sx={{ height: '100%', width: '100%', padding: "1em" }}>
+        <ApiRtcGrid sx={{ height: '100%', width: '100%' }}>
           {isSelfDisplay ? _published : _subscribed}
         </ApiRtcGrid>
         <ApiRtcGrid sx={{
           position: 'absolute',
-          bottom: "0.5em", left: "0.5em",
+          bottom: 4, left: 4,
           opacity: 0.9,
           height: '34%', width: { xs: '50%', sm: '40%', md: '30%', lg: '20%' },
         }}
