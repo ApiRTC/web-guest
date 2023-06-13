@@ -167,8 +167,6 @@ function App(inProps: AppProps) {
     if (new_constraints?.audio && (streamAudioEnabled === undefined || streamAudioEnabled)) {
       const audioMediaTrackConstraints = new_constraints.audio instanceof Object ? { ...new_constraints.audio } : {};
 
-      setStreamAudioEnabled(true)
-
       if (selectedAudioIn) {
         audioMediaTrackConstraints.deviceId = selectedAudioIn.id;
       }
@@ -180,8 +178,6 @@ function App(inProps: AppProps) {
 
     if (new_constraints?.video && (streamVideoEnabled === undefined || streamVideoEnabled)) {
       const videoMediaTrackConstraints = new_constraints.video instanceof Object ? { ...new_constraints.video } : {};
-
-      setStreamVideoEnabled(true);
 
       if (selectedVideoIn) {
         videoMediaTrackConstraints.deviceId = selectedVideoIn.id;
@@ -332,8 +328,6 @@ function App(inProps: AppProps) {
                 console.debug(`${COMPONENT_NAME}|getInvitationData`, invitationId, data)
               }
               setInvitationData(data)
-              setStreamAudioEnabled(data.streams[0].constraints?.audio)
-              setStreamVideoEnabled(data.streams[0].constraints?.video)
             })
           }).catch((error: any) => {
             console.error(`${COMPONENT_NAME}|loginKeyCloakJS error`, error)
@@ -342,6 +336,11 @@ function App(inProps: AppProps) {
       }
     }
   }, [params.invitationData])
+
+  useEffect(() => {
+    setStreamAudioEnabled(Boolean(invitationData?.streams[0].constraints?.audio))
+    setStreamVideoEnabled(Boolean(invitationData?.streams[0].constraints?.video))
+  }, [invitationData])
 
   useEffect(() => {
     const i: string | null = searchParams.get("i");
@@ -608,7 +607,7 @@ function App(inProps: AppProps) {
                           border: 'solid 1px rgba(0, 0, 0, 0.23)', borderRadius: '4px', boxSizing: 'border-box', flexShrink: 0, color: 'black'}}
                           disabled={!invitationData?.streams[0].constraints?.audio}
                           onClick={() => setStreamAudioEnabled(!streamAudioEnabled)}>
-                          <Icon>{invitationData?.streams[0].constraints?.audio && streamAudioEnabled ? "mic_on" : "mic_off"}</Icon>
+                          <Icon>{constraints.audio ? "mic_on" : "mic_off"}</Icon>
                         </Button>
 
                         <MediaDeviceSelect sx={{ marginLeft: '0.25em', minWidth: '120px', flexGrow: "1" }}
@@ -625,7 +624,7 @@ function App(inProps: AppProps) {
                           border: 'solid 1px rgba(0, 0, 0, 0.23)', borderRadius: '4px', boxSizing: 'border-box', flexShrink: 0, color: 'black'}}
                           disabled={!invitationData?.streams[0].constraints?.video}
                           onClick={() => {setStreamVideoEnabled(!streamVideoEnabled)}}>
-                          <Icon>{invitationData?.streams[0].constraints?.video && streamVideoEnabled ? "videocam_on" : "videocam_off"}</Icon>
+                          <Icon>{constraints.video ? "videocam_on" : "videocam_off"}</Icon>
                         </Button>
                         
                         <MediaDeviceSelect sx={{ marginLeft: '0.25em', minWidth: '120px', flexGrow: "1" }}
