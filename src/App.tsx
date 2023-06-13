@@ -5,7 +5,7 @@ import { UAParser } from 'ua-parser-js';
 
 import { decode as base64_decode } from 'base-64';
 
-import { Contact, GetOrCreateConversationOptions, JoinOptions, MediaStreamTrackFlowStatus, PublishOptions, Stream, UserAgent, UserData } from '@apirtc/apirtc'; //INVITATION_STATUS_ENDED
+import { Contact, GetOrCreateConversationOptions, JoinOptions, PublishOptions, Stream, UserAgent, UserData } from '@apirtc/apirtc'; //INVITATION_STATUS_ENDED
 import {
   Grid as ApiRtcGrid,
   Audio, AudioEnableButton,
@@ -134,6 +134,9 @@ function App(inProps: AppProps) {
 
   const [facingMode, setFacingMode] = useState<'user' | 'environment' | undefined>();
 
+  const [streamVideoEnabled, setStreamVideoEnabled] = useState<boolean | undefined>(undefined)
+  const [streamAudioEnabled, setStreamAudioEnabled] = useState<boolean | undefined>(undefined)
+
   // opt-in
   const { value: accepted, toggle: toggleAccepted } = useToggle(false);
 
@@ -161,18 +164,24 @@ function App(inProps: AppProps) {
   const constraints = useMemo(() => {
     const new_constraints = { ...invitationData?.streams[0].constraints };
 
-    if (new_constraints?.audio) {
+    if (new_constraints?.audio && (streamAudioEnabled === undefined || streamAudioEnabled)) {
       const audioMediaTrackConstraints = new_constraints.audio instanceof Object ? { ...new_constraints.audio } : {};
+
+      setStreamAudioEnabled(true)
 
       if (selectedAudioIn) {
         audioMediaTrackConstraints.deviceId = selectedAudioIn.id;
       }
 
       new_constraints.audio = audioMediaTrackConstraints;
+    } else {
+      new_constraints.audio = false;
     }
 
-    if (new_constraints?.video) {
+    if (new_constraints?.video && (streamVideoEnabled === undefined || streamVideoEnabled)) {
       const videoMediaTrackConstraints = new_constraints.video instanceof Object ? { ...new_constraints.video } : {};
+
+      setStreamVideoEnabled(true);
 
       if (selectedVideoIn) {
         videoMediaTrackConstraints.deviceId = selectedVideoIn.id;
@@ -192,13 +201,16 @@ function App(inProps: AppProps) {
       }
 
       new_constraints.video = videoMediaTrackConstraints;
+    } else {
+      new_constraints.video = false;
     }
 
     if (globalThis.logLevel.isDebugEnabled) {
       console.debug(`${COMPONENT_NAME}|useMemo new_constraints`, new_constraints)
     }
+
     return new_constraints
-  }, [invitationData, selectedAudioIn, selectedVideoIn, facingMode]);
+  }, [invitationData, selectedAudioIn, selectedVideoIn, facingMode, streamAudioEnabled, streamVideoEnabled]);
 
   const { stream: localStream } = useCameraStream(accepted ? session : undefined, { constraints: constraints });
   const { conversation } = useConversation(ready ? session : undefined,
@@ -208,12 +220,6 @@ function App(inProps: AppProps) {
     invitationData ? invitationData.conversation.joinOptions : undefined);
   const { publishedStreams, subscribedStreams } = useConversationStreams(conversation,
     localStream ? [{ stream: localStream, options: invitationData?.streams[0].publishOptions }] : []);
-
-    const [streamVideoMuted, setStreamVideoMuted] = useState(localStream?.isVideoMuted())
-    const [streamAudioMuted, setStreamAudioMuted] = useState(localStream?.isAudioMuted())
-
-    localStream?.on('audioFlowStatusChanged', (data: MediaStreamTrackFlowStatus) => setStreamAudioMuted(!data.enabled))
-    localStream?.on('videoFlowStatusChanged', (data: MediaStreamTrackFlowStatus) => setStreamVideoMuted(!data.enabled))
 
   // For testing purpose
   // const [localStreams, setLocalStreams] = useState<Stream[]>(localStream ? [localStream] : []);
@@ -326,6 +332,8 @@ function App(inProps: AppProps) {
                 console.debug(`${COMPONENT_NAME}|getInvitationData`, invitationId, data)
               }
               setInvitationData(data)
+              setStreamAudioEnabled(data.streams[0].constraints?.audio)
+              setStreamVideoEnabled(data.streams[0].constraints?.video)
             })
           }).catch((error: any) => {
             console.error(`${COMPONENT_NAME}|loginKeyCloakJS error`, error)
@@ -587,54 +595,48 @@ function App(inProps: AppProps) {
                         }}
                           stream={localStream} muted={true}>
                           {localStream.hasVideo() ? 
-                          <Video style={{ height: '100%', ...VIDEO_ROUNDED_CORNERS }} data-testid={`local-video`} /> 
-                          : 
-                          <Audio data-testid={`local-audio`} />}
+                            <Video style={{ height: '100%', ...VIDEO_ROUNDED_CORNERS }} data-testid={`local-video`} /> 
+                            : 
+                            <Audio data-testid={`local-audio`} />
+                          }
                         </StreamComponent> : <Skeleton variant="rectangular"
-                          width='100%' height='100%' sx={{ position: 'absolute', top: 0, left: 0 }}/>}
+                          width='100%' height='100%' sx={{ position: 'absolute', top: 0, left: 0 }}/>
+                        }
                       </Box>
-                      { localStream ? 
-                        <Box sx={{ minWidth: '120px', width: '100%', display: "flex" }}>
-                          <Button sx={{ minWidth: 0, width: '3em', height: '3em', display: 'flex', justifyContent: 'center', alignItems: 'center',
-                            border: 'solid 1px rgba(0, 0, 0, 0.23)', borderRadius: '4px', boxSizing: 'border-box', flexShrink: 0, color: 'black'}}
-                            disabled={!invitationData?.streams[0].constraints?.audio}
-                            onClick={() => {streamAudioMuted ? localStream.enableAudio() : localStream.disableAudio()}}>
-                            <Icon>{invitationData?.streams[0].constraints?.audio && !streamAudioMuted ? "mic_on" : "mic_off"}</Icon>
-                          </Button>
+                      <Box sx={{ minWidth: '120px', width: '100%', display: "flex" }}>
+                        <Button sx={{ minWidth: 0, width: '3em', height: '3em', display: 'flex', justifyContent: 'center', alignItems: 'center',
+                          border: 'solid 1px rgba(0, 0, 0, 0.23)', borderRadius: '4px', boxSizing: 'border-box', flexShrink: 0, color: 'black'}}
+                          disabled={!invitationData?.streams[0].constraints?.audio}
+                          onClick={() => {console.log(streamAudioEnabled); setStreamAudioEnabled(!streamAudioEnabled)}}>
+                          <Icon>{invitationData?.streams[0].constraints?.audio && streamAudioEnabled ? "mic_on" : "mic_off"}</Icon>
+                        </Button>
 
-                          <MediaDeviceSelect sx={{ marginLeft: '0.25em', minWidth: '120px', flexGrow: "1" }}
-                            id='audio-in'
-                            size='small'
-                            // label={audioInLabel}
-                            disabled={!invitationData?.streams[0].constraints?.audio}
-                            devices={userMediaDevices.audioinput}
-                            selectedDevice={selectedAudioIn}
-                            setSelectedDevice={setSelectedAudioIn} /> 
-                        </Box>
-                        :
-                        <Skeleton variant="rectangular" width="100%" height="2.5em"/>
-                      }
-                      { localStream ? 
-                        <Box sx={{ minWidth: '120px', width: '100%', display: "flex" }}>
-                          <Button sx={{ minWidth: 0, width: '3em', height: '3em', display: 'flex', justifyContent: 'center', alignItems: 'center',
-                            border: 'solid 1px rgba(0, 0, 0, 0.23)', borderRadius: '4px', boxSizing: 'border-box', flexShrink: 0, color: 'black'}}
-                            disabled={!invitationData?.streams[0].constraints?.video}
-                            onClick={() => {streamVideoMuted ? localStream.enableVideo() : localStream.disableVideo()}}>
-                            <Icon>{invitationData?.streams[0].constraints?.video && !streamVideoMuted ? "videocam_on" : "videocam_off"}</Icon>
-                          </Button>
-                          
-                          <MediaDeviceSelect sx={{ marginLeft: '0.25em', minWidth: '120px', flexGrow: "1" }}
-                            id='video-in'
-                            size='small'
-                            // label={videoInLabel}
-                            disabled={!invitationData?.streams[0].constraints?.video}
-                            devices={userMediaDevices.videoinput}
-                            selectedDevice={selectedVideoIn}
-                            setSelectedDevice={setSelectedVideoIn} />
-                        </Box>
-                        :
-                        <Skeleton variant="rectangular" width="100%" height="2.5em"/>
-                      }
+                        <MediaDeviceSelect sx={{ marginLeft: '0.25em', minWidth: '120px', flexGrow: "1" }}
+                          id='audio-in'
+                          size='small'
+                          // label={audioInLabel}
+                          disabled={!invitationData?.streams[0].constraints?.audio}
+                          devices={userMediaDevices.audioinput}
+                          selectedDevice={selectedAudioIn}
+                          setSelectedDevice={setSelectedAudioIn} /> 
+                      </Box>
+                      <Box sx={{ minWidth: '120px', width: '100%', display: "flex" }}>
+                        <Button sx={{ minWidth: 0, width: '3em', height: '3em', display: 'flex', justifyContent: 'center', alignItems: 'center',
+                          border: 'solid 1px rgba(0, 0, 0, 0.23)', borderRadius: '4px', boxSizing: 'border-box', flexShrink: 0, color: 'black'}}
+                          disabled={!invitationData?.streams[0].constraints?.video}
+                          onClick={() => {setStreamVideoEnabled(!streamVideoEnabled)}}>
+                          <Icon>{invitationData?.streams[0].constraints?.video && streamVideoEnabled ? "videocam_on" : "videocam_off"}</Icon>
+                        </Button>
+                        
+                        <MediaDeviceSelect sx={{ marginLeft: '0.25em', minWidth: '120px', flexGrow: "1" }}
+                          id='video-in'
+                          size='small'
+                          // label={videoInLabel}
+                          disabled={!invitationData?.streams[0].constraints?.video}
+                          devices={userMediaDevices.videoinput}
+                          selectedDevice={selectedVideoIn}
+                          setSelectedDevice={setSelectedVideoIn} />
+                      </Box>
                     </Stack>
                     <Typography sx={{ mt: 1 }}>{selectDeviceHelperText}</Typography>
                     <Box sx={{ display: 'flex', justifyContent: 'end', mt: 1 }}>
