@@ -20,6 +20,8 @@ import {
   useCameraStream, useConversation, useConversationStreams, useSession, useUserMediaDevices
 } from '@apirtc/react-lib';
 
+// import { Stream as StreamComponent } from './Stream'
+
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
