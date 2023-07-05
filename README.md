@@ -1,50 +1,96 @@
-# Getting Started with Create React App
+# Apizee Web assisted
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+## Prerequisites
 
-## DEV
+-   IDE / Code editor ([VS Code](https://code.visualstudio.com/Download) recommended to use TypeScript)
+-   [GIT](https://git-scm.com/downloads) - Free and open source distributed version control system
+-   [NodeJS](https://nodejs.org/en/) - JavaScript runtime built on Chrome's V8 JavaScript engine
+-   [NPM](https://www.npmjs.com/) or [YARN](https://yarnpkg.com/lang/en/)
 
-`npm link @apirtc/react-lib @apirtc/mui-react-lib`
+**At Apizee, we mainly use Yarn for its speed and the consistency offered by its yarn.lock file across installations.**
 
-## Available Scripts
+## Installation
 
-In the project directory, you can run:
+These instructions will get you a copy of the project up and running on your local machine for development and testing purposes.
 
-### `npm start`
+```bash
+$ git clone git@gitlab.apizee.com:code/web-assisted.git
+```
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+With YARN :
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+```bash
+$ yarn install
+```
 
-### `npm test`
+## Dependencies
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+This dependencies from GIT repositories are loaded as node modules from package.json
 
-### `npm run build`
+apiRTC : [Go to repository](https://apizee.codebasehq.com/projects/apizee-libs/repositories/lib-apirtc2/tree/master)  
+MUI React Lib : [Go to repository](https://github.com/ApiRTC/mui-react-lib/tree/main)  
+React Lib : [Go to repository](https://github.com/ApiRTC/react-lib/tree/main)
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+## Start local development server
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+If you run this repo for the first time, you will need to generate new certificates. To do this, see the regeneration command in the [Certificates](#certificates) section.
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+To start the local dev server, run:
 
-### `npm run eject`
+```bash
+$ yarn start
+```
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+Vite will start a dev server an web app will be accessible a [https://localhost:3400](https://localhost:3400) by default.
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+### Certificates
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+If you have problem with the certificates:
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+-   on vite config file :
+-   in the development configuration section
+-   replace `https: true` with:
 
-## Learn More
+```ts
+https: {
+    key: fs.readFileSync(path.resolve(__dirname, '.cert/localhost.key')),
+    cert: fs.readFileSync(path.resolve(__dirname, './.cert/localhost.crt')),
+    ca: fs.readFileSync(path.resolve(__dirname, './.cert/RootCA.pem')),
+},
+```
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+On chrome program, you must add the certificate on the application preferences.  
+you must choose `RootCA.crt` on `.cert` directory on the root of directory.  
+save et relaunch program chrome
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+If you need to generate new certificates, please run:
+
+```bash
+yarn dev:regenerateCertificates
+```
+
+## Release for production
+
+Merge your code in the the develop branch
+
+**/!\ TEMPORARY PROCESS /!\\**
+
+If you never make this procedure, you will need to add the Github repo of this app:
+
+```bash
+git remote add github git@github.com:ApiRTC/visio-assisted.git
+```
+
+Note: the Github repo is **only use for the deployment** ! Do not push code directly on this repo.
+
+```bash
+git checkout main
+git merge develop
+git push github main
+yarn predeploy
+yarn deploy
+```
+
+## Release for validation
+
+No validation process for now
