@@ -1,6 +1,6 @@
 import FormControlLabel from "@mui/material/FormControlLabel/FormControlLabel";
 import Link from "@mui/material/Link/Link";
-import Switch from "@mui/material/Switch/Switch";
+import Checkbox from "@mui/material/Checkbox/Checkbox";
 import Typography from "@mui/material/Typography/Typography";
 import React from "react";
 
@@ -27,7 +27,7 @@ const OptIn: React.FC<OptInProps> = ({
     <FormControlLabel
       required
       control={
-        <Switch
+        <Checkbox
           id={`${id}`}
           data-testid={`${id}`}
           checked={checked}
@@ -38,13 +38,15 @@ const OptIn: React.FC<OptInProps> = ({
       label={
         <Typography variant="body1" component="span">
           {labels.prefix}
-          <Link target="_blank" href={link} color="info.main">{labels.link}</Link>
+          <Link target="_blank" href={link} color="info.main">
+            {labels.link}
+          </Link>
         </Typography>
       }
       sx={{
         ".MuiFormControlLabel-asterisk": {
-          display: "none"
-        }
+          display: "none",
+        },
       }}
     />
   );
