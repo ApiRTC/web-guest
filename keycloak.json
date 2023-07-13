@@ -1,0 +1,8 @@
+{
+    "realm": "APIZEE-POC-DGPN",
+    "auth-server-url": "https://idp.apizee.com/auth/",
+    "ssl-required": "external",
+    "resource": "visio-assisted",
+    "public-client": true,
+    "confidential-port": 0
+  }
