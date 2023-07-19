@@ -51,6 +51,7 @@ import { useThemeProps } from '@mui/material/styles';
 
 import OptInList from './components/Optin/OptInList';
 import TextStepper from './components/TextStepper/TextStepper';
+import ErrorPage from './components/Error/ErrorPage';
 
 //import Keycloak from 'keycloak-js';
 import './App.css';
@@ -61,6 +62,7 @@ import { VIDEO_ROUNDED_CORNERS } from './constants';
 // WARN : Keep in Sync with m-visio-assist and z-visio
 //
 type InvitationData = {
+	invitationError?: boolean;
 	cloudUrl?: string;
 	apiKey?: string;
 	conversation: {
@@ -153,6 +155,10 @@ function App(inProps: AppProps) {
 	const [searchParams] = useSearchParams();
 
 	const [invitationData, setInvitationData] = useState<InvitationData | undefined>(undefined);
+	const [invitationError, setInvitationError] = useState<boolean>(false);
+	const [invitationErrorStatus, setInvitationErrorStatus] = useState<number | undefined>(
+		undefined
+	);
 
 	const [facingMode, setFacingMode] = useState<'user' | 'environment' | undefined>();
 
@@ -313,7 +319,6 @@ function App(inProps: AppProps) {
 				console.error('getInvitationData', error);
 			});
 	};
-
 	useEffect(() => {
 		if (invitationData) {
 			const videoMediaTrackConstraints = invitationData.streams[0].constraints?.video;
@@ -419,6 +424,7 @@ function App(inProps: AppProps) {
 				}
 				setInvitationData(l_data);
 			} catch (error) {
+				setInvitationError(true);
 				console.error(`${COMPONENT_NAME}|parsing i search parameter error`, error);
 			}
 		}
@@ -584,6 +590,27 @@ function App(inProps: AppProps) {
 		}
 	}, [conversation]);
 
+	useEffect(() => {
+		if (invitationData) {
+			fetch(invitationData.cloudUrl as string)
+				.then((response) => {
+					if (response.status === 404) {
+						setInvitationError(true);
+						setInvitationErrorStatus(404);
+					} else if (response.status === 401) {
+						setInvitationError(true);
+						setInvitationErrorStatus(401);
+					} else if (response.status === 500) {
+						setInvitationError(true);
+						setInvitationErrorStatus(500);
+					}
+				})
+				.catch((error) => {
+					setInvitationError(true);
+				});
+		}
+	}, [invitationData]);
+
 	// isSelfDisplay corresponds to published in main
 
 	const getName = (stream: Stream) => {
@@ -674,15 +701,16 @@ function App(inProps: AppProps) {
 		}
 	}, [activeStep, accepted, toggleAccepted]);
 
-	console.log(invitationData);
 	return (
 		<>
-			{!session && (
+			{!session && !invitationError && (
 				<Box display="flex" alignItems="center" justifyContent="center" sx={{ mt: 5 }}>
 					<img height="320px" width="320px" src={logo} alt="logo" />
 				</Box>
 			)}
-			{session && !ready && (
+
+			{invitationError && <ErrorPage errorType={invitationErrorStatus}></ErrorPage>}
+			{session && !invitationError && !ready && (
 				<Container maxWidth="sm" sx={{ height: '100vh' }}>
 					<Box
 						sx={{ height: '100%' }}
