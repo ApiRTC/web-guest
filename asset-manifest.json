@@ -1,0 +1,14 @@
+{
+  "files": {
+    "main.css": "/visio-assisted/static/css/main.9b906f8d.css",
+    "main.js": "/visio-assisted/static/js/main.eb181a52.js",
+    "static/media/apizee.svg": "/visio-assisted/static/media/apizee.74314f1e3f52e4a1af20c60a1c6ae4af.svg",
+    "index.html": "/visio-assisted/index.html",
+    "main.9b906f8d.css.map": "/visio-assisted/static/css/main.9b906f8d.css.map",
+    "main.eb181a52.js.map": "/visio-assisted/static/js/main.eb181a52.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.9b906f8d.css",
+    "static/js/main.eb181a52.js"
+  ]
+}
