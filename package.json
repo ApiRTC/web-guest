@@ -38,8 +38,8 @@
 		"vite-tsconfig-paths": "^4.2.0"
 	},
 	"scripts": {
-		"predeploy": "yarn build && cp ./build/index.html ./build/404.html",
-		"deploy": "gh-pages -d build",
+		"predeploy": "yarn build && cp ./dist/index.html ./dist/404.html",
+		"deploy": "gh-pages -d dist",
 		"start": "vite",
 		"build": "tsc && vite build",
 		"preview": "vite preview",
