@@ -287,11 +287,10 @@ function App(inProps: AppProps) {
 		...(localStream ? [{ stream: localStream, options: userMediaStreamRequest?.publishOptions }] : []),
 		...(screen ? [{ stream: screen }] : [])]);
 
-
-
-
-
 	const shareScreen = () => {
+		if (globalThis.logLevel.isDebugEnabled) {
+			console.debug(`${COMPONENT_NAME}|shareScreen calls createDisplayMediaStream`)
+		}
 		Stream.createDisplayMediaStream({}, false).then((localStream: Stream) => {
 			if (globalThis.logLevel.isInfoEnabled) {
 				console.info(`${COMPONENT_NAME}|createDisplayMediaStream`, localStream)
