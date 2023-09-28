@@ -236,6 +236,10 @@ function App(inProps: AppProps) {
 			}
 
 			if (facingMode) {
+				// On my mobile, this makes apirtc use the environment cam only if deviceId is not set
+				videoMediaTrackConstraints.facingMode = facingMode;
+				// with advanced, even if deviceId is set to front, the back will be forced 
+				// set in 'advanced' array :
 				if (videoMediaTrackConstraints.advanced) {
 					videoMediaTrackConstraints.advanced = videoMediaTrackConstraints.advanced.map(
 						(item: any) => {
@@ -272,6 +276,13 @@ function App(inProps: AppProps) {
 	const { stream: localStream } = useCameraStream(accepted && userMediaStreamRequest ? session : undefined, {
 		constraints: constraints,
 	});
+
+	// getCapabilities does not work on firefox
+	// useEffect(() => {
+	// 	if (localStream) {
+	// 		console.log("getCapabilities", localStream, localStream.getCapabilities())
+	// 	}
+	// }, [localStream])
 
 	const [screen, setScreen] = useState<Stream>();
 
@@ -362,6 +373,7 @@ function App(inProps: AppProps) {
 			});
 	};
 
+	// set facingMode according to invitation
 	useEffect(() => {
 		if (userMediaStreamRequest) {
 			const videoMediaTrackConstraints = userMediaStreamRequest.constraints?.video;
@@ -369,19 +381,19 @@ function App(inProps: AppProps) {
 				if (videoMediaTrackConstraints.facingMode) {
 					setFacingMode(videoMediaTrackConstraints.facingMode)
 				}
-				if (videoMediaTrackConstraints.advanced) {
-					videoMediaTrackConstraints.advanced.forEach((item: any) => {
-						if (item.facingMode) {
-							if (globalThis.logLevel.isDebugEnabled) {
-								console.debug(
-									`${COMPONENT_NAME}|useEffect invitationData, facingMode`,
-									item.facingMode
-								);
-							}
-							setFacingMode(item.facingMode);
-						}
-					});
-				}
+				// if (videoMediaTrackConstraints.advanced) {
+				// 	videoMediaTrackConstraints.advanced.forEach((item: any) => {
+				// 		if (item.facingMode) {
+				// 			if (globalThis.logLevel.isDebugEnabled) {
+				// 				console.debug(
+				// 					`${COMPONENT_NAME}|useEffect invitationData, facingMode`,
+				// 					item.facingMode
+				// 				);
+				// 			}
+				// 			setFacingMode(item.facingMode);
+				// 		}
+				// 	});
+				// }
 			}
 		}
 	}, [userMediaStreamRequest])
