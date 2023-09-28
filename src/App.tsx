@@ -59,7 +59,7 @@ import logo from './assets/apizee.svg';
 import { loginKeyCloakJS } from './auth/keycloak';
 import { VIDEO_ROUNDED_CORNERS } from './constants';
 
-// WARN : Keep in Sync with m-visio-assist and z-visio
+// WARN : Keep in Sync with m-visio-assist, z-visio, zendesk, web-agent
 //
 type InvitationData = {
 	invitationError?: boolean;
@@ -161,7 +161,7 @@ function App(inProps: AppProps) {
 		undefined
 	);
 
-	const [facingMode, setFacingMode] = useState<'user' | 'environment' | undefined>();
+	const [facingMode, setFacingMode] = useState<ConstrainDOMString | undefined>();
 
 	const [streamAudioEnabled, setStreamAudioEnabled] = useState<boolean | undefined>(undefined);
 	const [streamVideoEnabled, setStreamVideoEnabled] = useState<boolean | undefined>(undefined);
@@ -331,7 +331,7 @@ function App(inProps: AppProps) {
 	// };
 	// const subscribedStreams = useMemo(() => [...t_subscribedStreams, ...localStreams], [t_subscribedStreams, localStreams]);
 
-	const { value: u_isSelfDisplay, toggle: toggleIsSelfDisplay } = useToggle(false);
+	const { value: u_isSelfDisplay, setValue: setSelfDisplay, toggle: toggleIsSelfDisplay } = useToggle(false);
 
 	// Force isSelfDisplay to true if there are no streams to subscribe in the room
 	const isSelfDisplay = useMemo(() => {
@@ -363,26 +363,34 @@ function App(inProps: AppProps) {
 	};
 
 	useEffect(() => {
-		if (invitationData) {
-			const videoMediaTrackConstraints = invitationData.streams[0].constraints?.video;
-			if (
-				videoMediaTrackConstraints instanceof Object &&
-				videoMediaTrackConstraints.advanced
-			) {
-				videoMediaTrackConstraints.advanced.forEach((item: any) => {
-					if (item.facingMode) {
-						if (globalThis.logLevel.isDebugEnabled) {
-							console.debug(
-								`${COMPONENT_NAME}|useEffect invitationData, facingMode`,
-								item.facingMode
-							);
+		if (userMediaStreamRequest) {
+			const videoMediaTrackConstraints = userMediaStreamRequest.constraints?.video;
+			if (videoMediaTrackConstraints instanceof Object) {
+				if (videoMediaTrackConstraints.facingMode) {
+					setFacingMode(videoMediaTrackConstraints.facingMode)
+				}
+				if (videoMediaTrackConstraints.advanced) {
+					videoMediaTrackConstraints.advanced.forEach((item: any) => {
+						if (item.facingMode) {
+							if (globalThis.logLevel.isDebugEnabled) {
+								console.debug(
+									`${COMPONENT_NAME}|useEffect invitationData, facingMode`,
+									item.facingMode
+								);
+							}
+							setFacingMode(item.facingMode);
 						}
-						setFacingMode(item.facingMode);
-					}
-				});
+					});
+				}
 			}
 		}
-	}, [invitationData]);
+	}, [userMediaStreamRequest])
+
+	useEffect(() => {
+		if (facingMode === 'environment') {
+			setSelfDisplay(true)
+		}
+	}, [facingMode])
 
 	useEffect(() => {
 		const handleTabClose = (event: BeforeUnloadEvent) => {
@@ -394,7 +402,7 @@ function App(inProps: AppProps) {
 		return () => {
 			window.removeEventListener('beforeunload', handleTabClose);
 		};
-	}, []);
+	}, [])
 
 	// useEffect(() => {
 	//   keycloak.init({
