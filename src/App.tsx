@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 
 import { UAParser } from 'ua-parser-js';
@@ -58,6 +58,8 @@ import './App.css';
 import logo from './assets/apizee.svg';
 import { loginKeyCloakJS } from './auth/keycloak';
 import { VIDEO_ROUNDED_CORNERS } from './constants';
+
+declare var apiRTC: any;
 
 // WARN : Keep in Sync with m-visio-assist, z-visio, zendesk, web-agent
 //
@@ -352,7 +354,7 @@ function App(inProps: AppProps) {
 		return u_isSelfDisplay;
 	}, [subscribedStreams, u_isSelfDisplay]);
 
-	const [pointer, setPointer] = useState<any>(undefined);
+	const [pointer, setPointer] = useState<any>({});
 
 	const getInvitationData = async (invitationId: string, token?: string) => {
 		return fetch(`https://is.dev.apizee.com/invitations/${invitationId}`, {
@@ -643,13 +645,16 @@ function App(inProps: AppProps) {
 			};
 			conversation.on('pointerSharingEnabled', on_pointerSharingEnabled);
 
-			const on_pointerLocationChanged = (data: any) => {
+			const on_pointerLocationChanged = (event: any) => {
 				if (globalThis.logLevel.isDebugEnabled) {
-					console.debug(`${COMPONENT_NAME}|pointerLocationChanged`, data);
+					console.debug(`${COMPONENT_NAME}|pointerLocationChanged`, event);
 				}
-				setPointer(data.data);
+				setPointer((pointer: Object) => { return { ...pointer, [event.source.contactId]: event.data } });
 				setTimeout(() => {
-					setPointer(undefined);
+					setPointer((pointer: any) => {
+						delete pointer[event.source.contactId];
+						return { pointer }
+					});
 				}, 3000);
 			};
 			conversation.on('pointerLocationChanged', on_pointerLocationChanged);
@@ -662,6 +667,27 @@ function App(inProps: AppProps) {
 			};
 		}
 	}, [conversation]);
+
+	const onStreamMouseDown = useCallback((stream: Stream, event: React.MouseEvent) => {
+		if (globalThis.logLevel.isDebugEnabled) {
+			console.debug(`${COMPONENT_NAME}|onStreamMouseDown`, stream.getId(), event)
+		}
+		// x and y are useless, make it 0, 0 to enforce this
+		if (conversation) {
+			conversation.sendPointerLocation({
+				streamId: stream.getId(),
+				contactId: stream.getContact() ? stream.getContact().getId() : apiRTC.userAgentInstance.userId
+			}, 0, 0,
+				{
+					top: `${Math.round(event.nativeEvent.offsetY * 100 / (event.nativeEvent.target as HTMLVideoElement).offsetHeight)}%`,
+					left: `${Math.round(event.nativeEvent.offsetX * 100 / (event.nativeEvent.target as HTMLVideoElement).offsetWidth)}%`
+				})
+		}
+	}, [conversation]);
+
+	// useEffect(() => {
+	// 	console.log("pointer", pointer)
+	// }, [pointer]);
 
 	useEffect(() => {
 		if (invitationData) {
@@ -718,8 +744,12 @@ function App(inProps: AppProps) {
 					sx={video_sizing}
 					style={{
 						...video_sizing,
-						objectFit: 'cover' as any,
+						objectFit: pointer[stream.getContact().getId()] ? 'fill' : 'cover',
 						...VIDEO_ROUNDED_CORNERS,
+					}}
+					pointer={pointer[stream.getContact().getId()]}
+					onMouseDown={(event: React.MouseEvent) => {
+						onStreamMouseDown(stream, event)
 					}}
 				/>
 			) : (
@@ -750,10 +780,13 @@ function App(inProps: AppProps) {
 					sx={video_sizing}
 					style={{
 						...video_sizing,
-						objectFit: 'cover' as any,
+						objectFit: pointer[apiRTC.userAgentInstance.userId] ? 'fill' : 'cover', //or (session as any).user.userId
 						...VIDEO_ROUNDED_CORNERS,
 					}}
-					pointer={pointer}
+					pointer={pointer[apiRTC.userAgentInstance.userId]}
+					onMouseDown={(event: React.MouseEvent) => {
+						onStreamMouseDown(stream, event)
+					}}
 				/>
 			) : (
 				<Audio />
