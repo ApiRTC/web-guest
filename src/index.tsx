@@ -85,7 +85,7 @@ if (container) {
 	const root = createRoot(container);
 	root.render(
 		<ThemeProvider theme={theme}>
-			<BrowserRouter basename="/visio-assisted">
+			<BrowserRouter basename="/web-assisted">
 				<Routes>
 					{/* will try to get invitation data from search parameter */}
 					<Route path="/" element={<App />} />
