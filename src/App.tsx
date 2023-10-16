@@ -203,7 +203,7 @@ function App(inProps: AppProps) {
 		setSelectedAudioIn,
 		selectedVideoIn,
 		setSelectedVideoIn,
-	} = useUserMediaDevices(session, isMobile ? 'no-storage' : 'apirtc-web-guest'); // TODO use NO_STORAGE const once exposed
+	} = useUserMediaDevices(session, isMobile ? undefined : 'apirtc-web-guest');
 
 	const userMediaStreamRequest = useMemo(() => invitationData ?
 		invitationData.streams.find((obj) => { return (obj.type === 'user-media') })
@@ -245,8 +245,7 @@ function App(inProps: AppProps) {
 				// When using advanced, on Chrome and Android, even if deviceId is set to a user facingMode device,
 				// the environment will be forced.
 				// COMMENTED-OUT: because it prevents the user from selecting another device.
-				// To fix the wrongly selected user device display, we now make use of NO_STORAGE on
-				// userUserMediaDevices hook when using mobile.
+				// To fix the wrongly selected user device display, we now use userUserMediaDevices hook with no local storage.
 				// if (videoMediaTrackConstraints.advanced) {
 				// 	videoMediaTrackConstraints.advanced = videoMediaTrackConstraints.advanced.map(
 				// 		(item: any) => {

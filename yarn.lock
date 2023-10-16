@@ -26,9 +26,9 @@
   integrity sha512-4gLRHcjVO+WcG7yZ9pCLrwcqrp8Te3Nti3KonS5J5LQI//1xnuRV9jFtX2OU/Lcx4Fiu8KB55cmuPCczoWxrFw==
 
 "@apirtc/react-lib@^1.0.16":
-  version "1.0.18"
-  resolved "https://registry.yarnpkg.com/@apirtc/react-lib/-/react-lib-1.0.18.tgz#3616dd1bcb448ae015235e5ba8e0cd2d1ea6b8c6"
-  integrity sha512-BaaQBqLd2ZqVY+L7ZwD0v+GSHE8LJpNBYV2xuBar4RELjcL6UoaXSf9LUdke/33vdGb0v0c01x7jkCFgaeyqOQ==
+  version "1.0.19"
+  resolved "https://registry.yarnpkg.com/@apirtc/react-lib/-/react-lib-1.0.19.tgz#0fe56ce44fd57f94b4973828814cf9272d5fc026"
+  integrity sha512-KU8LaiwtESR34tLV2ZkAZan4MX8ewVEj+OMIbdLrsF6vV05VvCfIneBvfnY+A6KOejqi9tUJ6qyIttDCRjLe0g==
 
 "@babel/code-frame@^7.0.0", "@babel/code-frame@^7.10.4", "@babel/code-frame@^7.12.13", "@babel/code-frame@^7.22.5":
   version "7.22.5"
