@@ -26,9 +26,9 @@
   integrity sha512-4gLRHcjVO+WcG7yZ9pCLrwcqrp8Te3Nti3KonS5J5LQI//1xnuRV9jFtX2OU/Lcx4Fiu8KB55cmuPCczoWxrFw==
 
 "@apirtc/react-lib@^1.0.16":
-  version "1.0.16"
-  resolved "https://registry.npmjs.org/@apirtc/react-lib/-/react-lib-1.0.16.tgz"
-  integrity sha512-fSrBA4z3z1t9BESEZR+TVk/PpggvGJlWVWsS9wKZ/CjSSKfRTn72VAcgEpglIKb3BWm3nzfaCtiN2vY4zU4uSw==
+  version "1.0.18"
+  resolved "https://registry.yarnpkg.com/@apirtc/react-lib/-/react-lib-1.0.18.tgz#3616dd1bcb448ae015235e5ba8e0cd2d1ea6b8c6"
+  integrity sha512-BaaQBqLd2ZqVY+L7ZwD0v+GSHE8LJpNBYV2xuBar4RELjcL6UoaXSf9LUdke/33vdGb0v0c01x7jkCFgaeyqOQ==
 
 "@babel/code-frame@^7.0.0", "@babel/code-frame@^7.10.4", "@babel/code-frame@^7.12.13", "@babel/code-frame@^7.22.5":
   version "7.22.5"
@@ -2543,6 +2543,13 @@ querystringify@^2.1.1:
   resolved "https://registry.npmjs.org/querystringify/-/querystringify-2.2.0.tgz"
   integrity sha512-FIqgj2EUvTa7R50u0rGsyTftzjYmv/a3hO345bZNrqabNqjtgiDMgmo4mkUjd+nzU5oF3dClKqFIPUKybUyqoQ==
 
+react-device-detect@^2.2.3:
+  version "2.2.3"
+  resolved "https://registry.yarnpkg.com/react-device-detect/-/react-device-detect-2.2.3.tgz#97a7ae767cdd004e7c3578260f48cf70c036e7ca"
+  integrity sha512-buYY3qrCnQVlIFHrC5UcUoAj7iANs/+srdkwsnNjI7anr3Tt7UY6MqNxtMLlr0tMBied0O49UZVK8XKs3ZIiPw==
+  dependencies:
+    ua-parser-js "^1.0.33"
+
 react-dom@^18.2.0:
   version "18.2.0"
   resolved "https://registry.npmjs.org/react-dom/-/react-dom-18.2.0.tgz"
@@ -2862,6 +2869,11 @@ ua-parser-js@^1.0.2:
   version "1.0.35"
   resolved "https://registry.npmjs.org/ua-parser-js/-/ua-parser-js-1.0.35.tgz"
   integrity sha512-fKnGuqmTBnIE+/KXSzCn4db8RTigUzw1AN0DmdU6hJovUTbYJKyqj+8Mt1c4VfRDnOVJnENmfYkIPZ946UrSAA==
+
+ua-parser-js@^1.0.33:
+  version "1.0.36"
+  resolved "https://registry.yarnpkg.com/ua-parser-js/-/ua-parser-js-1.0.36.tgz#a9ab6b9bd3a8efb90bb0816674b412717b7c428c"
+  integrity sha512-znuyCIXzl8ciS3+y3fHJI/2OhQIXbXw9MWC/o3qwyR+RGppjZHrM27CGFSKCJXi2Kctiz537iOu2KnXs1lMQhw==
 
 universalify@^0.1.0:
   version "0.1.2"
