@@ -215,6 +215,35 @@ function App(inProps: AppProps) {
 		: undefined,
 		[invitationData]);
 
+	// set facingMode according to invitation
+	useEffect(() => {
+		if (userMediaStreamRequest) {
+			const videoMediaTrackConstraints = userMediaStreamRequest.constraints?.video;
+			if (videoMediaTrackConstraints instanceof Object) {
+				if (videoMediaTrackConstraints.facingMode) {
+					setFacingMode(videoMediaTrackConstraints.facingMode)
+				}
+			}
+		}
+	}, [userMediaStreamRequest])
+
+	// This useEffect MUST happen before 'constraints' useMemo
+	useEffect(() => {
+		if (isMobile) {
+			// Consider facing mode is for mobile only.
+
+			if (selectedVideoIn) {
+				// if a specific device was selected by the user, clear this selection
+				// to let facingMode be taken into account in 'constraints' rebuild
+				setSelectedVideoIn(undefined)
+			}
+
+			if (facingMode === 'environment') {
+				setSelfDisplay(true)
+			}
+		}
+	}, [facingMode])
+
 	const constraints = useMemo(() => {
 		const new_constraints = { ...userMediaStreamRequest?.constraints };
 
@@ -237,10 +266,12 @@ function App(inProps: AppProps) {
 
 			if (selectedVideoIn) {
 				videoMediaTrackConstraints.deviceId = selectedVideoIn.id;
-			}
-
-			if (facingMode) {
+				// Do not leave a facingMode set if a deviceId was selected.
+				delete videoMediaTrackConstraints.facingMode;
+			} else if (facingMode) {
 				videoMediaTrackConstraints.facingMode = facingMode;
+				// Do not leave a deviceId set if facingMode is activated.
+				delete videoMediaTrackConstraints.deviceId;
 
 				// When using advanced, on Chrome and Android, even if deviceId is set to a user facingMode device,
 				// the environment will be forced.
@@ -378,37 +409,6 @@ function App(inProps: AppProps) {
 				console.error(`${COMPONENT_NAME}|getInvitationData`, error);
 			});
 	};
-
-	// set facingMode according to invitation
-	useEffect(() => {
-		if (userMediaStreamRequest) {
-			const videoMediaTrackConstraints = userMediaStreamRequest.constraints?.video;
-			if (videoMediaTrackConstraints instanceof Object) {
-				if (videoMediaTrackConstraints.facingMode) {
-					setFacingMode(videoMediaTrackConstraints.facingMode)
-				}
-				// if (videoMediaTrackConstraints.advanced) {
-				// 	videoMediaTrackConstraints.advanced.forEach((item: any) => {
-				// 		if (item.facingMode) {
-				// 			if (globalThis.logLevel.isDebugEnabled) {
-				// 				console.debug(
-				// 					`${COMPONENT_NAME}|useEffect invitationData, facingMode`,
-				// 					item.facingMode
-				// 				);
-				// 			}
-				// 			setFacingMode(item.facingMode);
-				// 		}
-				// 	});
-				// }
-			}
-		}
-	}, [userMediaStreamRequest])
-
-	useEffect(() => {
-		if (facingMode === 'environment') {
-			setSelfDisplay(true)
-		}
-	}, [facingMode])
 
 	useEffect(() => {
 		const handleTabClose = (event: BeforeUnloadEvent) => {
