@@ -170,8 +170,17 @@ function App(inProps: AppProps) {
 	const [streamAudioEnabled, setStreamAudioEnabled] = useState<boolean | undefined>(undefined);
 	const [streamVideoEnabled, setStreamVideoEnabled] = useState<boolean | undefined>(undefined);
 
+	// stepper
+	const [activeStep, setActiveStep] = useState(0);
+	const handleNext = () => {
+		setActiveStep((prevActiveStep) => prevActiveStep + 1);
+	};
+	const handleBack = () => {
+		setActiveStep((prevActiveStep) => prevActiveStep - 1);
+	};
+
 	// opt-in
-	const { value: accepted, toggle: toggleAccepted } = useToggle(false);
+	const optInAccepted = useMemo(() => activeStep >= 1, [activeStep]);
 
 	const { value: ready, toggle: toggleReady } = useToggle(false);
 
@@ -310,7 +319,7 @@ function App(inProps: AppProps) {
 		streamVideoEnabled,
 	]);
 
-	const { stream: localStream } = useCameraStream(accepted && userMediaStreamRequest ? session : undefined, {
+	const { stream: localStream } = useCameraStream(optInAccepted && userMediaStreamRequest ? session : undefined, {
 		constraints: constraints,
 	});
 
@@ -323,8 +332,8 @@ function App(inProps: AppProps) {
 
 	const [screen, setScreen] = useState<Stream>();
 
-	const { conversation } = useConversation(
-		ready ? session : undefined,
+	const { conversation, leave } = useConversation(
+		session,
 		invitationData ? invitationData.conversation.name : undefined,
 		invitationData ? invitationData.conversation.getOrCreateOptions : undefined,
 		true,
@@ -332,8 +341,22 @@ function App(inProps: AppProps) {
 	);
 	const { publishedStreams, subscribedStreams } = useConversationStreams(
 		conversation, [
-		...(localStream ? [{ stream: localStream, options: userMediaStreamRequest?.publishOptions }] : []),
+		...(localStream && ready ? [{ stream: localStream, options: userMediaStreamRequest?.publishOptions }] : []),
 		...(screen ? [{ stream: screen }] : [])]);
+
+	const doSendData = useCallback((data: any) => {
+		if (conversation) {
+			conversation.sendData(data).then(() => {
+				if (globalThis.logLevel.isDebugEnabled) {
+					console.log(`${COMPONENT_NAME}|conversation sendData`, data)
+				}
+			}).catch((error: any) => {
+				if (globalThis.logLevel.isWarnEnabled) {
+					console.warn(`${COMPONENT_NAME}|conversation sendData error`, error)
+				}
+			})
+		}
+	}, [conversation]);
 
 	const shareScreen = () => {
 		if (globalThis.logLevel.isDebugEnabled) {
@@ -379,6 +402,7 @@ function App(inProps: AppProps) {
 	// };
 	// const subscribedStreams = useMemo(() => [...t_subscribedStreams, ...localStreams], [t_subscribedStreams, localStreams]);
 
+	// isSelfDisplay corresponds to published in main
 	const { value: u_isSelfDisplay, setValue: setSelfDisplay, toggle: toggleIsSelfDisplay } = useToggle(false);
 
 	// Force isSelfDisplay to true if there are no streams to subscribe in the room
@@ -398,16 +422,14 @@ function App(inProps: AppProps) {
 				Authorization: `Bearer ${token}`,
 				'Content-Type': 'application/json',
 			},
-		})
-			.then((response) => {
-				if (response.status !== 200) {
-					return null;
-				}
-				return response.json();
-			})
-			.catch((error) => {
-				console.error(`${COMPONENT_NAME}|getInvitationData`, error);
-			});
+		}).then((response) => {
+			if (response.status !== 200) {
+				return null;
+			}
+			return response.json();
+		}).catch((error) => {
+			console.error(`${COMPONENT_NAME}|getInvitationData`, error);
+		});
 	};
 
 	useEffect(() => {
@@ -453,26 +475,20 @@ function App(inProps: AppProps) {
 			} catch (error) {
 				if (error instanceof SyntaxError) {
 					const invitationId = params.invitationData;
-					loginKeyCloakJS()
-						.then((keycloak) => {
+					loginKeyCloakJS().then((keycloak) => {
+						if (globalThis.logLevel.isDebugEnabled) {
+							console.debug(`${COMPONENT_NAME}|keycloak.token`, keycloak.token);
+						}
+						// TODO : use the token to make authenticated call to the API :
+						getInvitationData(invitationId).then((data) => {
 							if (globalThis.logLevel.isDebugEnabled) {
-								console.debug(`${COMPONENT_NAME}|keycloak.token`, keycloak.token);
+								console.debug(`${COMPONENT_NAME}|getInvitationData`, invitationId, data);
 							}
-							// TODO : use the token to make authenticated call to the API :
-							getInvitationData(invitationId).then((data) => {
-								if (globalThis.logLevel.isDebugEnabled) {
-									console.debug(
-										`${COMPONENT_NAME}|getInvitationData`,
-										invitationId,
-										data
-									);
-								}
-								setInvitationData(data);
-							});
-						})
-						.catch((error: any) => {
-							console.error(`${COMPONENT_NAME}|loginKeyCloakJS error`, error);
+							setInvitationData(data);
 						});
+					}).catch((error: any) => {
+						console.error(`${COMPONENT_NAME}|loginKeyCloakJS error`, error);
+					});
 				}
 			}
 		}
@@ -535,8 +551,7 @@ function App(inProps: AppProps) {
 				const sender: Contact = contactDataInfo.sender;
 				const content: Object = contactDataInfo.content;
 				if (isInstanceOfTakeSnapshot(content)) {
-					localStream
-						.takeSnapshot(content.takeSnapshot)
+					localStream.takeSnapshot(content.takeSnapshot)
 						.then((snapshot: any) => {
 							if (globalThis.logLevel.isDebugEnabled) {
 								console.debug(
@@ -562,8 +577,7 @@ function App(inProps: AppProps) {
 								}
 								// To learn about constants look at https://dev.apirtc.com/reference/Constants.html
 							});
-						})
-						.catch((error: any) => {
+						}).catch((error: any) => {
 							if (globalThis.logLevel.isWarnEnabled) {
 								console.warn(`${COMPONENT_NAME}|takeSnapshot error`, error);
 							}
@@ -583,7 +597,7 @@ function App(inProps: AppProps) {
 	}, [session, localStream]);
 
 	useEffect(() => {
-		if (session && conversation) {
+		if (conversation) {
 			// To receive data from contacts
 			const onData = (dataInfo: any) => {
 				if (globalThis.logLevel.isDebugEnabled) {
@@ -599,35 +613,25 @@ function App(inProps: AppProps) {
 						method: 'get',
 						mode: 'cors',
 						headers: new Headers({
-							Authorization: 'Bearer ' + content.fileShared.jwt, // session?.getId()
+							Authorization: 'Bearer ' + content.fileShared.jwt
 						}),
-					})
-						.then((res) => {
-							return res.blob();
-						})
-						.then((blob) => {
-							const url = window.URL.createObjectURL(blob);
-							setImgSrc(url);
-							// force a state update
-							//forceUpdate()
-						})
-						.catch((error) => {
-							console.error(
-								`${COMPONENT_NAME}|fetch error`,
-								content.fileShared.link,
-								error
-							);
-						});
+					}).then((res) => {
+						return res.blob();
+					}).then((blob) => {
+						const url = window.URL.createObjectURL(blob);
+						setImgSrc(url);
+						// force a state update
+						//forceUpdate()
+					}).catch((error) => {
+						console.error(`${COMPONENT_NAME}|fetch error`, content.fileShared.link, error);
+					});
 				} else if (isInstanceOfHangup(content)) {
-					conversation
-						.leave()
-						.then()
+					conversation.leave().then()
 						.catch((error) => {
 							if (globalThis.logLevel.isWarnEnabled) {
 								console.warn(`${COMPONENT_NAME}|conversation leave error`, error);
 							}
-						})
-						.finally(() => {
+						}).finally(() => {
 							disconnect();
 						});
 					setHangedUp(true);
@@ -638,7 +642,7 @@ function App(inProps: AppProps) {
 				conversation.removeListener('data', onData);
 			};
 		}
-	}, [conversation, session, disconnect]);
+	}, [conversation, disconnect]);
 
 	useEffect(() => {
 		if (conversation) {
@@ -689,10 +693,6 @@ function App(inProps: AppProps) {
 		}
 	}, [conversation]);
 
-	// useEffect(() => {
-	// 	console.log("pointer", pointer)
-	// }, [pointer]);
-
 	useEffect(() => {
 		if (invitationData) {
 			fetch(invitationData.cloudUrl as string)
@@ -714,7 +714,47 @@ function App(inProps: AppProps) {
 		}
 	}, [invitationData]);
 
-	// isSelfDisplay corresponds to published in main
+	// Commented out to prefer using Conversation contactJoined, instead of having to use a setTimeout
+	// Also this saves a sendData
+	// useEffect(() => {
+	// 	if (joined) {
+	// 		// Note : Trying to send data too immediately after joined does not work
+	// 		// Fixed by delaying it a bit 
+	// 		setTimeout(() => {
+	// 			doSendData({
+	// 				type: 'timeline-event',
+	// 				event: 'joined'
+	// 			})
+	// 		}, 100)
+	// 	}
+	// }, [doSendData, joined])
+
+	useEffect(() => {
+		if (optInAccepted) {
+			doSendData({
+				type: 'timeline-event',
+				event: 'opt-in-accepted'
+			})
+		}
+	}, [doSendData, optInAccepted])
+
+	useEffect(() => {
+		if (localStream) {
+			doSendData({
+				type: 'timeline-event',
+				event: 'camera-stream-grabbed'
+			})
+		}
+	}, [doSendData, localStream])
+
+	useEffect(() => {
+		if (ready) {
+			doSendData({
+				type: 'timeline-event',
+				event: 'enter-room'
+			})
+		}
+	}, [doSendData, ready])
 
 	const getName = (stream: Stream) => {
 		const firstName = stream.getContact()?.getUserData().get('firstName');
@@ -797,19 +837,6 @@ function App(inProps: AppProps) {
 			)}
 		</StreamComponent>
 	));
-
-	const [activeStep, setActiveStep] = useState(0);
-	const handleNext = () => {
-		setActiveStep((prevActiveStep) => prevActiveStep + 1);
-	};
-	const handleBack = () => {
-		setActiveStep((prevActiveStep) => prevActiveStep - 1);
-	};
-	useEffect(() => {
-		if (activeStep === 1 && !accepted) {
-			toggleAccepted();
-		}
-	}, [activeStep, accepted, toggleAccepted]);
 
 	return (
 		<>
@@ -961,7 +988,6 @@ function App(inProps: AppProps) {
 															{constraints.audio ? 'mic_on' : 'mic_off'}
 														</Icon>
 													</Button>
-
 													<MediaDeviceSelect
 														sx={{
 															marginLeft: '0.25em',
