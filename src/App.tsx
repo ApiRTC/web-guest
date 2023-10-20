@@ -116,8 +116,8 @@ function isInstanceOfHangup(object: any): object is HangUp {
 // const keycloak = new Keycloak({
 //   url: 'https://idp.apizee.com/auth', realm: 'APIZEE-POC-DGPN', clientId: 'visio-assisted'
 // })
-//const keycloak = new Keycloak(window.location.origin + '/visio-assisted/keycloak.json');
-// console.log(window.location.origin + '/visio-assisted/silent-check-sso.html')
+//const keycloak = new Keycloak(window.location.origin + '/web-guest/keycloak.json');
+// console.log(window.location.origin + '/web-guest/silent-check-sso.html')
 
 const video_sizing = { height: '100%', width: '100%' };
 
@@ -448,7 +448,7 @@ function App(inProps: AppProps) {
 	//   keycloak.init({
 	//     //onLoad: 'login-required', // Loops on refreshes
 	//     // onLoad: 'check-sso', // does not seem to change anything
-	//     // silentCheckSsoRedirectUri: window.location.origin + '/visio-assisted/silent-check-sso.html',
+	//     // silentCheckSsoRedirectUri: window.location.origin + '/web-guest/silent-check-sso.html',
 	//     //silentCheckSsoFallback: false
 	//   }).then((auth) => {
 	//     console.log("Keycloak.init", auth)

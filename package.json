@@ -1,7 +1,7 @@
 {
 	"name": "web-assisted",
 	"version": "1.0.0",
-	"homepage": "https://apirtc.github.io/web-assisted",
+	"homepage": "https://apirtc.github.io/web-guest",
 	"private": true,
 	"dependencies": {
 		"@apirtc/apirtc": "^5.0.14",

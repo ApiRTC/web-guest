@@ -85,7 +85,7 @@ if (container) {
 	const root = createRoot(container);
 	root.render(
 		<ThemeProvider theme={theme}>
-			<BrowserRouter basename="/web-assisted">
+			<BrowserRouter basename="/web-guest">
 				<Routes>
 					{/* will try to get invitation data from search parameter */}
 					<Route path="/" element={<App />} />

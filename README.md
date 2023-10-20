@@ -1,4 +1,4 @@
-# Apizee Web assisted
+# Apizee Web Guest application
 
 ## Prerequisites
 
@@ -14,7 +14,7 @@
 These instructions will get you a copy of the project up and running on your local machine for development and testing purposes.
 
 ```bash
-$ git clone git@gitlab.apizee.com:code/web-assisted.git
+$ git clone git@gitlab.apizee.com:code/web-guest.git
 ```
 
 With YARN :
@@ -78,7 +78,7 @@ Merge your code in the the develop branch
 If you never make this procedure, you will need to add the Github repo of this app:
 
 ```bash
-git remote add github git@github.com:ApiRTC/web-assisted.git
+git remote add github git@github.com:ApiRTC/web-guest.git
 ```
 
 Note: the Github repo is **only use for the deployment** ! Do not push code directly on this repo.
