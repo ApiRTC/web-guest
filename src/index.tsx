@@ -17,10 +17,9 @@ import './index.css';
 import { frFR } from './locale/frFR';
 import { setLogLevel } from './logLevel';
 
-const logLevel = 'debug';
-setLogLevel(logLevel);
-setApiRtcReactLibLogLevel(logLevel);
-setApiRtcMuiReactLibLogLevel(logLevel);
+setLogLevel('warn');
+setApiRtcReactLibLogLevel(globalThis.logLevel.level);
+setApiRtcMuiReactLibLogLevel(globalThis.logLevel.level);
 
 function getLangFiles() {
 	switch (navigator.language) {

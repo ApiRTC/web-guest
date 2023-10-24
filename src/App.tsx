@@ -51,40 +51,43 @@ import Step from '@mui/material/Step';
 import Typography from '@mui/material/Typography/Typography';
 import { useThemeProps } from '@mui/material/styles';
 
+import { setLogLevel as setApiRtcMuiReactLibLogLevel } from '@apirtc/mui-react-lib';
+import { setLogLevel as setApiRtcReactLibLogLevel } from '@apirtc/react-lib';
+
+import ErrorPage from './components/Error/ErrorPage';
 import OptInList from './components/Optin/OptInList';
 import TextStepper from './components/TextStepper/TextStepper';
-import ErrorPage from './components/Error/ErrorPage';
 
 //import Keycloak from 'keycloak-js';
 import './App.css';
 import logo from './assets/apizee.svg';
 import { loginKeyCloakJS } from './auth/keycloak';
 import { VIDEO_ROUNDED_CORNERS } from './constants';
+import { LogLevelText, setLogLevel } from './logLevel';
 
 declare var apiRTC: any;
 
 // WARN : Keep in Sync with m-visio-assist, z-visio, zendesk, web-agent
 //
 type InvitationData = {
-	invitationError?: boolean;
 	cloudUrl?: string;
 	apiKey?: string;
+	// TBD: this might become an ApiRTC platform configuration instead (per apiKey or even per userAgent id).
 	callStatsMonitoringInterval?: number;
+	logLevel: LogLevelText;
 	conversation: {
-		name: string;
-		friendlyName?: string;
-		//moderationEnabled?: boolean
+		name: string; friendlyName?: string;
+		//moderationEnabled?: boolean;;
 		getOrCreateOptions?: GetOrCreateConversationOptions;
 		joinOptions?: JoinOptions;
 	};
 	user: {
-		firstName: string;
-		lastName: string;
-	};
+		firstName: string; lastName: string;
+	}
 	streams: Array<{
 		type: 'user-media' | 'display-media',
-		constraints?: MediaStreamConstraints;
-		publishOptions?: PublishOptions;
+		constraints?: MediaStreamConstraints,
+		publishOptions?: PublishOptions
 	}>;
 };
 
@@ -159,6 +162,19 @@ function App(inProps: AppProps) {
 
 	const params = useParams();
 	const [searchParams] = useSearchParams();
+
+	const logLevel = useMemo(() => {
+		return searchParams.get('lL') as LogLevelText ?? globalThis.logLevel.level;
+	}, [searchParams]);
+
+	useEffect(() => {
+		setLogLevel(logLevel)
+		setApiRtcReactLibLogLevel(logLevel)
+		setApiRtcMuiReactLibLogLevel(logLevel)
+		// ApiRTC log level can be set at ApiRTC platform level, per apiKey.
+		// Shall we set it here too ?
+		//apiRTC.setLogLevel(10)
+	}, [logLevel])
 
 	const [invitationData, setInvitationData] = useState<InvitationData | undefined>(undefined);
 	const [invitationError, setInvitationError] = useState<boolean>(false);
