@@ -69,6 +69,7 @@ type InvitationData = {
 	invitationError?: boolean;
 	cloudUrl?: string;
 	apiKey?: string;
+	callStatsMonitoringInterval?: number;
 	conversation: {
 		name: string;
 		friendlyName?: string;
@@ -223,6 +224,14 @@ function App(inProps: AppProps) {
 		invitationData.streams.find((obj) => { return (obj.type === 'display-media') })
 		: undefined,
 		[invitationData]);
+
+	useEffect(() => {
+		if (session && invitationData) {
+			// enable callStatsMonitoring for support
+			session.getUserAgent().enableCallStatsMonitoring(invitationData.callStatsMonitoringInterval !== undefined,
+				{ interval: invitationData.callStatsMonitoringInterval })
+		}
+	}, [session, invitationData])
 
 	// set facingMode according to invitation
 	useEffect(() => {
