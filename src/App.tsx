@@ -54,6 +54,8 @@ import { useThemeProps } from '@mui/material/styles';
 import { setLogLevel as setApiRtcMuiReactLibLogLevel } from '@apirtc/mui-react-lib';
 import { setLogLevel as setApiRtcReactLibLogLevel } from '@apirtc/react-lib';
 
+import LogRocket from 'logrocket';
+
 import ErrorPage from './components/Error/ErrorPage';
 import OptInList from './components/Optin/OptInList';
 import TextStepper from './components/TextStepper/TextStepper';
@@ -125,6 +127,13 @@ function isInstanceOfHangup(object: any): object is HangUp {
 
 const video_sizing = { height: '100%', width: '100%' };
 
+enum RequestParameters {
+	invitationId = "i",
+	invitationServiceUrl = "iU",
+	logLevel = "lL",
+	logRocketAppID = 'lRAppID'
+}
+
 export type AppProps = {
 	acceptTitleText?: string;
 	optInCGUPrefixText?: string;
@@ -164,7 +173,7 @@ function App(inProps: AppProps) {
 	const [searchParams] = useSearchParams();
 
 	const logLevel = useMemo(() => {
-		return searchParams.get('lL') as LogLevelText ?? globalThis.logLevel.level;
+		return searchParams.get(RequestParameters.logLevel) as LogLevelText ?? globalThis.logLevel.level;
 	}, [searchParams]);
 
 	useEffect(() => {
@@ -175,6 +184,24 @@ function App(inProps: AppProps) {
 		// Shall we set it here too ?
 		//apiRTC.setLogLevel(10)
 	}, [logLevel])
+
+	const logRocketAppID = useMemo(() => {
+		return searchParams.get(RequestParameters.logRocketAppID);
+	}, [searchParams]);
+
+	useEffect(() => {
+		// setup logRocket
+		if (logRocketAppID) {
+			if (globalThis.logLevel.isDebugEnabled) {
+				console.debug(`${COMPONENT_NAME}|logRocket init`, logRocketAppID);
+			}
+			LogRocket.init(logRocketAppID);
+		}
+	}, [logRocketAppID])
+
+	const invitationServiceUrl = useMemo(() => {
+		return searchParams.get(RequestParameters.invitationServiceUrl) ?? 'https://is.dev.apizee.com/invitations';
+	}, [searchParams]);
 
 	const [invitationData, setInvitationData] = useState<InvitationData | undefined>(undefined);
 	const [invitationError, setInvitationError] = useState<boolean>(false);
@@ -240,6 +267,15 @@ function App(inProps: AppProps) {
 		invitationData.streams.find((obj) => { return (obj.type === 'display-media') })
 		: undefined,
 		[invitationData]);
+
+	useEffect(() => {
+		if (session) {
+			if (globalThis.logLevel.isDebugEnabled) {
+				console.debug(`${COMPONENT_NAME}|logRocket identify`, session.getId());
+			}
+			LogRocket.identify(session.getId());
+		}
+	}, [session])
 
 	useEffect(() => {
 		if (session && invitationData) {
@@ -441,7 +477,7 @@ function App(inProps: AppProps) {
 	const [pointer, setPointer] = useState<any>({});
 
 	const getInvitationData = async (invitationId: string, token?: string) => {
-		return fetch(`https://is.dev.apizee.com/invitations/${invitationId}`, {
+		return fetch(`${invitationServiceUrl}/${invitationId}`, {
 			method: 'GET',
 			headers: {
 				Authorization: `Bearer ${token}`,
@@ -525,7 +561,7 @@ function App(inProps: AppProps) {
 	}, [invitationData]);
 
 	useEffect(() => {
-		const i: string | null = searchParams.get('i');
+		const i: string | null = searchParams.get(RequestParameters.invitationId);
 		if (i) {
 			try {
 				const l_data: InvitationData = JSON.parse(base64_decode(i)) as InvitationData;
