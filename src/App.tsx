@@ -269,15 +269,6 @@ function App(inProps: AppProps) {
 		[invitationData]);
 
 	useEffect(() => {
-		if (session) {
-			if (globalThis.logLevel.isDebugEnabled) {
-				console.debug(`${COMPONENT_NAME}|logRocket identify`, session.getId());
-			}
-			LogRocket.identify(session.getId());
-		}
-	}, [session])
-
-	useEffect(() => {
 		if (session && invitationData) {
 			// enable callStatsMonitoring for support
 			session.getUserAgent().enableCallStatsMonitoring(invitationData.callStatsMonitoringInterval !== undefined,
@@ -435,20 +426,6 @@ function App(inProps: AppProps) {
 		})
 	};
 
-	useEffect(() => {
-		if (screen) {
-			screen.on('stopped', () => {
-				if (globalThis.logLevel.isInfoEnabled) {
-					console.log(`${COMPONENT_NAME}|The user has ended sharing the screen`);
-				}
-				setScreen(undefined)
-			});
-			return () => {
-				screen.release()
-			}
-		}
-	}, [screen])
-
 	// For testing purpose
 	// const [localStreams, setLocalStreams] = useState<Stream[]>(localStream ? [localStream] : []);
 	// const more = () => {
@@ -524,6 +501,32 @@ function App(inProps: AppProps) {
 	// }, [])
 
 	useEffect(() => {
+		const i: string | null = searchParams.get(RequestParameters.invitationId);
+		if (i) {
+			try {
+				const l_data: InvitationData = JSON.parse(base64_decode(i)) as InvitationData;
+				if (globalThis.logLevel.isDebugEnabled) {
+					console.debug(`${COMPONENT_NAME}|InvitationData`, JSON.stringify(l_data));
+				}
+				setInvitationData(l_data);
+			} catch (error) {
+				if (error instanceof SyntaxError) {
+					getInvitationData(i).then((body) => {
+						if (globalThis.logLevel.isInfoEnabled) {
+							console.info(`${COMPONENT_NAME}|getInvitationData`, i, body);
+						}
+						setInvitationData(body.data);
+					});
+					return
+				} else {
+					console.error(`${COMPONENT_NAME}|parsing i search parameter error`, error);
+					setInvitationError(true);
+				}
+			}
+		}
+	}, [searchParams]);
+
+	useEffect(() => {
 		if (params.invitationData) {
 			try {
 				const l_data: InvitationData = JSON.parse(
@@ -561,30 +564,13 @@ function App(inProps: AppProps) {
 	}, [invitationData]);
 
 	useEffect(() => {
-		const i: string | null = searchParams.get(RequestParameters.invitationId);
-		if (i) {
-			try {
-				const l_data: InvitationData = JSON.parse(base64_decode(i)) as InvitationData;
-				if (globalThis.logLevel.isDebugEnabled) {
-					console.debug(`${COMPONENT_NAME}|InvitationData`, JSON.stringify(l_data));
-				}
-				setInvitationData(l_data);
-			} catch (error) {
-				if (error instanceof SyntaxError) {
-					getInvitationData(i).then((body) => {
-						if (globalThis.logLevel.isInfoEnabled) {
-							console.info(`${COMPONENT_NAME}|getInvitationData`, i, body);
-						}
-						setInvitationData(body.data);
-					});
-					return
-				} else {
-					console.error(`${COMPONENT_NAME}|parsing i search parameter error`, error);
-					setInvitationError(true);
-				}
+		if (invitationData && session) {
+			if (globalThis.logLevel.isDebugEnabled) {
+				console.debug(`${COMPONENT_NAME}|logRocket identify`, invitationData.conversation.name, session.getId());
 			}
+			LogRocket.identify(`${invitationData.conversation.name}-${session.getId()}`);
 		}
-	}, [searchParams]);
+	}, [invitationData, session])
 
 	useEffect(() => {
 		if (session) {
@@ -755,25 +741,18 @@ function App(inProps: AppProps) {
 	}, [conversation]);
 
 	useEffect(() => {
-		if (invitationData) {
-			fetch(invitationData.cloudUrl as string)
-				.then((response) => {
-					if (response.status === 404) {
-						setInvitationError(true);
-						setInvitationErrorStatus(404);
-					} else if (response.status === 401) {
-						setInvitationError(true);
-						setInvitationErrorStatus(401);
-					} else if (response.status === 500) {
-						setInvitationError(true);
-						setInvitationErrorStatus(500);
-					}
-				})
-				.catch((error) => {
-					setInvitationError(true);
-				});
+		if (screen) {
+			screen.on('stopped', () => {
+				if (globalThis.logLevel.isInfoEnabled) {
+					console.log(`${COMPONENT_NAME}|The user has ended sharing the screen`);
+				}
+				setScreen(undefined)
+			});
+			return () => {
+				screen.release()
+			}
 		}
-	}, [invitationData]);
+	}, [screen])
 
 	// Commented out to prefer using Conversation contactJoined, instead of having to use a setTimeout
 	// Also this saves a sendData
