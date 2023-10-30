@@ -128,9 +128,9 @@ function isInstanceOfHangup(object: any): object is HangUp {
 const video_sizing = { height: '100%', width: '100%' };
 
 enum RequestParameters {
-	invitationId = "i",
-	invitationServiceUrl = "iU",
-	logLevel = "lL",
+	invitationId = 'i',
+	invitationServiceUrl = 'iU',
+	logLevel = 'lL',
 	logRocketAppID = 'lRAppID'
 }
 
@@ -191,7 +191,7 @@ function App(inProps: AppProps) {
 
 	useEffect(() => {
 		// setup logRocket
-		if (logRocketAppID) {
+		if (logRocketAppID && logRocketAppID !== '') {
 			if (globalThis.logLevel.isDebugEnabled) {
 				console.debug(`${COMPONENT_NAME}|logRocket init`, logRocketAppID);
 			}
