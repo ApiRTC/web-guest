@@ -54,6 +54,8 @@ import { useThemeProps } from '@mui/material/styles';
 import { setLogLevel as setApiRtcMuiReactLibLogLevel } from '@apirtc/mui-react-lib';
 import { setLogLevel as setApiRtcReactLibLogLevel } from '@apirtc/react-lib';
 
+import { InvitationData } from '@apirtc/shared-types';
+
 import LogRocket from 'logrocket';
 
 import ErrorPage from './components/Error/ErrorPage';
@@ -68,30 +70,6 @@ import { VIDEO_ROUNDED_CORNERS } from './constants';
 import { LogLevelText, setLogLevel } from './logLevel';
 
 declare var apiRTC: any;
-
-// WARN : Keep in Sync with m-visio-assist, z-visio, zendesk, web-agent
-//
-type InvitationData = {
-	cloudUrl?: string;
-	apiKey?: string;
-	// TBD: this might become an ApiRTC platform configuration instead (per apiKey or even per userAgent id).
-	callStatsMonitoringInterval?: number;
-	logLevel: LogLevelText;
-	conversation: {
-		name: string; friendlyName?: string;
-		//moderationEnabled?: boolean;;
-		getOrCreateOptions?: GetOrCreateConversationOptions;
-		joinOptions?: JoinOptions;
-	};
-	user: {
-		firstName: string; lastName: string;
-	}
-	streams: Array<{
-		type: 'user-media' | 'display-media',
-		constraints?: MediaStreamConstraints,
-		publishOptions?: PublishOptions
-	}>;
-};
 
 type TakeSnapshot = { takeSnapshot: Object };
 function isInstanceOfTakeSnapshot(object: any): object is TakeSnapshot {

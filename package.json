@@ -1,5 +1,5 @@
 {
-	"name": "web-assisted",
+	"name": "web-guest",
 	"version": "1.0.0",
 	"homepage": "https://apirtc.github.io/web-guest",
 	"private": true,
@@ -21,6 +21,7 @@
 		"web-vitals": "^2.1.4"
 	},
 	"devDependencies": {
+		"@apirtc/shared-types": "file:./shared-types",
 		"@testing-library/jest-dom": "^5.16.2",
 		"@testing-library/react": "^14.0.0",
 		"@testing-library/user-event": "^13.5.0",
