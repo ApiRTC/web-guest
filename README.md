@@ -1,4 +1,22 @@
-# Apizee Web Guest application
+# ApiRTC Web Guest application
+
+## Cloning a Project with Submodules
+
+After normal clone, You must run two commands:
+
+`git submodule init`
+
+to initialize your local configuration file, and:
+
+`git submodule update`
+
+to fetch all the data from that project and check out the appropriate commit listed in the project.
+
+Or you might clone with `--recurse-submodules` option.
+
+## Installation
+
+`yarn`
 
 ## Prerequisites
 
@@ -6,22 +24,6 @@
 -   [GIT](https://git-scm.com/downloads) - Free and open source distributed version control system
 -   [NodeJS](https://nodejs.org/en/) - JavaScript runtime built on Chrome's V8 JavaScript engine
 -   [NPM](https://www.npmjs.com/) or [YARN](https://yarnpkg.com/lang/en/)
-
-**At Apizee, we mainly use Yarn for its speed and the consistency offered by its yarn.lock file across installations.**
-
-## Installation
-
-These instructions will get you a copy of the project up and running on your local machine for development and testing purposes.
-
-```bash
-$ git clone git@gitlab.apizee.com:code/web-guest.git
-```
-
-With YARN :
-
-```bash
-$ yarn install
-```
 
 ## Dependencies
 
@@ -71,26 +73,4 @@ yarn dev:regenerateCertificates
 
 ## Release for production
 
-Merge your code in the the develop branch
-
-**/!\ TEMPORARY PROCESS /!\\**
-
-If you never make this procedure, you will need to add the Github repo of this app:
-
-```bash
-git remote add github git@github.com:ApiRTC/web-guest.git
-```
-
-Note: the Github repo is **only use for the deployment** ! Do not push code directly on this repo.
-
-```bash
-git checkout main
-git merge develop
-git push github main
-yarn predeploy
-yarn deploy
-```
-
-## Release for validation
-
-No validation process for now
+`yarn deploy`
