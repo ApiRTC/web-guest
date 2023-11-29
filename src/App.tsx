@@ -9,12 +9,9 @@ import { decode as base64_decode } from 'base-64';
 
 import {
 	Contact,
-	GetOrCreateConversationOptions,
-	JoinOptions,
-	PublishOptions,
 	Stream,
 	UserAgent,
-	UserData,
+	UserData
 } from '@apirtc/apirtc'; //INVITATION_STATUS_ENDED
 import {
 	Grid as ApiRtcGrid,
@@ -35,8 +32,6 @@ import {
 	useSession,
 	useUserMediaDevices
 } from '@apirtc/react-lib';
-
-// import { Stream as StreamComponent } from './Stream'
 
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
