@@ -252,8 +252,16 @@ function App(inProps: AppProps) {
 	// set facingMode according to invitation
 	useEffect(() => {
 		if (userMediaStreamRequest) {
+			const audioMediaTrackConstraints = userMediaStreamRequest.constraints?.audio;
 			const videoMediaTrackConstraints = userMediaStreamRequest.constraints?.video;
+
+			setStreamAudioEnabled(Boolean(audioMediaTrackConstraints));
+			setStreamVideoEnabled(Boolean(videoMediaTrackConstraints));
+
 			if (videoMediaTrackConstraints instanceof Object) {
+				if (globalThis.logLevel.isDebugEnabled) {
+					console.debug(`${COMPONENT_NAME}|useEffect invitationData has video constraints`, videoMediaTrackConstraints);
+				}
 				if (videoMediaTrackConstraints.facingMode) {
 					setFacingMode(videoMediaTrackConstraints.facingMode)
 				}
@@ -530,11 +538,6 @@ function App(inProps: AppProps) {
 			}
 		}
 	}, [params.invitationData]);
-
-	useEffect(() => {
-		setStreamAudioEnabled(Boolean(invitationData?.streams[0].constraints?.audio));
-		setStreamVideoEnabled(Boolean(invitationData?.streams[0].constraints?.video));
-	}, [invitationData]);
 
 	useEffect(() => {
 		if (invitationData && session) {
@@ -991,7 +994,7 @@ function App(inProps: AppProps) {
 															color: 'black',
 														}}
 														disabled={
-															!invitationData?.streams[0].constraints
+															!userMediaStreamRequest.constraints
 																?.audio
 														}
 														onClick={() =>
@@ -1037,7 +1040,7 @@ function App(inProps: AppProps) {
 															color: 'black',
 														}}
 														disabled={
-															!invitationData?.streams[0].constraints
+															!userMediaStreamRequest.constraints
 																?.video
 														}
 														onClick={() => {
