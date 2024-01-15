@@ -120,13 +120,11 @@ export type AppProps = {
 	readyButtonText?: string;
 	selectDeviceText?: string;
 	selectDeviceHelperText?: string;
-	// audioInLabel?: string,
-	// videoInLabel?: string,
 	hangedUpText?: string;
 };
 const COMPONENT_NAME = 'App';
 function App(inProps: AppProps) {
-	const props = useThemeProps({ props: inProps, name: `${COMPONENT_NAME}` });
+	const props = useThemeProps({ props: inProps, name: COMPONENT_NAME });
 	const {
 		optInCGUPrefixText = 'I agree to the ',
 		optInCGULinkText = 'General Terms of Sale',
@@ -138,7 +136,6 @@ function App(inProps: AppProps) {
 		backButtonText = 'Back',
 		readyButtonText = 'Enter',
 		selectDeviceHelperText = 'Please check what you want to share before entering the room.',
-		// audioInLabel = "Audio In", videoInLabel = "Video In",
 		hangedUpText = 'The agent hanged up. Bye!',
 	} = props;
 
@@ -215,7 +212,7 @@ function App(inProps: AppProps) {
 					: 'https://cloud.apirtc.com',
 				// SpecifyThis : The customer-side app shall join the <sessionId>-guests group
 				// this will allow to share customer side specific info with userData for example
-				groups: [invitationData.conversation.name + '-guests'],
+				groups: [`${invitationData.conversation.name}-guests`],
 				userData: new UserData({
 					firstName: invitationData.user.firstName,
 					lastName: invitationData.user.lastName,
@@ -424,6 +421,15 @@ function App(inProps: AppProps) {
 	// isSelfDisplay corresponds to published in main
 	const { value: u_isSelfDisplay, setValue: setSelfDisplay, toggle: toggleIsSelfDisplay } = useToggle(false);
 
+	const [selectedSubscribeStream, setSelectedSubscribeStream] = useState<Stream>();
+	// TODO: when a stream is selected, unsubscribe to others and resubscribe when unselected.. ?
+
+	useEffect(() => {
+		// Auto select a screen share as the selectedSubscribedStream, to display it alone
+		const screenShared = subscribedStreams.find((stream) => stream.isScreensharing());
+		setSelectedSubscribeStream(screenShared ? screenShared : undefined)
+	}, [subscribedStreams])
+
 	// Force isSelfDisplay to true if there are no streams to subscribe in the room
 	const isSelfDisplay = useMemo(() => {
 		if (subscribedStreams.length === 0) {
@@ -577,26 +583,18 @@ function App(inProps: AppProps) {
 					localStream.takeSnapshot(content.takeSnapshot)
 						.then((snapshot: any) => {
 							if (globalThis.logLevel.isDebugEnabled) {
-								console.debug(
-									`${COMPONENT_NAME}|takeSnapshot of`,
-									localStream,
-									snapshot
-								);
+								console.debug(`${COMPONENT_NAME}|takeSnapshot of`, localStream, snapshot);
 							}
 							//$('#timeline').append('<a><img src="' + snapshot + '" /></a>');
 							const fileTransferInvitation = sender.sendFile(
 								{
 									name: `snapshot_${new Date().toISOString()}.png`,
 									type: 'image/png',
-								},
-								snapshot
+								}, snapshot
 							);
 							fileTransferInvitation.on('statusChange', (statusChangeInfo: any) => {
 								if (globalThis.logLevel.isDebugEnabled) {
-									console.debug(
-										`${COMPONENT_NAME}|statusChange`,
-										statusChangeInfo
-									);
+									console.debug(`${COMPONENT_NAME}|statusChange`, statusChangeInfo);
 								}
 								// To learn about constants look at https://dev.apirtc.com/reference/Constants.html
 							});
@@ -636,7 +634,7 @@ function App(inProps: AppProps) {
 						method: 'get',
 						mode: 'cors',
 						headers: new Headers({
-							Authorization: 'Bearer ' + content.fileShared.jwt
+							Authorization: `Bearer ${content.fileShared.jwt}`
 						}),
 					}).then((res) => {
 						return res.blob();
@@ -708,11 +706,10 @@ function App(inProps: AppProps) {
 			conversation.sendPointerLocation({
 				streamId: stream.getId(),
 				contactId: stream.getContact() ? stream.getContact().getId() : apiRTC.userAgentInstance.userId
-			}, 0, 0,
-				{
-					top: `${Math.round(event.nativeEvent.offsetY * 100 / (event.nativeEvent.target as HTMLVideoElement).offsetHeight)}%`,
-					left: `${Math.round(event.nativeEvent.offsetX * 100 / (event.nativeEvent.target as HTMLVideoElement).offsetWidth)}%`
-				})
+			}, 0, 0, {
+				top: `${Math.round(event.nativeEvent.offsetY * 100 / (event.nativeEvent.target as HTMLVideoElement).offsetHeight)}%`,
+				left: `${Math.round(event.nativeEvent.offsetX * 100 / (event.nativeEvent.target as HTMLVideoElement).offsetWidth)}%`
+			})
 		}
 	}, [conversation]);
 
@@ -783,46 +780,51 @@ function App(inProps: AppProps) {
 
 	const subscribedButtonsSize =
 		!isSelfDisplay && subscribedStreams.length <= 2 ? 'large' : undefined;
-	const _subscribed = subscribedStreams.map((stream: Stream, index: number) => (
-		<StreamComponent
-			id={'subscribed-stream-' + index}
-			key={index}
-			sx={{
-				...(stream.hasVideo() ? video_sizing : { backgroundColor: 'grey' }),
-			}}
-			stream={stream}
-			name={getName(stream)}
-			controls={
-				<>
-					<MuteButton size={subscribedButtonsSize} />
-					<AudioEnableButton size={subscribedButtonsSize} disabled={true} />
-					<VideoEnableButton size={subscribedButtonsSize} disabled={true} />
-				</>
-			}>
-			{stream.hasVideo() ? (
-				<Video
-					sx={video_sizing}
-					style={{
-						...video_sizing,
-						objectFit: pointer[stream.getContact().getId()] ? 'fill' : 'cover',
-						...VIDEO_ROUNDED_CORNERS,
-					}}
-					pointer={pointer[stream.getContact().getId()]}
-					onMouseDown={(event: React.MouseEvent) => {
-						onStreamMouseDown(stream, event)
-					}}
-				/>
-			) : (
-				<Audio />
-			)}
-		</StreamComponent>
-	));
+
+	const _subscribedStream = (stream: Stream, index: number) => <StreamComponent
+		id={`subscribed-stream-${index}`}
+		key={index}
+		sx={{
+			...(stream.hasVideo() ? video_sizing : { backgroundColor: 'grey' }),
+		}}
+		stream={stream}
+		name={getName(stream)}
+		controls={
+			<>
+				<MuteButton size={subscribedButtonsSize} />
+				<AudioEnableButton size={subscribedButtonsSize} disabled={true} />
+				<VideoEnableButton size={subscribedButtonsSize} disabled={true} />
+			</>
+		}
+		onClick={!isSelfDisplay ? () => {
+			setSelectedSubscribeStream((current) => current ? undefined : stream)
+		} : undefined}>
+		{stream.hasVideo() ? (
+			<Video
+				sx={video_sizing}
+				style={{
+					...video_sizing,
+					objectFit: stream.isScreensharing() ? 'contain' : (pointer[stream.getContact().getId()] ? 'fill' : 'cover'),
+					...VIDEO_ROUNDED_CORNERS,
+				}}
+				pointer={pointer[stream.getContact().getId()]}
+				onMouseDown={(event: React.MouseEvent) => {
+					onStreamMouseDown(stream, event)
+				}}
+			/>
+		) : (
+			<Audio />
+		)}
+	</StreamComponent>
+
+	const _subscribed = selectedSubscribeStream ? _subscribedStream(selectedSubscribeStream, 0)
+		: subscribedStreams.map((stream: Stream, index: number) => _subscribedStream(stream, index));
 
 	const publishedButtonsSize =
 		isSelfDisplay && publishedStreams.length <= 2 ? 'large' : undefined;
 	const _published = publishedStreams.map((stream, index) => (
 		<StreamComponent
-			id={'published-stream-' + index}
+			id={`published-stream-${index}`}
 			key={index}
 			sx={{
 				...(stream.hasVideo() ? video_sizing : { backgroundColor: 'grey' }),
@@ -1012,7 +1014,6 @@ function App(inProps: AppProps) {
 														}}
 														id="audio-in"
 														size="small"
-														// label={audioInLabel}
 														disabled={!constraints.audio}
 														devices={userMediaDevices.audioinput}
 														selectedDevice={selectedAudioIn}
@@ -1061,7 +1062,6 @@ function App(inProps: AppProps) {
 														}}
 														id="video-in"
 														size="small"
-														// label={videoInLabel}
 														disabled={!constraints.video}
 														devices={userMediaDevices.videoinput}
 														selectedDevice={selectedVideoIn}
