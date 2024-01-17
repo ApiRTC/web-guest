@@ -372,7 +372,7 @@ function App(inProps: AppProps) {
 
 	const [screen, setScreen] = useState<Stream>();
 
-	const { conversation, leave } = useConversation(
+	const { conversation } = useConversation(
 		session,
 		invitationData ? invitationData.conversation.name : undefined,
 		invitationData ? invitationData.conversation.getOrCreateOptions : undefined,
