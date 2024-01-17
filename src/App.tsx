@@ -203,8 +203,13 @@ function App(inProps: AppProps) {
 	const [hangedUp, setHangedUp] = useState<boolean>(false);
 
 	// ApiRTC hooks
-	const { session, disconnect } = useSession(
+	//
+
+	const credentials = useMemo(() =>
 		invitationData ? ({ apiKey: invitationData.apiKey } as Credentials) : undefined,
+		[invitationData]);
+
+	const registerInformation = useMemo(() =>
 		invitationData
 			? {
 				cloudUrl: invitationData.cloudUrl
@@ -218,8 +223,11 @@ function App(inProps: AppProps) {
 					lastName: invitationData.user.lastName,
 				}),
 			}
-			: undefined
-	);
+			: undefined,
+		[invitationData]);
+
+	const { session, disconnect } = useSession(credentials, registerInformation);
+
 	const {
 		userMediaDevices,
 		selectedAudioIn,
@@ -283,7 +291,7 @@ function App(inProps: AppProps) {
 		}
 	}, [facingMode])
 
-	const constraints = useMemo(() => {
+	const createStreamOptions = useMemo(() => {
 		const new_constraints = { ...userMediaStreamRequest?.constraints };
 
 		if (new_constraints?.audio && (streamAudioEnabled === undefined || streamAudioEnabled)) {
@@ -339,7 +347,9 @@ function App(inProps: AppProps) {
 			console.debug(`${COMPONENT_NAME}|useMemo new_constraints`, new_constraints);
 		}
 
-		return new_constraints;
+		return {
+			constraints: new_constraints
+		};
 	}, [
 		userMediaStreamRequest,
 		selectedAudioIn,
@@ -349,9 +359,9 @@ function App(inProps: AppProps) {
 		streamVideoEnabled,
 	]);
 
-	const { stream: localStream } = useCameraStream(optInAccepted && userMediaStreamRequest ? session : undefined, {
-		constraints: constraints,
-	});
+	const { stream: localStream } = useCameraStream(
+		optInAccepted && userMediaStreamRequest ? session : undefined,
+		createStreamOptions);
 
 	// getCapabilities does not work on firefox
 	// useEffect(() => {
@@ -369,10 +379,13 @@ function App(inProps: AppProps) {
 		true,
 		invitationData ? invitationData.conversation.joinOptions : undefined
 	);
-	const { publishedStreams, subscribedStreams } = useConversationStreams(
-		conversation, [
+
+	const streamsToPublish = useMemo(() => [
 		...(localStream && ready ? [{ stream: localStream, options: userMediaStreamRequest?.publishOptions }] : []),
-		...(screen ? [{ stream: screen }] : [])]);
+		...(screen ? [{ stream: screen }] : [])],
+		[ready, localStream, userMediaStreamRequest, screen]);
+
+	const { publishedStreams, subscribedStreams } = useConversationStreams(conversation, streamsToPublish);
 
 	const doSendData = useCallback((data: any) => {
 		if (conversation) {
@@ -1003,7 +1016,7 @@ function App(inProps: AppProps) {
 															setStreamAudioEnabled(!streamAudioEnabled)
 														}>
 														<Icon>
-															{constraints.audio ? 'mic_on' : 'mic_off'}
+															{createStreamOptions.constraints.audio ? 'mic_on' : 'mic_off'}
 														</Icon>
 													</Button>
 													<MediaDeviceSelect
@@ -1014,7 +1027,7 @@ function App(inProps: AppProps) {
 														}}
 														id="audio-in"
 														size="small"
-														disabled={!constraints.audio}
+														disabled={!createStreamOptions.constraints.audio}
 														devices={userMediaDevices.audioinput}
 														selectedDevice={selectedAudioIn}
 														setSelectedDevice={setSelectedAudioIn}
@@ -1048,7 +1061,7 @@ function App(inProps: AppProps) {
 															setStreamVideoEnabled(!streamVideoEnabled);
 														}}>
 														<Icon>
-															{constraints.video
+															{createStreamOptions.constraints.video
 																? 'videocam_on'
 																: 'videocam_off'}
 														</Icon>
@@ -1062,7 +1075,7 @@ function App(inProps: AppProps) {
 														}}
 														id="video-in"
 														size="small"
-														disabled={!constraints.video}
+														disabled={!createStreamOptions.constraints.video}
 														devices={userMediaDevices.videoinput}
 														selectedDevice={selectedVideoIn}
 														setSelectedDevice={setSelectedVideoIn}

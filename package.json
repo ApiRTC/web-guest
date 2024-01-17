@@ -6,7 +6,7 @@
 	"dependencies": {
 		"@apirtc/apirtc": "^5.0.14",
 		"@apirtc/mui-react-lib": "^1.0.10",
-		"@apirtc/react-lib": "^1.1.1-rc.1",
+		"@apirtc/react-lib": "^1.1.2",
 		"@emotion/react": "^11.10.8",
 		"@emotion/styled": "^11.10.8",
 		"@mui/material": "^5.12.3",

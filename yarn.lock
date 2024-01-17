@@ -25,10 +25,10 @@
   resolved "https://registry.npmjs.org/@apirtc/mui-react-lib/-/mui-react-lib-1.0.10.tgz"
   integrity sha512-fZMfs5/O+mUr0BPeqm+kFNLBeHYwDqackJoYy7Dzmo3eodGDYSp2cVcwEbVitJ9r8Lyv1RS9LR29iwX1CcJJeg==
 
-"@apirtc/react-lib@^1.1.1-rc.1":
-  version "1.1.1"
-  resolved "https://registry.yarnpkg.com/@apirtc/react-lib/-/react-lib-1.1.1.tgz#b327529f20844b4f20641c8311db30b75247a8ec"
-  integrity sha512-IQPgu/rwJ2w/0qnO5e2+r4mvQAo2cJETTaWV5ynTXPmh6/upe0pAI1Nz2WGx/4kyWDih31AOiydWY/ZR7y4b7g==
+"@apirtc/react-lib@^1.1.2":
+  version "1.1.2"
+  resolved "https://registry.yarnpkg.com/@apirtc/react-lib/-/react-lib-1.1.2.tgz#9c1f5d7d7057ec7376c91ad1f114810a493e4dd3"
+  integrity sha512-TDN1auXZ8NqyffP3B8OAHvCD5jMGHYsfPUWHW2aP6WJtOIf1zZVjtTuMRL3KNWk45SagfJ+GBRaY7vRCTrF4Hw==
 
 "@apirtc/shared-types@file:./shared-types":
   version "0.1.0"
