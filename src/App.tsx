@@ -230,9 +230,9 @@ function App(inProps: AppProps) {
 
 	const {
 		userMediaDevices,
-		selectedAudioIn,
+		selectedAudioIn, selectedAudioInId,
 		setSelectedAudioIn,
-		selectedVideoIn,
+		selectedVideoIn, selectedVideoInId,
 		setSelectedVideoIn,
 	} = useUserMediaDevices(session, isMobile ? undefined : 'apirtc-web-guest');
 
@@ -298,8 +298,8 @@ function App(inProps: AppProps) {
 			const audioMediaTrackConstraints =
 				new_constraints.audio instanceof Object ? { ...new_constraints.audio } : {};
 
-			if (selectedAudioIn) {
-				audioMediaTrackConstraints.deviceId = selectedAudioIn.id;
+			if (selectedAudioInId) {
+				audioMediaTrackConstraints.deviceId = selectedAudioInId;
 			}
 
 			new_constraints.audio = audioMediaTrackConstraints;
@@ -311,8 +311,8 @@ function App(inProps: AppProps) {
 			const videoMediaTrackConstraints =
 				new_constraints.video instanceof Object ? { ...new_constraints.video } : {};
 
-			if (selectedVideoIn) {
-				videoMediaTrackConstraints.deviceId = selectedVideoIn.id;
+			if (selectedVideoInId) {
+				videoMediaTrackConstraints.deviceId = selectedVideoInId;
 				// Do not leave a facingMode set if a deviceId was selected.
 				delete videoMediaTrackConstraints.facingMode;
 			} else if (facingMode) {
@@ -352,8 +352,8 @@ function App(inProps: AppProps) {
 		};
 	}, [
 		userMediaStreamRequest,
-		selectedAudioIn,
-		selectedVideoIn,
+		selectedAudioInId,
+		selectedVideoInId,
 		facingMode,
 		streamAudioEnabled,
 		streamVideoEnabled,
