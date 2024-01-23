@@ -7,12 +7,7 @@ import { UAParser } from 'ua-parser-js';
 
 import { decode as base64_decode } from 'base-64';
 
-import {
-	Contact,
-	Stream,
-	UserAgent,
-	UserData
-} from '@apirtc/apirtc'; //INVITATION_STATUS_ENDED
+import { Contact, Stream, UserAgent, UserData } from '@apirtc/apirtc'; //INVITATION_STATUS_ENDED
 import {
 	Grid as ApiRtcGrid,
 	Audio,
@@ -25,12 +20,8 @@ import {
 	useToggle,
 } from '@apirtc/mui-react-lib';
 import {
-	Credentials,
-	useCameraStream,
-	useConversation,
-	useConversationStreams,
-	useSession,
-	useUserMediaDevices
+	Credentials, useCameraStream, useConversation, useConversationStreams,
+	useSession, useUserMediaDevices
 } from '@apirtc/react-lib';
 
 import Alert from '@mui/material/Alert';
@@ -804,9 +795,9 @@ function App(inProps: AppProps) {
 		name={getName(stream)}
 		controls={
 			<>
-				<MuteButton size={subscribedButtonsSize} />
+				{stream.hasAudio() && <MuteButton size={subscribedButtonsSize} />}
 				<AudioEnableButton size={subscribedButtonsSize} disabled={true} />
-				<VideoEnableButton size={subscribedButtonsSize} disabled={true} />
+				{stream.hasVideo() && <VideoEnableButton size={subscribedButtonsSize} disabled={true} />}
 			</>
 		}
 		onClick={!isSelfDisplay ? () => {
@@ -1092,7 +1083,7 @@ function App(inProps: AppProps) {
 										<Box sx={{ display: 'flex', justifyContent: 'end', mt: 1 }}>
 											<Button onClick={handleBack}>{backButtonText}</Button>
 											<Button variant="outlined"
-												disabled={displayMediaStreamRequest && !screen}
+												disabled={displayMediaStreamRequest && !screen || (userMediaStreamRequest && (!streamAudioEnabled && !streamVideoEnabled))}
 												onClick={toggleReady}>
 												{readyButtonText}
 											</Button>
