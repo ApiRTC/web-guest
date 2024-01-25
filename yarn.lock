@@ -20,15 +20,15 @@
   resolved "https://registry.yarnpkg.com/@apirtc/apirtc/-/apirtc-5.0.19.tgz#17699b926a4545975254335bffd2acee4922ad6d"
   integrity sha512-eLTbVSEVk2LO5f369xNFcZYhKWxhCkQM1rUZ5r8qozGavB0pP+oVFui2malzH3REmKGrvotOs1JnwSo3Y3iqiA==
 
-"@apirtc/mui-react-lib@^1.0.11":
-  version "1.0.11"
-  resolved "https://registry.yarnpkg.com/@apirtc/mui-react-lib/-/mui-react-lib-1.0.11.tgz#6060930d8eb2cad886b45b67374a35fc16e17335"
-  integrity sha512-jlzAPiuBLT1RkdXCQ9pUO+7YFh3bhGCmItudFVwo/KJuTR7fkA9oaXXQ6u+gEqkZQoDNX8d0bzU88Y+aNCD9lA==
+"@apirtc/mui-react-lib@^1.0.12":
+  version "1.0.12"
+  resolved "https://registry.yarnpkg.com/@apirtc/mui-react-lib/-/mui-react-lib-1.0.12.tgz#3e17f004d63fd4752839b2ad5b430a8d633cb9a4"
+  integrity sha512-oFpLAkPaLvcMRidS/EHkAsq6BhEpTuTk36BiwiKQAT0u9yLqzNANV8uguwxCu4UeNq+2VdUxvliucPwf71kbDQ==
 
-"@apirtc/react-lib@^1.1.3":
-  version "1.1.3"
-  resolved "https://registry.yarnpkg.com/@apirtc/react-lib/-/react-lib-1.1.3.tgz#34e3800c8c99d155ca6176ade7769120874d3318"
-  integrity sha512-RxUHbxmJjTmNfZGrv1RkqnIZ8En8/bbUfreJik2DUou2aEaGBhgzeZhydM336aozth3mBXHrjZS0EuDIT5mLPw==
+"@apirtc/react-lib@^1.1.4":
+  version "1.1.4"
+  resolved "https://registry.yarnpkg.com/@apirtc/react-lib/-/react-lib-1.1.4.tgz#5fac38eb48c079008475713df653a7364c70e124"
+  integrity sha512-RQRGBUpdPwZrocefQeZxPVA7pNeZq0rMJfR7ZNnN+zULRUS4ROIRidSkop/FJ5btuFZ7cSpWg8fH10ic22eoBg==
 
 "@apirtc/shared-types@file:./shared-types":
   version "0.1.0"

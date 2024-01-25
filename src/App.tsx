@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useDeferredValue, useEffect, useMemo, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 
 import { isMobile } from 'react-device-detect';
@@ -350,7 +350,12 @@ function App(inProps: AppProps) {
 		streamVideoEnabled,
 	]);
 
-	const { stream: localStream } = useCameraStream(
+	// const [cameraError, setCameraError] = useState<any>();
+	// const cameraErrorCallback = useCallback((error: any) => {
+	// 	setCameraError(error)
+	// }, []);
+
+	const { stream: localStream, grabbing, error: cameraError } = useCameraStream(
 		optInAccepted && userMediaStreamRequest ? session : undefined,
 		createStreamOptions);
 
@@ -773,6 +778,16 @@ function App(inProps: AppProps) {
 		}
 	}, [doSendData, ready])
 
+	const _settingsErrors = useMemo(() => [
+		...(cameraError ? ['Please check a device is available and not already grabbed by another software'] : []),
+		...(createStreamOptions.constraints.audio && !grabbing && localStream && !localStream.hasAudio() ? ["Failed to grab audio"] : []),
+		...(createStreamOptions.constraints.video && !grabbing && localStream && !localStream.hasVideo() ? ["Failed to grab video: Please check a device is available and not already grabbed by another software"] : [])
+	], [localStream, grabbing, cameraError, createStreamOptions]);
+
+	// Kind of debounce the settingsErrors_ to prevent BadgeError to show
+	// between withAudio/Video toggle and grabbing
+	const settingsErrors = useDeferredValue(_settingsErrors);
+
 	const getName = (stream: Stream) => {
 		const firstName = stream.getContact()?.getUserData().get('firstName');
 		const lastName = stream.getContact()?.getUserData().get('lastName');
@@ -917,177 +932,189 @@ function App(inProps: AppProps) {
 										/>
 									</Step>
 									<Step key="device-selection">
-										{userMediaStreamRequest &&
-											<Stack
-												sx={{ mt: 1 }}
-												direction={{ xs: 'column' }}
-												alignItems="center"
-												justifyContent="center"
-												useFlexGap
-												flexWrap="wrap"
-												spacing={1}>
-												<Box
-													sx={{
-														width: '100%',
-														paddingTop: '75%',
-														position: 'relative',
-														'& .MuiBox-root': {
-															position: 'absolute',
-															height: '100%',
-															maxWidth: '100%',
-														},
-													}}>
-													{localStream ? (
-														<StreamComponent
-															sx={{
-																top: 0,
-																left: 0,
-																bottom: 0,
-																right: 0,
-																maxWidth: { xs: '100%', sm: '100%' },
-																...(!localStream.hasVideo() && {
-																	position: 'absolute',
-																	inset: 0,
-																	borderRadius: '4px',
-																	backgroundColor: '#CACCCE',
-																}),
-															}}
-															stream={localStream}
-															muted={true}>
-															{localStream.hasVideo() ? (
-																<Video
-																	style={{
-																		height: '100%',
-																		...VIDEO_ROUNDED_CORNERS,
-																	}}
-																	data-testid={`local-video`}
-																/>
-															) : (
-																<Audio data-testid={`local-audio`} />
-															)}
-														</StreamComponent>
-													) : (
-														<Skeleton
-															variant="rectangular"
-															width="100%"
-															height="100%"
-															sx={{
+										<Stack direction='column' spacing={1}>
+											{userMediaStreamRequest &&
+												<Stack
+													sx={{ mt: 1 }}
+													direction={{ xs: 'column' }}
+													alignItems="center"
+													justifyContent="center"
+													useFlexGap
+													flexWrap="wrap"
+													spacing={1}>
+													<Box
+														sx={{
+															width: '100%',
+															paddingTop: '75%',
+															position: 'relative',
+															'& .MuiBox-root': {
 																position: 'absolute',
-																top: 0,
-																left: 0,
-															}}
-														/>
-													)}
-												</Box>
-												<Box
-													sx={{
-														minWidth: '120px',
-														width: '100%',
-														display: 'flex',
-													}}>
-													<Button
-														sx={{
-															minWidth: 0,
-															width: '3em',
-															height: '3em',
-															display: 'flex',
-															justifyContent: 'center',
-															alignItems: 'center',
-															border: 'solid 1px rgba(0, 0, 0, 0.23)',
-															borderRadius: '4px',
-															boxSizing: 'border-box',
-															flexShrink: 0,
-															color: 'black',
-														}}
-														disabled={
-															!userMediaStreamRequest.constraints
-																?.audio
-														}
-														onClick={() =>
-															setStreamAudioEnabled(!streamAudioEnabled)
-														}>
-														<Icon>
-															{createStreamOptions.constraints.audio ? 'mic_on' : 'mic_off'}
-														</Icon>
-													</Button>
-													<MediaDeviceSelect
-														sx={{
-															marginLeft: '0.25em',
-															minWidth: '120px',
-															flexGrow: '1',
-														}}
-														id="audio-in"
-														size="small"
-														disabled={!createStreamOptions.constraints.audio}
-														devices={userMediaDevices.audioinput}
-														selectedDevice={selectedAudioIn}
-														setSelectedDevice={setSelectedAudioIn}
-													/>
-												</Box>
-												<Box
-													sx={{
-														minWidth: '120px',
-														width: '100%',
-														display: 'flex',
-													}}>
-													<Button
-														sx={{
-															minWidth: 0,
-															width: '3em',
-															height: '3em',
-															display: 'flex',
-															justifyContent: 'center',
-															alignItems: 'center',
-															border: 'solid 1px rgba(0, 0, 0, 0.23)',
-															borderRadius: '4px',
-															boxSizing: 'border-box',
-															flexShrink: 0,
-															color: 'black',
-														}}
-														disabled={
-															!userMediaStreamRequest.constraints
-																?.video
-														}
-														onClick={() => {
-															setStreamVideoEnabled(!streamVideoEnabled);
+																height: '100%',
+																maxWidth: '100%',
+															},
 														}}>
-														<Icon>
-															{createStreamOptions.constraints.video
-																? 'videocam_on'
-																: 'videocam_off'}
-														</Icon>
-													</Button>
-
-													<MediaDeviceSelect
+														{localStream ? (
+															<StreamComponent
+																sx={{
+																	top: 0,
+																	left: 0,
+																	bottom: 0,
+																	right: 0,
+																	maxWidth: { xs: '100%', sm: '100%' },
+																	...(!localStream.hasVideo() && {
+																		position: 'absolute',
+																		inset: 0,
+																		borderRadius: '4px',
+																		backgroundColor: '#CACCCE',
+																	}),
+																}}
+																stream={localStream}
+																muted={true}>
+																{localStream.hasVideo() ? (
+																	<Video
+																		style={{
+																			height: '100%',
+																			...VIDEO_ROUNDED_CORNERS,
+																		}}
+																		data-testid={`local-video`}
+																	/>
+																) : (
+																	<Audio data-testid={`local-audio`} />
+																)}
+															</StreamComponent>
+														) : (
+															<Skeleton
+																variant="rectangular"
+																width="100%"
+																height="100%"
+																sx={{
+																	position: 'absolute',
+																	top: 0,
+																	left: 0,
+																}}
+															/>
+														)}
+													</Box>
+													<Box
 														sx={{
-															marginLeft: '0.25em',
 															minWidth: '120px',
-															flexGrow: '1',
-														}}
-														id="video-in"
-														size="small"
-														disabled={!createStreamOptions.constraints.video}
-														devices={userMediaDevices.videoinput}
-														selectedDevice={selectedVideoIn}
-														setSelectedDevice={setSelectedVideoIn}
-													/>
-												</Box>
-											</Stack>}
-										{displayMediaStreamRequest && <Box sx={{ display: 'flex', justifyContent: 'center', mt: 1 }}>
-											<Button variant='outlined' color='primary'
-												onClick={shareScreen}>share screen</Button>
-										</Box>}
-										<Typography sx={{ mt: 1 }}>
-											{selectDeviceHelperText}
-										</Typography>
-										<Box sx={{ display: 'flex', justifyContent: 'end', mt: 1 }}>
-											<Button onClick={handleBack}>{backButtonText}</Button>
-											<Button variant="outlined"
-												disabled={displayMediaStreamRequest && !screen || (userMediaStreamRequest && (!streamAudioEnabled && !streamVideoEnabled))}
-												onClick={toggleReady}>
-												{readyButtonText}
-											</Button>
-										</Box>
+															width: '100%',
+															display: 'flex',
+														}}>
+														<Button
+															sx={{
+																minWidth: 0,
+																width: '3em',
+																height: '3em',
+																display: 'flex',
+																justifyContent: 'center',
+																alignItems: 'center',
+																border: 'solid 1px rgba(0, 0, 0, 0.23)',
+																borderRadius: '4px',
+																boxSizing: 'border-box',
+																flexShrink: 0,
+																color: 'black',
+															}}
+															disabled={
+																!userMediaStreamRequest.constraints
+																	?.audio
+															}
+															onClick={() =>
+																setStreamAudioEnabled(!streamAudioEnabled)
+															}>
+															<Icon>
+																{createStreamOptions.constraints.audio ? 'mic_on' : 'mic_off'}
+															</Icon>
+														</Button>
+														<MediaDeviceSelect
+															sx={{
+																marginLeft: '0.25em',
+																minWidth: '120px',
+																flexGrow: '1',
+															}}
+															id="audio-in"
+															size="small"
+															disabled={!createStreamOptions.constraints.audio}
+															devices={userMediaDevices.audioinput}
+															selectedDevice={selectedAudioIn}
+															setSelectedDevice={setSelectedAudioIn}
+														/>
+													</Box>
+													<Box
+														sx={{
+															minWidth: '120px',
+															width: '100%',
+															display: 'flex',
+														}}>
+														<Button
+															sx={{
+																minWidth: 0,
+																width: '3em',
+																height: '3em',
+																display: 'flex',
+																justifyContent: 'center',
+																alignItems: 'center',
+																border: 'solid 1px rgba(0, 0, 0, 0.23)',
+																borderRadius: '4px',
+																boxSizing: 'border-box',
+																flexShrink: 0,
+																color: 'black',
+															}}
+															disabled={
+																!userMediaStreamRequest.constraints
+																	?.video
+															}
+															onClick={() => {
+																setStreamVideoEnabled(!streamVideoEnabled);
+															}}>
+															<Icon>
+																{createStreamOptions.constraints.video
+																	? 'videocam_on'
+																	: 'videocam_off'}
+															</Icon>
+														</Button>
+
+														<MediaDeviceSelect
+															sx={{
+																marginLeft: '0.25em',
+																minWidth: '120px',
+																flexGrow: '1',
+															}}
+															id="video-in"
+															size="small"
+															disabled={!createStreamOptions.constraints.video}
+															devices={userMediaDevices.videoinput}
+															selectedDevice={selectedVideoIn}
+															setSelectedDevice={setSelectedVideoIn}
+														/>
+													</Box>
+												</Stack>}
+											{displayMediaStreamRequest && <Box sx={{ display: 'flex', justifyContent: 'center', mt: 1 }}>
+												<Button variant='outlined' color='primary'
+													onClick={shareScreen}>share screen</Button>
+											</Box>}
+											{settingsErrors.length !== 0 &&
+												<Stack direction="column"
+													justifyContent="center" alignItems="center"
+													spacing={1}>
+													{
+														settingsErrors.map((entry: string, index: number) =>
+															<Alert key={index} variant='outlined' severity='error'>{entry}</Alert>)
+													}
+												</Stack>
+											}
+											<Typography sx={{ mt: 1 }}>
+												{selectDeviceHelperText}
+											</Typography>
+											<Box sx={{ display: 'flex', justifyContent: 'end', mt: 1 }}>
+												<Button onClick={handleBack}>{backButtonText}</Button>
+												<Button variant="outlined"
+													disabled={(settingsErrors.length !== 0) || displayMediaStreamRequest && !screen || (userMediaStreamRequest && (!streamAudioEnabled && !streamVideoEnabled))}
+													onClick={toggleReady}>
+													{readyButtonText}
+												</Button>
+											</Box>
+										</Stack>
 									</Step>
 								</TextStepper>
 							</CardContent>
