@@ -265,23 +265,6 @@ function App(inProps: AppProps) {
 		}
 	}, [userMediaStreamRequest])
 
-	// This useEffect MUST happen before 'constraints' useMemo
-	useEffect(() => {
-		if (isMobile) {
-			// Consider facing mode is for mobile only.
-
-			if (selectedVideoIn) {
-				// if a specific device was selected by the user, clear this selection
-				// to let facingMode be taken into account in 'constraints' rebuild
-				setSelectedVideoIn(undefined)
-			}
-
-			if (facingMode === 'environment') {
-				setSelfDisplay(true)
-			}
-		}
-	}, [facingMode])
-
 	const createStreamOptions = useMemo(() => {
 		const new_constraints = { ...userMediaStreamRequest?.constraints };
 
@@ -302,31 +285,13 @@ function App(inProps: AppProps) {
 			const videoMediaTrackConstraints =
 				new_constraints.video instanceof Object ? { ...new_constraints.video } : {};
 
-			if (selectedVideoInId) {
+			if (isMobile && facingMode) {
+				videoMediaTrackConstraints.facingMode = facingMode;
+				delete videoMediaTrackConstraints.deviceId;
+			} else if (selectedVideoInId) {
 				videoMediaTrackConstraints.deviceId = selectedVideoInId;
 				// Do not leave a facingMode set if a deviceId was selected.
 				delete videoMediaTrackConstraints.facingMode;
-			} else if (facingMode) {
-				videoMediaTrackConstraints.facingMode = facingMode;
-				// Do not leave a deviceId set if facingMode is activated.
-				delete videoMediaTrackConstraints.deviceId;
-
-				// When using advanced, on Chrome and Android, even if deviceId is set to a user facingMode device,
-				// the environment will be forced.
-				// COMMENTED-OUT: because it prevents the user from selecting another device.
-				// To fix the wrongly selected user device display, we now use userUserMediaDevices hook with no local storage.
-				// if (videoMediaTrackConstraints.advanced) {
-				// 	videoMediaTrackConstraints.advanced = videoMediaTrackConstraints.advanced.map(
-				// 		(item: any) => {
-				// 			if (item.facingMode) {
-				// 				return { facingMode: facingMode };
-				// 			}
-				// 			return item;
-				// 		}
-				// 	);
-				// } else {
-				// 	videoMediaTrackConstraints.advanced = [{ facingMode: facingMode }];
-				// }
 			}
 
 			new_constraints.video = videoMediaTrackConstraints;
@@ -427,25 +392,38 @@ function App(inProps: AppProps) {
 	// };
 	// const subscribedStreams = useMemo(() => [...t_subscribedStreams, ...localStreams], [t_subscribedStreams, localStreams]);
 
-	// isSelfDisplay corresponds to published in main
-	const { value: u_isSelfDisplay, setValue: setSelfDisplay, toggle: toggleIsSelfDisplay } = useToggle(false);
+	const [selectedStream, setSelectedStream] = useState<Stream>();
 
-	const [selectedSubscribeStream, setSelectedSubscribeStream] = useState<Stream>();
-	// TODO: when a stream is selected, unsubscribe to others and resubscribe when unselected.. ?
-
+	// force selectedStream logic
 	useEffect(() => {
-		// Auto select a screen share as the selectedSubscribedStream, to display it alone
 		const screenShared = subscribedStreams.find((stream) => stream.isScreensharing());
-		setSelectedSubscribeStream(screenShared ? screenShared : undefined)
-	}, [subscribedStreams])
-
-	// Force isSelfDisplay to true if there are no streams to subscribe in the room
-	const isSelfDisplay = useMemo(() => {
-		if (subscribedStreams.length === 0) {
-			return true;
+		if (screenShared) {
+			if (globalThis.logLevel.isDebugEnabled) {
+				console.debug(`${COMPONENT_NAME}|useEffect setSelectedStream screenShared`, screenShared);
+			}
+			setSelectedStream(screenShared ? screenShared : undefined)
+			return
 		}
-		return u_isSelfDisplay;
-	}, [subscribedStreams, u_isSelfDisplay]);
+
+		if (facingMode === 'environment') {
+			if (globalThis.logLevel.isDebugEnabled) {
+				console.debug(`${COMPONENT_NAME}|useEffect setSelectedStream localStream`, localStream);
+			}
+			setSelectedStream(localStream)
+			return
+		}
+		if (subscribedStreams.length === 0) {
+			if (globalThis.logLevel.isDebugEnabled) {
+				console.debug(`${COMPONENT_NAME}|useEffect setSelectedStream localStream`, localStream);
+			}
+			setSelectedStream(localStream);
+		} else {
+			if (globalThis.logLevel.isDebugEnabled) {
+				console.debug(`${COMPONENT_NAME}|useEffect setSelectedStream undefined`);
+			}
+			setSelectedStream(undefined);
+		}
+	}, [localStream, subscribedStreams, facingMode]);
 
 	const [pointer, setPointer] = useState<any>({});
 
@@ -797,8 +775,8 @@ function App(inProps: AppProps) {
 		return `${firstName ?? ''} ${lastName ?? ''}`;
 	};
 
-	const subscribedButtonsSize =
-		!isSelfDisplay && subscribedStreams.length <= 2 ? 'large' : undefined;
+	// TODO : rework this ?
+	const subscribedButtonsSize = subscribedStreams.length <= 2 ? 'large' : undefined;
 
 	const _subscribedStream = (stream: Stream, index: number) => <StreamComponent
 		id={`subscribed-stream-${index}`}
@@ -811,13 +789,11 @@ function App(inProps: AppProps) {
 		controls={
 			<>
 				{stream.hasAudio() && <MuteButton size={subscribedButtonsSize} />}
-				<AudioEnableButton size={subscribedButtonsSize} disabled={true} />
-				{stream.hasVideo() && <VideoEnableButton size={subscribedButtonsSize} disabled={true} />}
+				{!stream.isScreensharing() && <AudioEnableButton size={subscribedButtonsSize} disabled={true} />}
+				{stream.hasVideo() && !stream.isScreensharing() && <VideoEnableButton size={subscribedButtonsSize} disabled={true} />}
 			</>
 		}
-		onClick={!isSelfDisplay ? () => {
-			setSelectedSubscribeStream((current) => current ? undefined : stream)
-		} : undefined}>
+		onClick={() => setSelectedStream((current) => current === stream ? undefined : stream)}>
 		{stream.hasVideo() ? (
 			<Video
 				sx={video_sizing}
@@ -836,44 +812,41 @@ function App(inProps: AppProps) {
 		)}
 	</StreamComponent>
 
-	const _subscribed = selectedSubscribeStream ? _subscribedStream(selectedSubscribeStream, 0)
-		: subscribedStreams.map((stream: Stream, index: number) => _subscribedStream(stream, index));
+	// TODO : rework this ?
+	const publishedButtonsSize = publishedStreams.length <= 2 ? 'large' : undefined;
 
-	const publishedButtonsSize =
-		isSelfDisplay && publishedStreams.length <= 2 ? 'large' : undefined;
-	const _published = publishedStreams.map((stream, index) => (
-		<StreamComponent
-			id={`published-stream-${index}`}
-			key={index}
-			sx={{
-				...(stream.hasVideo() ? video_sizing : { backgroundColor: 'grey' }),
-			}}
-			stream={stream}
-			muted={true}
-			controls={
-				<>
-					<AudioEnableButton size={publishedButtonsSize} />
-					<VideoEnableButton size={publishedButtonsSize} />
-				</>
-			}>
-			{stream.hasVideo() ? (
-				<Video
-					sx={video_sizing}
-					style={{
-						...video_sizing,
-						objectFit: pointer[apiRTC.userAgentInstance.userId] ? 'fill' : 'cover', //or (session as any).user.userId
-						...VIDEO_ROUNDED_CORNERS,
-					}}
-					pointer={pointer[apiRTC.userAgentInstance.userId]}
-					onMouseDown={(event: React.MouseEvent) => {
-						onStreamMouseDown(stream, event)
-					}}
-				/>
-			) : (
-				<Audio />
-			)}
-		</StreamComponent>
-	));
+	const _publishedStream = (stream: Stream, index: number) => <StreamComponent
+		id={`published-stream-${index}`}
+		key={index}
+		sx={{
+			...(stream.hasVideo() ? video_sizing : { backgroundColor: 'grey' }),
+		}}
+		stream={stream}
+		muted={true}
+		controls={
+			<>
+				<AudioEnableButton size={publishedButtonsSize} />
+				<VideoEnableButton size={publishedButtonsSize} />
+			</>
+		}
+		onClick={() => setSelectedStream((current) => current === stream ? undefined : stream)}>
+		{stream.hasVideo() ? (
+			<Video
+				sx={video_sizing}
+				style={{
+					...video_sizing,
+					objectFit: pointer[apiRTC.userAgentInstance.userId] ? 'fill' : 'cover', //or (session as any).user.userId
+					...VIDEO_ROUNDED_CORNERS,
+				}}
+				pointer={pointer[apiRTC.userAgentInstance.userId]}
+				onMouseDown={(event: React.MouseEvent) => {
+					onStreamMouseDown(stream, event)
+				}}
+			/>
+		) : (
+			<Audio />
+		)}
+	</StreamComponent>
 
 	return (
 		<>
@@ -1132,20 +1105,33 @@ function App(inProps: AppProps) {
 						maxWidth: '100%', // to prevent horizontal scrollbar on Chrome
 					}}>
 					<ApiRtcGrid sx={{ height: '100%', width: '100%' }}>
-						{isSelfDisplay ? _published : _subscribed}
+						{selectedStream ?
+							// display selected stream alone
+							(selectedStream.isRemote ? _subscribedStream(selectedStream, 0) : _publishedStream(selectedStream, 0))
+							:
+							// display all subscribed streams
+							subscribedStreams.map((stream: Stream, index: number) => _subscribedStream(stream, index))}
 					</ApiRtcGrid>
-					<ApiRtcGrid
+
+					{/* <ApiRtcGrid */}
+					<Stack direction='row'
 						sx={{
 							position: 'absolute',
 							bottom: 4,
 							left: 4,
 							opacity: 0.9,
 							height: '34%',
-							width: { xs: '50%', sm: '40%', md: '30%', lg: '20%' },
+							// width: { xs: '50%', sm: '40%', md: '30%', lg: '20%' },
 						}}
-						onClick={toggleIsSelfDisplay}>
-						{isSelfDisplay ? _subscribed : _published}
-					</ApiRtcGrid>
+					>
+						{selectedStream ?
+							// display both published and subscribed streams except the selected one
+							subscribedStreams.filter(stream => stream !== selectedStream).map((stream: Stream, index: number) => _subscribedStream(stream, index))
+								.concat(publishedStreams.filter(stream => stream !== selectedStream).map((stream: Stream, index: number) => _publishedStream(stream, index)))
+							:
+							// display all published
+							publishedStreams.map((stream, index) => (_publishedStream(stream, index)))}
+					</Stack>
 				</Box>
 			)}
 			{/* 
