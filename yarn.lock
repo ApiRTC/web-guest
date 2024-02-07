@@ -20,10 +20,10 @@
   resolved "https://registry.yarnpkg.com/@apirtc/apirtc/-/apirtc-5.0.19.tgz#17699b926a4545975254335bffd2acee4922ad6d"
   integrity sha512-eLTbVSEVk2LO5f369xNFcZYhKWxhCkQM1rUZ5r8qozGavB0pP+oVFui2malzH3REmKGrvotOs1JnwSo3Y3iqiA==
 
-"@apirtc/mui-react-lib@^1.0.12":
-  version "1.0.12"
-  resolved "https://registry.yarnpkg.com/@apirtc/mui-react-lib/-/mui-react-lib-1.0.12.tgz#3e17f004d63fd4752839b2ad5b430a8d633cb9a4"
-  integrity sha512-oFpLAkPaLvcMRidS/EHkAsq6BhEpTuTk36BiwiKQAT0u9yLqzNANV8uguwxCu4UeNq+2VdUxvliucPwf71kbDQ==
+"@apirtc/mui-react-lib@^1.0.13":
+  version "1.0.13"
+  resolved "https://registry.yarnpkg.com/@apirtc/mui-react-lib/-/mui-react-lib-1.0.13.tgz#5704e4c5478b5e914aa1f3706f4e997e26493c06"
+  integrity sha512-487vb3TVHj3lUNHv7NaqF7ZQu7tD/etGRe5Vy3uAbHuMvlra24uxbFd58KoZPTFQjPhxaGSMfrNzhGQPjyBZag==
 
 "@apirtc/react-lib@^1.1.4":
   version "1.1.4"

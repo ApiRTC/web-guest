@@ -5,6 +5,7 @@ export const frFR: Localization = {
 		App: {
 			defaultProps: {
 				acceptTitleText: 'Documents légaux',
+				cameraErrorText: "Vérifiez si votre périphérique n'est pas déjà utilisé.",
 				optInCGUPrefixText: "J'accepte les ",
 				optInCGULinkText: "Conditions générales d'utilisation",
 				optInCGUAriaLabel: 'conditions-générales',
@@ -14,6 +15,7 @@ export const frFR: Localization = {
 				optInButtonText: 'Confirmer',
 				backButtonText: 'Retour',
 				readyButtonText: 'Entrer en communication',
+				selectAtLeastOneMediaText: 'Veuillez sélectionner au moins un média.',
 				selectDeviceText: 'Sélection de périphériques',
 				selectDeviceHelperText:
 					"Avant d'entrer en communication, vérifiez ce que vous partagerez avec votre interlocuteur.",

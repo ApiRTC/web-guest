@@ -6,6 +6,7 @@ export default interface Localization {
 			defaultProps: Pick<
 				AppProps,
 				| 'acceptTitleText'
+				| 'cameraErrorText'
 				| 'optInCGUPrefixText'
 				| 'optInCGULinkText'
 				| 'optInCGUAriaLabel'
@@ -15,6 +16,7 @@ export default interface Localization {
 				| 'optInButtonText'
 				| 'backButtonText'
 				| 'readyButtonText'
+				| 'selectAtLeastOneMediaText'
 				| 'selectDeviceText'
 				| 'selectDeviceHelperText'
 				| 'hangedUpText'

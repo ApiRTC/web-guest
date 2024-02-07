@@ -35,7 +35,8 @@ import Skeleton from '@mui/material/Skeleton';
 import Stack from '@mui/material/Stack';
 import Step from '@mui/material/Step';
 import Typography from '@mui/material/Typography/Typography';
-import { useThemeProps } from '@mui/material/styles';
+import { Theme, useThemeProps } from '@mui/material/styles';
+import useMediaQuery from '@mui/material/useMediaQuery';
 
 import { setLogLevel as setApiRtcMuiReactLibLogLevel } from '@apirtc/mui-react-lib';
 import { setLogLevel as setApiRtcReactLibLogLevel } from '@apirtc/react-lib';
@@ -108,7 +109,9 @@ export type AppProps = {
 	optInPrivacyAriaLabel?: string;
 	optInButtonText?: string;
 	backButtonText?: string;
+	cameraErrorText?: string;
 	readyButtonText?: string;
+	selectAtLeastOneMediaText?: string;
 	selectDeviceText?: string;
 	selectDeviceHelperText?: string;
 	hangedUpText?: string;
@@ -125,10 +128,14 @@ function App(inProps: AppProps) {
 		optInPrivacyAriaLabel = 'accept-privacy-policy',
 		optInButtonText = 'Confirm',
 		backButtonText = 'Back',
+		selectAtLeastOneMediaText = 'Please select at least one media',
+		cameraErrorText = 'Please check a device is available and not already grabbed by another software.',
 		readyButtonText = 'Enter',
 		selectDeviceHelperText = 'Please check what you want to share before entering the room.',
 		hangedUpText = 'The agent hanged up. Bye!',
 	} = props;
+
+	const isSmallScreen = useMediaQuery((theme: Theme) => theme.breakpoints.down("xs"));
 
 	const params = useParams();
 	const [searchParams] = useSearchParams();
@@ -757,7 +764,8 @@ function App(inProps: AppProps) {
 	}, [doSendData, ready])
 
 	const _settingsErrors = useMemo(() => [
-		...(cameraError ? ['Please check a device is available and not already grabbed by another software'] : []),
+		...(!streamAudioEnabled && !streamVideoEnabled) ? [selectAtLeastOneMediaText] : [],
+		...((streamAudioEnabled || streamVideoEnabled) && cameraError ? [cameraErrorText] : []),
 		...(createStreamOptions.constraints.audio && !grabbing && localStream && !localStream.hasAudio() ? ["Failed to grab audio"] : []),
 		...(createStreamOptions.constraints.video && !grabbing && localStream && !localStream.hasVideo() ? ["Failed to grab video: Please check a device is available and not already grabbed by another software"] : [])
 	], [localStream, grabbing, cameraError, createStreamOptions]);
@@ -775,10 +783,7 @@ function App(inProps: AppProps) {
 		return `${firstName ?? ''} ${lastName ?? ''}`;
 	};
 
-	// TODO : rework this ?
-	const subscribedButtonsSize = subscribedStreams.length <= 2 ? 'large' : undefined;
-
-	const _subscribedStream = (stream: Stream, index: number) => <StreamComponent
+	const _subscribedStream = (stream: Stream, index: number, controlsSize: 'small' | 'medium' | 'large') => <StreamComponent
 		id={`subscribed-stream-${index}`}
 		key={index}
 		sx={{
@@ -788,9 +793,9 @@ function App(inProps: AppProps) {
 		name={getName(stream)}
 		controls={
 			<>
-				{stream.hasAudio() && <MuteButton size={subscribedButtonsSize} />}
-				{!stream.isScreensharing() && <AudioEnableButton size={subscribedButtonsSize} disabled={true} />}
-				{stream.hasVideo() && !stream.isScreensharing() && <VideoEnableButton size={subscribedButtonsSize} disabled={true} />}
+				{stream.hasAudio() && <MuteButton size={controlsSize} />}
+				{!stream.isScreensharing() && <AudioEnableButton size={controlsSize} disabled={true} />}
+				{stream.hasVideo() && !stream.isScreensharing() && <VideoEnableButton size={controlsSize} disabled={true} />}
 			</>
 		}
 		onClick={() => setSelectedStream((current) => current === stream ? undefined : stream)}>
@@ -812,10 +817,7 @@ function App(inProps: AppProps) {
 		)}
 	</StreamComponent>
 
-	// TODO : rework this ?
-	const publishedButtonsSize = publishedStreams.length <= 2 ? 'large' : undefined;
-
-	const _publishedStream = (stream: Stream, index: number) => <StreamComponent
+	const _publishedStream = (stream: Stream, index: number, controlsSize: 'small' | 'medium' | 'large') => <StreamComponent
 		id={`published-stream-${index}`}
 		key={index}
 		sx={{
@@ -825,8 +827,8 @@ function App(inProps: AppProps) {
 		muted={true}
 		controls={
 			<>
-				<AudioEnableButton size={publishedButtonsSize} />
-				<VideoEnableButton size={publishedButtonsSize} />
+				<AudioEnableButton size={controlsSize} />
+				<VideoEnableButton size={controlsSize} />
 			</>
 		}
 		onClick={() => setSelectedStream((current) => current === stream ? undefined : stream)}>
@@ -847,6 +849,10 @@ function App(inProps: AppProps) {
 			<Audio />
 		)}
 	</StreamComponent>
+
+	const pubsubStreamsSize = publishedStreams.length + subscribedStreams.length;
+	const nbAbsoluteStreams = selectedStream ? pubsubStreamsSize - 1 : publishedStreams.length;
+	const absoluteControlsSize = nbAbsoluteStreams > 1 && isSmallScreen ? 'small' : 'medium';
 
 	return (
 		<>
@@ -1107,10 +1113,10 @@ function App(inProps: AppProps) {
 					<ApiRtcGrid sx={{ height: '100%', width: '100%' }}>
 						{selectedStream ?
 							// display selected stream alone
-							(selectedStream.isRemote ? _subscribedStream(selectedStream, 0) : _publishedStream(selectedStream, 0))
+							(selectedStream.isRemote ? _subscribedStream(selectedStream, 0, 'large') : _publishedStream(selectedStream, 0, 'large'))
 							:
 							// display all subscribed streams
-							subscribedStreams.map((stream: Stream, index: number) => _subscribedStream(stream, index))}
+							subscribedStreams.map((stream: Stream, index: number) => _subscribedStream(stream, index, subscribedStreams.length > 1 && isSmallScreen ? 'medium' : 'large'))}
 					</ApiRtcGrid>
 
 					{/* <ApiRtcGrid */}
@@ -1120,17 +1126,18 @@ function App(inProps: AppProps) {
 							bottom: 4,
 							left: 4,
 							opacity: 0.9,
-							height: '34%',
-							// width: { xs: '50%', sm: '40%', md: '30%', lg: '20%' },
+							height: { xs: '20%', sm: '32%', md: '32%', lg: '32%' },
+							// { xs: '60%', sm: '70%', md: '80%', lg: '100%' }
+							width: { xs: `${Math.min(nbAbsoluteStreams * 32, 80)}%`, sm: `${Math.min(nbAbsoluteStreams * 20, 80)}%` }
 						}}
 					>
 						{selectedStream ?
 							// display both published and subscribed streams except the selected one
-							subscribedStreams.filter(stream => stream !== selectedStream).map((stream: Stream, index: number) => _subscribedStream(stream, index))
-								.concat(publishedStreams.filter(stream => stream !== selectedStream).map((stream: Stream, index: number) => _publishedStream(stream, index)))
+							subscribedStreams.filter(stream => stream !== selectedStream).map((stream: Stream, index: number) => _subscribedStream(stream, index, absoluteControlsSize))
+								.concat(publishedStreams.filter(stream => stream !== selectedStream).map((stream: Stream, index: number) => _publishedStream(stream, index, absoluteControlsSize)))
 							:
 							// display all published
-							publishedStreams.map((stream, index) => (_publishedStream(stream, index)))}
+							publishedStreams.map((stream, index) => (_publishedStream(stream, index, absoluteControlsSize)))}
 					</Stack>
 				</Box>
 			)}
