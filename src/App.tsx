@@ -7,34 +7,22 @@ import { UAParser } from 'ua-parser-js';
 
 import { decode as base64_decode } from 'base-64';
 
-import { Contact, Stream, UserAgent, UserData } from '@apirtc/apirtc'; //INVITATION_STATUS_ENDED
-import {
-	Grid as ApiRtcGrid,
-	Audio,
-	AudioEnableButton,
-	MuteButton,
-	Stream as StreamComponent,
-	Video,
-	VideoEnableButton,
-	useToggle
-} from '@apirtc/mui-react-lib';
-import {
-	Credentials, useCameraStream, useConversation, useConversationStreams,
-	useSession, useUserMediaDevices
-} from '@apirtc/react-lib';
-
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
 import Container from '@mui/material/Container';
-import Stack from '@mui/material/Stack';
 import Step from '@mui/material/Step';
-import { Theme, useThemeProps } from '@mui/material/styles';
-import useMediaQuery from '@mui/material/useMediaQuery';
+import { useThemeProps } from '@mui/material/styles';
 
-import { setLogLevel as setApiRtcMuiReactLibLogLevel } from '@apirtc/mui-react-lib';
-import { setLogLevel as setApiRtcReactLibLogLevel } from '@apirtc/react-lib';
+import { Contact, Stream, UserAgent, UserData } from '@apirtc/apirtc'; //INVITATION_STATUS_ENDED
+import { setLogLevel as setApiRtcMuiReactLibLogLevel, useToggle } from '@apirtc/mui-react-lib';
+import {
+	Credentials,
+	setLogLevel as setApiRtcReactLibLogLevel,
+	useCameraStream, useConversation, useConversationStreams,
+	useSession, useUserMediaDevices
+} from '@apirtc/react-lib';
 
 import { InvitationData } from '@apirtc/shared-types';
 
@@ -44,15 +32,14 @@ import ErrorPage from './components/Error/ErrorPage';
 import OptInList from './components/Optin/OptInList';
 import Settings from './components/Settings/Settings';
 import TextStepper from './components/TextStepper/TextStepper';
+import Room from './Room';
 
 //import Keycloak from 'keycloak-js';
 import './App.css';
 import logo from './assets/apizee.svg';
 import { loginKeyCloakJS } from './auth/keycloak';
-import { VIDEO_ROUNDED_CORNERS } from './constants';
 import { LogLevelText, setLogLevel } from './logLevel';
 
-declare var apiRTC: any;
 
 type TakeSnapshot = { takeSnapshot: Object };
 function isInstanceOfTakeSnapshot(object: any): object is TakeSnapshot {
@@ -78,15 +65,6 @@ function isInstanceOfHangup(object: any): object is HangUp {
 	if (typeof object !== 'object') return false;
 	return 'hangUp' in object;
 }
-
-// Keycloak
-// const keycloak = new Keycloak({
-//   url: 'https://idp.apizee.com/auth', realm: 'APIZEE-POC-DGPN', clientId: 'visio-assisted'
-// })
-//const keycloak = new Keycloak(window.location.origin + '/web-guest/keycloak.json');
-// console.log(window.location.origin + '/web-guest/silent-check-sso.html')
-
-const video_sizing = { height: '100%', width: '100%' };
 
 enum RequestParameters {
 	invitationId = 'i',
@@ -119,8 +97,6 @@ function App(inProps: AppProps) {
 		optInButtonText = 'Confirm',
 		hangedUpText = 'The agent hanged up. Bye!',
 	} = props;
-
-	const isSmallScreen = useMediaQuery((theme: Theme) => theme.breakpoints.down("xs"));
 
 	const params = useParams();
 	const [searchParams] = useSearchParams();
@@ -187,7 +163,6 @@ function App(inProps: AppProps) {
 
 	// ApiRTC hooks
 	//
-
 	const credentials = useMemo(() =>
 		invitationData ? ({ apiKey: invitationData.apiKey } as Credentials) : undefined,
 		[invitationData]);
@@ -211,20 +186,16 @@ function App(inProps: AppProps) {
 
 	const {
 		userMediaDevices,
-		selectedAudioIn, selectedAudioInId,
-		setSelectedAudioIn,
-		selectedVideoIn, selectedVideoInId,
-		setSelectedVideoIn,
+		selectedAudioIn, selectedAudioInId, setSelectedAudioIn,
+		selectedVideoIn, selectedVideoInId, setSelectedVideoIn,
 	} = useUserMediaDevices(session, isMobile ? undefined : 'apirtc-web-guest');
 
 	const userMediaStreamRequest = useMemo(() => invitationData ?
-		invitationData.streams.find((obj) => { return (obj.type === 'user-media') })
-		: undefined,
+		invitationData.streams.find((obj) => { return (obj.type === 'user-media') }) : undefined,
 		[invitationData]);
 
 	const displayMediaStreamRequest = useMemo(() => invitationData ?
-		invitationData.streams.find((obj) => { return (obj.type === 'display-media') })
-		: undefined,
+		invitationData.streams.find((obj) => { return (obj.type === 'display-media') }) : undefined,
 		[invitationData]);
 
 	useEffect(() => {
@@ -356,41 +327,6 @@ function App(inProps: AppProps) {
 	// };
 	// const subscribedStreams = useMemo(() => [...t_subscribedStreams, ...localStreams], [t_subscribedStreams, localStreams]);
 
-	const [selectedStream, setSelectedStream] = useState<Stream>();
-
-	// force selectedStream logic
-	useEffect(() => {
-		const screenShared = subscribedStreams.find((stream) => stream.isScreensharing());
-		if (screenShared) {
-			if (globalThis.logLevel.isDebugEnabled) {
-				console.debug(`${COMPONENT_NAME}|useEffect setSelectedStream screenShared`, screenShared);
-			}
-			setSelectedStream(screenShared ? screenShared : undefined)
-			return
-		}
-
-		if (facingMode === 'environment') {
-			if (globalThis.logLevel.isDebugEnabled) {
-				console.debug(`${COMPONENT_NAME}|useEffect setSelectedStream localStream`, localStream);
-			}
-			setSelectedStream(localStream)
-			return
-		}
-		if (subscribedStreams.length === 0) {
-			if (globalThis.logLevel.isDebugEnabled) {
-				console.debug(`${COMPONENT_NAME}|useEffect setSelectedStream localStream`, localStream);
-			}
-			setSelectedStream(localStream)
-		} else {
-			if (globalThis.logLevel.isDebugEnabled) {
-				console.debug(`${COMPONENT_NAME}|useEffect setSelectedStream undefined`);
-			}
-			setSelectedStream(undefined)
-		}
-	}, [localStream, subscribedStreams, facingMode]);
-
-	const [pointer, setPointer] = useState<any>({});
-
 	const getInvitationData = async (invitationId: string, token?: string) => {
 		return fetch(`${invitationServiceUrl}/${invitationId}`, {
 			method: 'GET',
@@ -419,24 +355,6 @@ function App(inProps: AppProps) {
 			window.removeEventListener('beforeunload', handleTabClose);
 		};
 	}, [])
-
-	// useEffect(() => {
-	//   keycloak.init({
-	//     //onLoad: 'login-required', // Loops on refreshes
-	//     // onLoad: 'check-sso', // does not seem to change anything
-	//     // silentCheckSsoRedirectUri: window.location.origin + '/web-guest/silent-check-sso.html',
-	//     //silentCheckSsoFallback: false
-	//   }).then((auth) => {
-	//     console.log("Keycloak.init", auth)
-	//     if (!auth) {
-	//       console.log("Keycloak NOT authenticated...")
-	//     } else {
-	//       console.log("Keycloak authenticated", auth, keycloak.token)
-	//     }
-	//   }).catch((error: any) => {
-	//     console.error('keycloak.init', error)
-	//   });
-	// }, [])
 
 	useEffect(() => {
 		const i: string | null = searchParams.get(RequestParameters.invitationId);
@@ -467,9 +385,7 @@ function App(inProps: AppProps) {
 	useEffect(() => {
 		if (params.invitationData) {
 			try {
-				const l_data: InvitationData = JSON.parse(
-					base64_decode(params.invitationData)
-				) as InvitationData;
+				const l_data: InvitationData = JSON.parse(base64_decode(params.invitationData)) as InvitationData;
 				if (globalThis.logLevel.isDebugEnabled) {
 					console.debug(`${COMPONENT_NAME}|InvitationData`, JSON.stringify(l_data));
 				}
@@ -481,7 +397,6 @@ function App(inProps: AppProps) {
 						if (globalThis.logLevel.isDebugEnabled) {
 							console.debug(`${COMPONENT_NAME}|keycloak.token`, keycloak.token);
 						}
-						// TODO : use the token to make authenticated call to the API :
 						getInvitationData(invitationId).then((data) => {
 							if (globalThis.logLevel.isDebugEnabled) {
 								console.debug(`${COMPONENT_NAME}|getInvitationData`, invitationId, data);
@@ -546,7 +461,6 @@ function App(inProps: AppProps) {
 								if (globalThis.logLevel.isDebugEnabled) {
 									console.debug(`${COMPONENT_NAME}|statusChange`, statusChangeInfo);
 								}
-								// To learn about constants look at https://dev.apirtc.com/reference/Constants.html
 							});
 						}).catch((error: any) => {
 							if (globalThis.logLevel.isWarnEnabled) {
@@ -613,54 +527,6 @@ function App(inProps: AppProps) {
 	}, [conversation, disconnect])
 
 	useEffect(() => {
-		if (conversation) {
-			const on_pointerSharingEnabled = (data: any) => {
-				if (globalThis.logLevel.isDebugEnabled) {
-					console.debug(`${COMPONENT_NAME}|pointerSharingEnabled`, data);
-				}
-			};
-			conversation.on('pointerSharingEnabled', on_pointerSharingEnabled);
-
-			const on_pointerLocationChanged = (event: any) => {
-				if (globalThis.logLevel.isDebugEnabled) {
-					console.debug(`${COMPONENT_NAME}|pointerLocationChanged`, event);
-				}
-				setPointer((pointer: Object) => { return { ...pointer, [event.source.contactId]: event.data } });
-				setTimeout(() => {
-					setPointer((pointer: any) => {
-						delete pointer[event.source.contactId];
-						return { pointer }
-					});
-				}, 3000);
-			};
-			conversation.on('pointerLocationChanged', on_pointerLocationChanged);
-
-			conversation.enablePointerSharing(true);
-
-			return () => {
-				conversation.removeListener('pointerSharingEnabled', on_pointerSharingEnabled);
-				conversation.removeListener('pointerLocationChanged', on_pointerLocationChanged);
-			};
-		}
-	}, [conversation])
-
-	const onStreamMouseDown = useCallback((stream: Stream, event: React.MouseEvent) => {
-		if (globalThis.logLevel.isDebugEnabled) {
-			console.debug(`${COMPONENT_NAME}|onStreamMouseDown`, stream.getId(), event)
-		}
-		// x and y are useless, make it 0, 0 to enforce this
-		if (conversation) {
-			conversation.sendPointerLocation({
-				streamId: stream.getId(),
-				contactId: stream.getContact() ? stream.getContact().getId() : apiRTC.userAgentInstance.userId
-			}, 0, 0, {
-				top: `${Math.round(event.nativeEvent.offsetY * 100 / (event.nativeEvent.target as HTMLVideoElement).offsetHeight)}%`,
-				left: `${Math.round(event.nativeEvent.offsetX * 100 / (event.nativeEvent.target as HTMLVideoElement).offsetWidth)}%`
-			})
-		}
-	}, [conversation]);
-
-	useEffect(() => {
 		if (screen) {
 			screen.on('stopped', () => {
 				if (globalThis.logLevel.isInfoEnabled) {
@@ -701,72 +567,6 @@ function App(inProps: AppProps) {
 		}
 	}, [doSendData, ready])
 
-	const getName = (stream: Stream) => {
-		const firstName = stream.getContact()?.getUserData().get('firstName');
-		const lastName = stream.getContact()?.getUserData().get('lastName');
-		if (!firstName && !lastName) {
-			return undefined;
-		}
-		return `${firstName ?? ''} ${lastName ?? ''}`;
-	};
-
-	const _subscribedStream = (stream: Stream, index: number, controlsSize: 'small' | 'medium' | 'large') => <StreamComponent
-		id={`subscribed-stream-${index}`}
-		key={index}
-		sx={{
-			...(stream.hasVideo() ? video_sizing : { backgroundColor: 'grey' }),
-		}}
-		stream={stream}
-		name={getName(stream)}
-		controls={<>
-			{stream.hasAudio() && <MuteButton size={controlsSize} />}
-			{!stream.isScreensharing() && <AudioEnableButton size={controlsSize} disabled={true} />}
-			{stream.hasVideo() && !stream.isScreensharing() && <VideoEnableButton size={controlsSize} disabled={true} />}
-		</>}
-		onClick={() => setSelectedStream((current) => current === stream ? undefined : stream)}>
-		{stream.hasVideo() ? <Video
-			sx={video_sizing}
-			style={{
-				...video_sizing,
-				objectFit: stream.isScreensharing() ? 'contain' : (pointer[stream.getContact().getId()] ? 'fill' : 'cover'),
-				...VIDEO_ROUNDED_CORNERS,
-			}}
-			pointer={pointer[stream.getContact().getId()]}
-			onMouseDown={(event: React.MouseEvent) => {
-				onStreamMouseDown(stream, event)
-			}}
-		/> : <Audio />}
-	</StreamComponent>;
-
-	const _publishedStream = (stream: Stream, index: number, controlsSize: 'small' | 'medium' | 'large') => <StreamComponent
-		id={`published-stream-${index}`}
-		key={index}
-		sx={{
-			...(stream.hasVideo() ? video_sizing : { backgroundColor: 'grey' }),
-		}}
-		stream={stream}
-		muted={true}
-		controls={<><AudioEnableButton size={controlsSize} />
-			<VideoEnableButton size={controlsSize} /></>}
-		onClick={() => setSelectedStream((current) => current === stream ? undefined : stream)}>
-		{stream.hasVideo() ? <Video
-			sx={video_sizing}
-			style={{
-				...video_sizing,
-				objectFit: pointer[apiRTC.userAgentInstance.userId] ? 'fill' : 'cover', //or (session as any).user.userId
-				...VIDEO_ROUNDED_CORNERS,
-			}}
-			pointer={pointer[apiRTC.userAgentInstance.userId]}
-			onMouseDown={(event: React.MouseEvent) => {
-				onStreamMouseDown(stream, event)
-			}}
-		/> : <Audio />}
-	</StreamComponent>;
-
-	const pubsubStreamsSize = publishedStreams.length + subscribedStreams.length;
-	const nbAbsoluteStreams = selectedStream ? pubsubStreamsSize - 1 : publishedStreams.length;
-	const absoluteControlsSize = nbAbsoluteStreams > 1 && isSmallScreen ? 'small' : 'medium';
-
 	const optIns = [
 		{
 			id: 'CGU',
@@ -793,102 +593,85 @@ function App(inProps: AppProps) {
 	];
 
 	return <>
-		{!session && !invitationError && (
-			<Box display="flex" alignItems="center" justifyContent="center" sx={{ mt: 5 }}>
-				<img height="320px" width="320px" src={logo} alt="logo" />
-			</Box>
-		)}
+		{!session && !invitationError && <Box display="flex" alignItems="center" justifyContent="center" sx={{ mt: 5 }}>
+			<img height="320px" width="320px" src={logo} alt="logo" />
+		</Box>}
 
 		{invitationError && <ErrorPage errorType={invitationErrorStatus}></ErrorPage>}
-		{session && !invitationError && !ready && (
-			<Container maxWidth="sm" sx={{ height: '100vh' }}>
-				<Box
-					sx={{ height: '100%' }}
-					display="flex"
-					alignItems="center"
-					justifyContent="center">
-					<Card>
-						<CardContent>
-							<TextStepper
-								activeStep={activeStep}
-								header={<img src={logo} alt="Apizee Logo" height={24} />}>
-								<Step key="legal">
-									<OptInList
-										optIns={optIns}
-										labels={{ submit: optInButtonText }}
-										onSubmit={handleNext}
-									/>
-								</Step>
-								<Step key="device-selection">
-									<Settings
-										userMediaStreamRequest={userMediaStreamRequest} displayMediaStreamRequest={displayMediaStreamRequest}
-										userMediaDevices={userMediaDevices}
-										selectedAudioIn={selectedAudioIn} setSelectedAudioIn={setSelectedAudioIn}
-										selectedVideoIn={selectedVideoIn} setSelectedVideoIn={setSelectedVideoIn}
-										createStreamOptions={createStreamOptions} grabbing={grabbing} localStream={localStream}
-										cameraError={cameraError}
-										streamAudioEnabled={streamAudioEnabled} setStreamAudioEnabled={setStreamAudioEnabled}
-										streamVideoEnabled={streamVideoEnabled} setStreamVideoEnabled={setStreamVideoEnabled}
-										setScreen={setScreen}
-										handleBack={handleBack} toggleReady={toggleReady}></Settings>
-								</Step>
-							</TextStepper>
-						</CardContent>
-					</Card>
-				</Box>
-			</Container>
-		)}
-		{conversation && ready && (
+		{session && !invitationError && !ready && <Container maxWidth="sm" sx={{ height: '100vh' }}>
 			<Box
-				sx={{
-					position: 'relative',
-					height: '99vh', // to prevent vertical scrollbar on Chrome
-					// maxHeight: '-webkit-fill-available',
-					width: '100vw',
-					maxWidth: '100%', // to prevent horizontal scrollbar on Chrome
-				}}>
-				<ApiRtcGrid sx={{ height: '100%', width: '100%' }}>
-					{selectedStream ?
-						// display selected stream alone
-						(selectedStream.isRemote ? _subscribedStream(selectedStream, 0, 'large') : _publishedStream(selectedStream, 0, 'large'))
-						:
-						// display all subscribed streams
-						subscribedStreams.map((stream: Stream, index: number) => _subscribedStream(stream, index, subscribedStreams.length > 1 && isSmallScreen ? 'medium' : 'large'))}
-				</ApiRtcGrid>
-				<Stack direction='row'
-					sx={{
-						position: 'absolute',
-						bottom: 4,
-						left: 4,
-						opacity: 0.9,
-						height: { xs: '20%', sm: '32%', md: '32%', lg: '32%' },
-						// { xs: '60%', sm: '70%', md: '80%', lg: '100%' }
-						width: { xs: `${Math.min(nbAbsoluteStreams * 32, 80)}%`, sm: `${Math.min(nbAbsoluteStreams * 20, 80)}%` }
-					}}
-				>
-					{selectedStream ?
-						// display both published and subscribed streams except the selected one
-						subscribedStreams.filter(stream => stream !== selectedStream).map((stream: Stream, index: number) => _subscribedStream(stream, index, absoluteControlsSize))
-							.concat(publishedStreams.filter(stream => stream !== selectedStream).map((stream: Stream, index: number) => _publishedStream(stream, index, absoluteControlsSize)))
-						:
-						// display all published
-						publishedStreams.map((stream, index) => (_publishedStream(stream, index, absoluteControlsSize)))}
-				</Stack>
+				sx={{ height: '100%' }}
+				display="flex"
+				alignItems="center"
+				justifyContent="center">
+				<Card>
+					<CardContent>
+						<TextStepper
+							activeStep={activeStep}
+							header={<img src={logo} alt="Apizee Logo" height={24} />}>
+							<Step key="legal">
+								<OptInList
+									optIns={optIns}
+									labels={{ submit: optInButtonText }}
+									onSubmit={handleNext}
+								/>
+							</Step>
+							<Step key="device-selection">
+								<Settings
+									userMediaStreamRequest={userMediaStreamRequest} displayMediaStreamRequest={displayMediaStreamRequest}
+									userMediaDevices={userMediaDevices}
+									selectedAudioIn={selectedAudioIn} setSelectedAudioIn={setSelectedAudioIn}
+									selectedVideoIn={selectedVideoIn} setSelectedVideoIn={setSelectedVideoIn}
+									createStreamOptions={createStreamOptions} grabbing={grabbing} localStream={localStream}
+									cameraError={cameraError}
+									streamAudioEnabled={streamAudioEnabled} setStreamAudioEnabled={setStreamAudioEnabled}
+									streamVideoEnabled={streamVideoEnabled} setStreamVideoEnabled={setStreamVideoEnabled}
+									setScreen={setScreen}
+									handleBack={handleBack} toggleReady={toggleReady}></Settings>
+							</Step>
+						</TextStepper>
+					</CardContent>
+				</Card>
 			</Box>
-		)}
-		{/* 
-    <Button onClick={more}>+</Button>
-    <Button onClick={less}>-</Button> */}
+		</Container>}
+		{conversation && ready && <Room conversation={conversation}
+			facingMode={facingMode} localStream={localStream}
+			publishedStreams={publishedStreams} subscribedStreams={subscribedStreams}></Room>}
+		{/* <Button onClick={more}>+</Button><Button onClick={less}>-</Button> */}
 		{imgSrc && <img src={imgSrc} alt="sharedImg"></img>}
-		{hangedUp && (
-			<Container maxWidth="md">
-				<Alert severity="info">{hangedUpText}</Alert>
-			</Container>
-		)}
+		{hangedUp && <Container maxWidth="md">
+			<Alert severity="info">{hangedUpText}</Alert>
+		</Container>}
 	</>;
 }
 
 export default App;
+
+
+// Keycloak
+// const keycloak = new Keycloak({
+//   url: 'https://idp.apizee.com/auth', realm: 'APIZEE-POC-DGPN', clientId: 'visio-assisted'
+// })
+//const keycloak = new Keycloak(window.location.origin + '/web-guest/keycloak.json');
+// console.log(window.location.origin + '/web-guest/silent-check-sso.html')
+
+// useEffect(() => {
+//   keycloak.init({
+//     //onLoad: 'login-required', // Loops on refreshes
+//     // onLoad: 'check-sso', // does not seem to change anything
+//     // silentCheckSsoRedirectUri: window.location.origin + '/web-guest/silent-check-sso.html',
+//     //silentCheckSsoFallback: false
+//   }).then((auth) => {
+//     console.log("Keycloak.init", auth)
+//     if (!auth) {
+//       console.log("Keycloak NOT authenticated...")
+//     } else {
+//       console.log("Keycloak authenticated", auth, keycloak.token)
+//     }
+//   }).catch((error: any) => {
+//     console.error('keycloak.init', error)
+//   });
+// }, [])
 
 // {session &&
 //       <div>
