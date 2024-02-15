@@ -808,7 +808,6 @@ function App(inProps: AppProps) {
 					alignItems="center"
 					justifyContent="center">
 					<Card>
-						{/* <CardHeader sx={{ textAlign: 'center' }} title={acceptTitleText} /> */}
 						<CardContent>
 							<TextStepper
 								activeStep={activeStep}
