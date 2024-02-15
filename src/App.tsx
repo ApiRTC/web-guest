@@ -1,4 +1,4 @@
-import { useCallback, useDeferredValue, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 
 import { isMobile } from 'react-device-detect';
@@ -12,12 +12,11 @@ import {
 	Grid as ApiRtcGrid,
 	Audio,
 	AudioEnableButton,
-	MediaDeviceSelect,
 	MuteButton,
 	Stream as StreamComponent,
 	Video,
 	VideoEnableButton,
-	useToggle,
+	useToggle
 } from '@apirtc/mui-react-lib';
 import {
 	Credentials, useCameraStream, useConversation, useConversationStreams,
@@ -26,15 +25,11 @@ import {
 
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
 import Container from '@mui/material/Container';
-import Icon from '@mui/material/Icon';
-import Skeleton from '@mui/material/Skeleton';
 import Stack from '@mui/material/Stack';
 import Step from '@mui/material/Step';
-import Typography from '@mui/material/Typography/Typography';
 import { Theme, useThemeProps } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 
@@ -47,6 +42,7 @@ import LogRocket from 'logrocket';
 
 import ErrorPage from './components/Error/ErrorPage';
 import OptInList from './components/Optin/OptInList';
+import Settings from './components/Settings/Settings';
 import TextStepper from './components/TextStepper/TextStepper';
 
 //import Keycloak from 'keycloak-js';
@@ -108,12 +104,6 @@ export type AppProps = {
 	optInPrivacyLinkText?: string;
 	optInPrivacyAriaLabel?: string;
 	optInButtonText?: string;
-	backButtonText?: string;
-	cameraErrorText?: string;
-	readyButtonText?: string;
-	selectAtLeastOneMediaText?: string;
-	selectDeviceText?: string;
-	selectDeviceHelperText?: string;
 	hangedUpText?: string;
 };
 const COMPONENT_NAME = 'App';
@@ -127,11 +117,6 @@ function App(inProps: AppProps) {
 		optInPrivacyLinkText = 'Privacy Policy',
 		optInPrivacyAriaLabel = 'accept-privacy-policy',
 		optInButtonText = 'Confirm',
-		backButtonText = 'Back',
-		selectAtLeastOneMediaText = 'Please select at least one media',
-		cameraErrorText = 'Please check a device is available and not already grabbed by another software.',
-		readyButtonText = 'Enter',
-		selectDeviceHelperText = 'Please check what you want to share before entering the room.',
 		hangedUpText = 'The agent hanged up. Bye!',
 	} = props;
 
@@ -208,20 +193,18 @@ function App(inProps: AppProps) {
 		[invitationData]);
 
 	const registerInformation = useMemo(() =>
-		invitationData
-			? {
-				cloudUrl: invitationData.cloudUrl
-					? invitationData.cloudUrl
-					: 'https://cloud.apirtc.com',
-				// SpecifyThis : The customer-side app shall join the <sessionId>-guests group
-				// this will allow to share customer side specific info with userData for example
-				groups: [`${invitationData.conversation.name}-guests`],
-				userData: new UserData({
-					firstName: invitationData.user.firstName,
-					lastName: invitationData.user.lastName,
-				}),
-			}
-			: undefined,
+		invitationData ? {
+			cloudUrl: invitationData.cloudUrl
+				? invitationData.cloudUrl
+				: 'https://cloud.apirtc.com',
+			// SpecifyThis : The customer-side app shall join the <sessionId>-guests group
+			// this will allow to share customer side specific info with userData for example
+			groups: [`${invitationData.conversation.name}-guests`],
+			userData: new UserData({
+				firstName: invitationData.user.firstName,
+				lastName: invitationData.user.lastName,
+			}),
+		} : undefined,
 		[invitationData]);
 
 	const { session, disconnect } = useSession(credentials, registerInformation);
@@ -278,11 +261,9 @@ function App(inProps: AppProps) {
 		if (new_constraints?.audio && (streamAudioEnabled === undefined || streamAudioEnabled)) {
 			const audioMediaTrackConstraints =
 				new_constraints.audio instanceof Object ? { ...new_constraints.audio } : {};
-
 			if (selectedAudioInId) {
 				audioMediaTrackConstraints.deviceId = selectedAudioInId;
 			}
-
 			new_constraints.audio = audioMediaTrackConstraints;
 		} else {
 			new_constraints.audio = false;
@@ -300,7 +281,6 @@ function App(inProps: AppProps) {
 				// Do not leave a facingMode set if a deviceId was selected.
 				delete videoMediaTrackConstraints.facingMode;
 			}
-
 			new_constraints.video = videoMediaTrackConstraints;
 		} else {
 			new_constraints.video = false;
@@ -315,17 +295,10 @@ function App(inProps: AppProps) {
 		};
 	}, [
 		userMediaStreamRequest,
-		selectedAudioInId,
-		selectedVideoInId,
+		selectedAudioInId, selectedVideoInId,
 		facingMode,
-		streamAudioEnabled,
-		streamVideoEnabled,
+		streamAudioEnabled, streamVideoEnabled,
 	]);
-
-	// const [cameraError, setCameraError] = useState<any>();
-	// const cameraErrorCallback = useCallback((error: any) => {
-	// 	setCameraError(error)
-	// }, []);
 
 	const { stream: localStream, grabbing, error: cameraError } = useCameraStream(
 		optInAccepted && userMediaStreamRequest ? session : undefined,
@@ -369,22 +342,6 @@ function App(inProps: AppProps) {
 		}
 	}, [conversation]);
 
-	const shareScreen = () => {
-		if (globalThis.logLevel.isDebugEnabled) {
-			console.debug(`${COMPONENT_NAME}|shareScreen calls createDisplayMediaStream`)
-		}
-		Stream.createDisplayMediaStream({}, false).then((localStream: Stream) => {
-			if (globalThis.logLevel.isInfoEnabled) {
-				console.info(`${COMPONENT_NAME}|createDisplayMediaStream`, localStream)
-			}
-			setScreen(localStream)
-		}).catch((error: any) => {
-			console.error(`${COMPONENT_NAME}|createDisplayMediaStream error`, error)
-		}).finally(() => {
-			// setGrabbing(false)
-		})
-	};
-
 	// For testing purpose
 	// const [localStreams, setLocalStreams] = useState<Stream[]>(localStream ? [localStream] : []);
 	// const more = () => {
@@ -423,12 +380,12 @@ function App(inProps: AppProps) {
 			if (globalThis.logLevel.isDebugEnabled) {
 				console.debug(`${COMPONENT_NAME}|useEffect setSelectedStream localStream`, localStream);
 			}
-			setSelectedStream(localStream);
+			setSelectedStream(localStream)
 		} else {
 			if (globalThis.logLevel.isDebugEnabled) {
 				console.debug(`${COMPONENT_NAME}|useEffect setSelectedStream undefined`);
 			}
-			setSelectedStream(undefined);
+			setSelectedStream(undefined)
 		}
 	}, [localStream, subscribedStreams, facingMode]);
 
@@ -505,7 +462,7 @@ function App(inProps: AppProps) {
 				}
 			}
 		}
-	}, [searchParams]);
+	}, [searchParams])
 
 	useEffect(() => {
 		if (params.invitationData) {
@@ -537,7 +494,7 @@ function App(inProps: AppProps) {
 				}
 			}
 		}
-	}, [params.invitationData]);
+	}, [params.invitationData])
 
 	useEffect(() => {
 		if (invitationData && session) {
@@ -562,7 +519,7 @@ function App(inProps: AppProps) {
 			// could the api be enhanced regarding userData usage (setToSession is also a pain)
 			userAgent.setUserData(userData);
 		}
-	}, [session]);
+	}, [session])
 
 	useEffect(() => {
 		if (session && localStream) {
@@ -579,7 +536,6 @@ function App(inProps: AppProps) {
 							if (globalThis.logLevel.isDebugEnabled) {
 								console.debug(`${COMPONENT_NAME}|takeSnapshot of`, localStream, snapshot);
 							}
-							//$('#timeline').append('<a><img src="' + snapshot + '" /></a>');
 							const fileTransferInvitation = sender.sendFile(
 								{
 									name: `snapshot_${new Date().toISOString()}.png`,
@@ -609,7 +565,7 @@ function App(inProps: AppProps) {
 				session.removeListener('contactData', onContactData);
 			};
 		}
-	}, [session, localStream]);
+	}, [session, localStream])
 
 	useEffect(() => {
 		if (conversation) {
@@ -618,7 +574,6 @@ function App(inProps: AppProps) {
 				if (globalThis.logLevel.isDebugEnabled) {
 					console.debug(`${COMPONENT_NAME}|Conversation onData`, dataInfo);
 				}
-				// const sender: Contact = dataInfo.sender;
 				const content: Object = dataInfo.content;
 				if (isInstanceOfFileShared(content)) {
 					if (globalThis.logLevel.isDebugEnabled) {
@@ -635,8 +590,6 @@ function App(inProps: AppProps) {
 					}).then((blob) => {
 						const url = window.URL.createObjectURL(blob);
 						setImgSrc(url);
-						// force a state update
-						//forceUpdate()
 					}).catch((error) => {
 						console.error(`${COMPONENT_NAME}|fetch error`, content.fileShared.link, error);
 					});
@@ -657,7 +610,7 @@ function App(inProps: AppProps) {
 				conversation.removeListener('data', onData);
 			};
 		}
-	}, [conversation, disconnect]);
+	}, [conversation, disconnect])
 
 	useEffect(() => {
 		if (conversation) {
@@ -689,7 +642,7 @@ function App(inProps: AppProps) {
 				conversation.removeListener('pointerLocationChanged', on_pointerLocationChanged);
 			};
 		}
-	}, [conversation]);
+	}, [conversation])
 
 	const onStreamMouseDown = useCallback((stream: Stream, event: React.MouseEvent) => {
 		if (globalThis.logLevel.isDebugEnabled) {
@@ -721,21 +674,6 @@ function App(inProps: AppProps) {
 		}
 	}, [screen])
 
-	// Commented out to prefer using Conversation contactJoined, instead of having to use a setTimeout
-	// Also this saves a sendData
-	// useEffect(() => {
-	// 	if (joined) {
-	// 		// Note : Trying to send data too immediately after joined does not work
-	// 		// Fixed by delaying it a bit 
-	// 		setTimeout(() => {
-	// 			doSendData({
-	// 				type: 'timeline-event',
-	// 				event: 'joined'
-	// 			})
-	// 		}, 100)
-	// 	}
-	// }, [doSendData, joined])
-
 	useEffect(() => {
 		if (optInAccepted) {
 			doSendData({
@@ -763,17 +701,6 @@ function App(inProps: AppProps) {
 		}
 	}, [doSendData, ready])
 
-	const _settingsErrors = useMemo(() => [
-		...(!streamAudioEnabled && !streamVideoEnabled) ? [selectAtLeastOneMediaText] : [],
-		...((streamAudioEnabled || streamVideoEnabled) && cameraError ? [cameraErrorText] : []),
-		...(createStreamOptions.constraints.audio && !grabbing && localStream && !localStream.hasAudio() ? ["Failed to grab audio"] : []),
-		...(createStreamOptions.constraints.video && !grabbing && localStream && !localStream.hasVideo() ? ["Failed to grab video: Please check a device is available and not already grabbed by another software"] : [])
-	], [localStream, grabbing, cameraError, createStreamOptions]);
-
-	// Kind of debounce the settingsErrors_ to prevent BadgeError to show
-	// between withAudio/Video toggle and grabbing
-	const settingsErrors = useDeferredValue(_settingsErrors);
-
 	const getName = (stream: Stream) => {
 		const firstName = stream.getContact()?.getUserData().get('firstName');
 		const lastName = stream.getContact()?.getUserData().get('lastName');
@@ -791,31 +718,25 @@ function App(inProps: AppProps) {
 		}}
 		stream={stream}
 		name={getName(stream)}
-		controls={
-			<>
-				{stream.hasAudio() && <MuteButton size={controlsSize} />}
-				{!stream.isScreensharing() && <AudioEnableButton size={controlsSize} disabled={true} />}
-				{stream.hasVideo() && !stream.isScreensharing() && <VideoEnableButton size={controlsSize} disabled={true} />}
-			</>
-		}
+		controls={<>
+			{stream.hasAudio() && <MuteButton size={controlsSize} />}
+			{!stream.isScreensharing() && <AudioEnableButton size={controlsSize} disabled={true} />}
+			{stream.hasVideo() && !stream.isScreensharing() && <VideoEnableButton size={controlsSize} disabled={true} />}
+		</>}
 		onClick={() => setSelectedStream((current) => current === stream ? undefined : stream)}>
-		{stream.hasVideo() ? (
-			<Video
-				sx={video_sizing}
-				style={{
-					...video_sizing,
-					objectFit: stream.isScreensharing() ? 'contain' : (pointer[stream.getContact().getId()] ? 'fill' : 'cover'),
-					...VIDEO_ROUNDED_CORNERS,
-				}}
-				pointer={pointer[stream.getContact().getId()]}
-				onMouseDown={(event: React.MouseEvent) => {
-					onStreamMouseDown(stream, event)
-				}}
-			/>
-		) : (
-			<Audio />
-		)}
-	</StreamComponent>
+		{stream.hasVideo() ? <Video
+			sx={video_sizing}
+			style={{
+				...video_sizing,
+				objectFit: stream.isScreensharing() ? 'contain' : (pointer[stream.getContact().getId()] ? 'fill' : 'cover'),
+				...VIDEO_ROUNDED_CORNERS,
+			}}
+			pointer={pointer[stream.getContact().getId()]}
+			onMouseDown={(event: React.MouseEvent) => {
+				onStreamMouseDown(stream, event)
+			}}
+		/> : <Audio />}
+	</StreamComponent>;
 
 	const _publishedStream = (stream: Stream, index: number, controlsSize: 'small' | 'medium' | 'large') => <StreamComponent
 		id={`published-stream-${index}`}
@@ -825,333 +746,147 @@ function App(inProps: AppProps) {
 		}}
 		stream={stream}
 		muted={true}
-		controls={
-			<>
-				<AudioEnableButton size={controlsSize} />
-				<VideoEnableButton size={controlsSize} />
-			</>
-		}
+		controls={<><AudioEnableButton size={controlsSize} />
+			<VideoEnableButton size={controlsSize} /></>}
 		onClick={() => setSelectedStream((current) => current === stream ? undefined : stream)}>
-		{stream.hasVideo() ? (
-			<Video
-				sx={video_sizing}
-				style={{
-					...video_sizing,
-					objectFit: pointer[apiRTC.userAgentInstance.userId] ? 'fill' : 'cover', //or (session as any).user.userId
-					...VIDEO_ROUNDED_CORNERS,
-				}}
-				pointer={pointer[apiRTC.userAgentInstance.userId]}
-				onMouseDown={(event: React.MouseEvent) => {
-					onStreamMouseDown(stream, event)
-				}}
-			/>
-		) : (
-			<Audio />
-		)}
-	</StreamComponent>
+		{stream.hasVideo() ? <Video
+			sx={video_sizing}
+			style={{
+				...video_sizing,
+				objectFit: pointer[apiRTC.userAgentInstance.userId] ? 'fill' : 'cover', //or (session as any).user.userId
+				...VIDEO_ROUNDED_CORNERS,
+			}}
+			pointer={pointer[apiRTC.userAgentInstance.userId]}
+			onMouseDown={(event: React.MouseEvent) => {
+				onStreamMouseDown(stream, event)
+			}}
+		/> : <Audio />}
+	</StreamComponent>;
 
 	const pubsubStreamsSize = publishedStreams.length + subscribedStreams.length;
 	const nbAbsoluteStreams = selectedStream ? pubsubStreamsSize - 1 : publishedStreams.length;
 	const absoluteControlsSize = nbAbsoluteStreams > 1 && isSmallScreen ? 'small' : 'medium';
 
-	return (
-		<>
-			{!session && !invitationError && (
-				<Box display="flex" alignItems="center" justifyContent="center" sx={{ mt: 5 }}>
-					<img height="320px" width="320px" src={logo} alt="logo" />
-				</Box>
-			)}
+	const optIns = [
+		{
+			id: 'CGU',
+			labels: {
+				aria: optInCGUAriaLabel,
+				prefix: optInCGUPrefixText,
+				link: optInCGULinkText,
+			},
+			link: navigator.language === 'fr' || navigator.language === 'fr-FR'
+				? 'https://cloud.apizee.com/attachments/b87662d7-3e82-4519-a4db-9fb6ba67b5cc/Apizee-ConditionsGeneralesUtilisation.pdf'
+				: 'https://cloud.apizee.com/attachments/cb744e03-182b-453e-bbdf-0d89cf42e182/Apizee-TermsOfUse.pdf',
+		},
+		{
+			id: 'Privacy',
+			labels: {
+				aria: optInPrivacyAriaLabel,
+				prefix: optInPrivacyPrefixText,
+				link: optInPrivacyLinkText,
+			},
+			link: navigator.language === 'fr' || navigator.language === 'fr-FR'
+				? 'https://cloud.apizee.com/attachments/f87493b0-483e-4723-a3ee-02d59a501b1c/Apizee-PolitiqueConfidentialite.pdf'
+				: 'https://cloud.apizee.com/attachments/ae61f778-16d1-4dd4-baa1-cd1ba568a0d6/Apizee-PrivacyPolicy.pdf',
+		}
+	];
 
-			{invitationError && <ErrorPage errorType={invitationErrorStatus}></ErrorPage>}
-			{session && !invitationError && !ready && (
-				<Container maxWidth="sm" sx={{ height: '100vh' }}>
-					<Box
-						sx={{ height: '100%' }}
-						display="flex"
-						alignItems="center"
-						justifyContent="center">
-						<Card>
-							{/* <CardHeader sx={{ textAlign: 'center' }} title={acceptTitleText} /> */}
-							<CardContent>
-								<TextStepper
-									activeStep={activeStep}
-									header={<img src={logo} alt="Apizee Logo" height={24} />}>
-									<Step key="legal">
-										<OptInList
-											optIns={[
-												{
-													id: 'CGU',
-													labels: {
-														aria: optInCGUAriaLabel,
-														prefix: optInCGUPrefixText,
-														link: optInCGULinkText,
-													},
-													link:
-														navigator.language === 'fr' ||
-															navigator.language === 'fr-FR'
-															? 'https://cloud.apizee.com/attachments/b87662d7-3e82-4519-a4db-9fb6ba67b5cc/Apizee-ConditionsGeneralesUtilisation.pdf'
-															: 'https://cloud.apizee.com/attachments/cb744e03-182b-453e-bbdf-0d89cf42e182/Apizee-TermsOfUse.pdf',
-												},
-												{
-													id: 'Privacy',
-													labels: {
-														aria: optInPrivacyAriaLabel,
-														prefix: optInPrivacyPrefixText,
-														link: optInPrivacyLinkText,
-													},
-													link:
-														navigator.language === 'fr' ||
-															navigator.language === 'fr-FR'
-															? 'https://cloud.apizee.com/attachments/f87493b0-483e-4723-a3ee-02d59a501b1c/Apizee-PolitiqueConfidentialite.pdf'
-															: 'https://cloud.apizee.com/attachments/ae61f778-16d1-4dd4-baa1-cd1ba568a0d6/Apizee-PrivacyPolicy.pdf',
-												},
-											]}
-											labels={{ submit: optInButtonText }}
-											onSubmit={handleNext}
-										/>
-									</Step>
-									<Step key="device-selection">
-										<Stack direction='column' spacing={1}>
-											{userMediaStreamRequest &&
-												<Stack
-													sx={{ mt: 1 }}
-													direction={{ xs: 'column' }}
-													alignItems="center"
-													justifyContent="center"
-													useFlexGap
-													flexWrap="wrap"
-													spacing={1}>
-													<Box
-														sx={{
-															width: '100%',
-															paddingTop: '75%',
-															position: 'relative',
-															'& .MuiBox-root': {
-																position: 'absolute',
-																height: '100%',
-																maxWidth: '100%',
-															},
-														}}>
-														{localStream ? (
-															<StreamComponent
-																sx={{
-																	top: 0,
-																	left: 0,
-																	bottom: 0,
-																	right: 0,
-																	maxWidth: { xs: '100%', sm: '100%' },
-																	...(!localStream.hasVideo() && {
-																		position: 'absolute',
-																		inset: 0,
-																		borderRadius: '4px',
-																		backgroundColor: '#CACCCE',
-																	}),
-																}}
-																stream={localStream}
-																muted={true}>
-																{localStream.hasVideo() ? (
-																	<Video
-																		style={{
-																			height: '100%',
-																			...VIDEO_ROUNDED_CORNERS,
-																		}}
-																		data-testid={`local-video`}
-																	/>
-																) : (
-																	<Audio data-testid={`local-audio`} />
-																)}
-															</StreamComponent>
-														) : (
-															<Skeleton
-																variant="rectangular"
-																width="100%"
-																height="100%"
-																sx={{
-																	position: 'absolute',
-																	top: 0,
-																	left: 0,
-																}}
-															/>
-														)}
-													</Box>
-													<Box
-														sx={{
-															minWidth: '120px',
-															width: '100%',
-															display: 'flex',
-														}}>
-														<Button
-															sx={{
-																minWidth: 0,
-																width: '3em',
-																height: '3em',
-																display: 'flex',
-																justifyContent: 'center',
-																alignItems: 'center',
-																border: 'solid 1px rgba(0, 0, 0, 0.23)',
-																borderRadius: '4px',
-																boxSizing: 'border-box',
-																flexShrink: 0,
-																color: 'black',
-															}}
-															disabled={
-																!userMediaStreamRequest.constraints
-																	?.audio
-															}
-															onClick={() =>
-																setStreamAudioEnabled(!streamAudioEnabled)
-															}>
-															<Icon>
-																{createStreamOptions.constraints.audio ? 'mic_on' : 'mic_off'}
-															</Icon>
-														</Button>
-														<MediaDeviceSelect
-															sx={{
-																marginLeft: '0.25em',
-																minWidth: '120px',
-																flexGrow: '1',
-															}}
-															id="audio-in"
-															size="small"
-															disabled={!createStreamOptions.constraints.audio}
-															devices={userMediaDevices.audioinput}
-															selectedDevice={selectedAudioIn}
-															setSelectedDevice={setSelectedAudioIn}
-														/>
-													</Box>
-													<Box
-														sx={{
-															minWidth: '120px',
-															width: '100%',
-															display: 'flex',
-														}}>
-														<Button
-															sx={{
-																minWidth: 0,
-																width: '3em',
-																height: '3em',
-																display: 'flex',
-																justifyContent: 'center',
-																alignItems: 'center',
-																border: 'solid 1px rgba(0, 0, 0, 0.23)',
-																borderRadius: '4px',
-																boxSizing: 'border-box',
-																flexShrink: 0,
-																color: 'black',
-															}}
-															disabled={
-																!userMediaStreamRequest.constraints
-																	?.video
-															}
-															onClick={() => {
-																setStreamVideoEnabled(!streamVideoEnabled);
-															}}>
-															<Icon>
-																{createStreamOptions.constraints.video
-																	? 'videocam_on'
-																	: 'videocam_off'}
-															</Icon>
-														</Button>
+	return <>
+		{!session && !invitationError && (
+			<Box display="flex" alignItems="center" justifyContent="center" sx={{ mt: 5 }}>
+				<img height="320px" width="320px" src={logo} alt="logo" />
+			</Box>
+		)}
 
-														<MediaDeviceSelect
-															sx={{
-																marginLeft: '0.25em',
-																minWidth: '120px',
-																flexGrow: '1',
-															}}
-															id="video-in"
-															size="small"
-															disabled={!createStreamOptions.constraints.video}
-															devices={userMediaDevices.videoinput}
-															selectedDevice={selectedVideoIn}
-															setSelectedDevice={setSelectedVideoIn}
-														/>
-													</Box>
-												</Stack>}
-											{displayMediaStreamRequest && <Box sx={{ display: 'flex', justifyContent: 'center', mt: 1 }}>
-												<Button variant='outlined' color='primary'
-													onClick={shareScreen}>share screen</Button>
-											</Box>}
-											{settingsErrors.length !== 0 &&
-												<Stack direction="column"
-													justifyContent="center" alignItems="center"
-													spacing={1}>
-													{
-														settingsErrors.map((entry: string, index: number) =>
-															<Alert key={index} variant='outlined' severity='error'>{entry}</Alert>)
-													}
-												</Stack>
-											}
-											<Typography sx={{ mt: 1 }}>
-												{selectDeviceHelperText}
-											</Typography>
-											<Box sx={{ display: 'flex', justifyContent: 'end', mt: 1 }}>
-												<Button onClick={handleBack}>{backButtonText}</Button>
-												<Button variant="outlined"
-													disabled={(settingsErrors.length !== 0) || displayMediaStreamRequest && !screen || (userMediaStreamRequest && (!streamAudioEnabled && !streamVideoEnabled))}
-													onClick={toggleReady}>
-													{readyButtonText}
-												</Button>
-											</Box>
-										</Stack>
-									</Step>
-								</TextStepper>
-							</CardContent>
-						</Card>
-					</Box>
-				</Container>
-			)}
-			{conversation && ready && (
+		{invitationError && <ErrorPage errorType={invitationErrorStatus}></ErrorPage>}
+		{session && !invitationError && !ready && (
+			<Container maxWidth="sm" sx={{ height: '100vh' }}>
 				<Box
-					sx={{
-						position: 'relative',
-						height: '99vh', // to prevent vertical scrollbar on Chrome
-						// maxHeight: '-webkit-fill-available',
-						width: '100vw',
-						maxWidth: '100%', // to prevent horizontal scrollbar on Chrome
-					}}>
-					<ApiRtcGrid sx={{ height: '100%', width: '100%' }}>
-						{selectedStream ?
-							// display selected stream alone
-							(selectedStream.isRemote ? _subscribedStream(selectedStream, 0, 'large') : _publishedStream(selectedStream, 0, 'large'))
-							:
-							// display all subscribed streams
-							subscribedStreams.map((stream: Stream, index: number) => _subscribedStream(stream, index, subscribedStreams.length > 1 && isSmallScreen ? 'medium' : 'large'))}
-					</ApiRtcGrid>
-
-					{/* <ApiRtcGrid */}
-					<Stack direction='row'
-						sx={{
-							position: 'absolute',
-							bottom: 4,
-							left: 4,
-							opacity: 0.9,
-							height: { xs: '20%', sm: '32%', md: '32%', lg: '32%' },
-							// { xs: '60%', sm: '70%', md: '80%', lg: '100%' }
-							width: { xs: `${Math.min(nbAbsoluteStreams * 32, 80)}%`, sm: `${Math.min(nbAbsoluteStreams * 20, 80)}%` }
-						}}
-					>
-						{selectedStream ?
-							// display both published and subscribed streams except the selected one
-							subscribedStreams.filter(stream => stream !== selectedStream).map((stream: Stream, index: number) => _subscribedStream(stream, index, absoluteControlsSize))
-								.concat(publishedStreams.filter(stream => stream !== selectedStream).map((stream: Stream, index: number) => _publishedStream(stream, index, absoluteControlsSize)))
-							:
-							// display all published
-							publishedStreams.map((stream, index) => (_publishedStream(stream, index, absoluteControlsSize)))}
-					</Stack>
+					sx={{ height: '100%' }}
+					display="flex"
+					alignItems="center"
+					justifyContent="center">
+					<Card>
+						{/* <CardHeader sx={{ textAlign: 'center' }} title={acceptTitleText} /> */}
+						<CardContent>
+							<TextStepper
+								activeStep={activeStep}
+								header={<img src={logo} alt="Apizee Logo" height={24} />}>
+								<Step key="legal">
+									<OptInList
+										optIns={optIns}
+										labels={{ submit: optInButtonText }}
+										onSubmit={handleNext}
+									/>
+								</Step>
+								<Step key="device-selection">
+									<Settings
+										userMediaStreamRequest={userMediaStreamRequest} displayMediaStreamRequest={displayMediaStreamRequest}
+										userMediaDevices={userMediaDevices}
+										selectedAudioIn={selectedAudioIn} setSelectedAudioIn={setSelectedAudioIn}
+										selectedVideoIn={selectedVideoIn} setSelectedVideoIn={setSelectedVideoIn}
+										createStreamOptions={createStreamOptions} grabbing={grabbing} localStream={localStream}
+										cameraError={cameraError}
+										streamAudioEnabled={streamAudioEnabled} setStreamAudioEnabled={setStreamAudioEnabled}
+										streamVideoEnabled={streamVideoEnabled} setStreamVideoEnabled={setStreamVideoEnabled}
+										setScreen={setScreen}
+										handleBack={handleBack} toggleReady={toggleReady}></Settings>
+								</Step>
+							</TextStepper>
+						</CardContent>
+					</Card>
 				</Box>
-			)}
-			{/* 
+			</Container>
+		)}
+		{conversation && ready && (
+			<Box
+				sx={{
+					position: 'relative',
+					height: '99vh', // to prevent vertical scrollbar on Chrome
+					// maxHeight: '-webkit-fill-available',
+					width: '100vw',
+					maxWidth: '100%', // to prevent horizontal scrollbar on Chrome
+				}}>
+				<ApiRtcGrid sx={{ height: '100%', width: '100%' }}>
+					{selectedStream ?
+						// display selected stream alone
+						(selectedStream.isRemote ? _subscribedStream(selectedStream, 0, 'large') : _publishedStream(selectedStream, 0, 'large'))
+						:
+						// display all subscribed streams
+						subscribedStreams.map((stream: Stream, index: number) => _subscribedStream(stream, index, subscribedStreams.length > 1 && isSmallScreen ? 'medium' : 'large'))}
+				</ApiRtcGrid>
+				<Stack direction='row'
+					sx={{
+						position: 'absolute',
+						bottom: 4,
+						left: 4,
+						opacity: 0.9,
+						height: { xs: '20%', sm: '32%', md: '32%', lg: '32%' },
+						// { xs: '60%', sm: '70%', md: '80%', lg: '100%' }
+						width: { xs: `${Math.min(nbAbsoluteStreams * 32, 80)}%`, sm: `${Math.min(nbAbsoluteStreams * 20, 80)}%` }
+					}}
+				>
+					{selectedStream ?
+						// display both published and subscribed streams except the selected one
+						subscribedStreams.filter(stream => stream !== selectedStream).map((stream: Stream, index: number) => _subscribedStream(stream, index, absoluteControlsSize))
+							.concat(publishedStreams.filter(stream => stream !== selectedStream).map((stream: Stream, index: number) => _publishedStream(stream, index, absoluteControlsSize)))
+						:
+						// display all published
+						publishedStreams.map((stream, index) => (_publishedStream(stream, index, absoluteControlsSize)))}
+				</Stack>
+			</Box>
+		)}
+		{/* 
     <Button onClick={more}>+</Button>
     <Button onClick={less}>-</Button> */}
-			{imgSrc && <img src={imgSrc} alt="sharedImg"></img>}
-			{hangedUp && (
-				<Container maxWidth="md">
-					<Alert severity="info">{hangedUpText}</Alert>
-				</Container>
-			)}
-		</>
-	);
+		{imgSrc && <img src={imgSrc} alt="sharedImg"></img>}
+		{hangedUp && (
+			<Container maxWidth="md">
+				<Alert severity="info">{hangedUpText}</Alert>
+			</Container>
+		)}
+	</>;
 }
 
 export default App;

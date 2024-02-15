@@ -1,4 +1,5 @@
 import { AppProps } from '../App';
+import { SettingsProps } from '../components/Settings/Settings';
 
 export default interface Localization {
 	components?: {
@@ -6,7 +7,6 @@ export default interface Localization {
 			defaultProps: Pick<
 				AppProps,
 				| 'acceptTitleText'
-				| 'cameraErrorText'
 				| 'optInCGUPrefixText'
 				| 'optInCGULinkText'
 				| 'optInCGUAriaLabel'
@@ -14,13 +14,18 @@ export default interface Localization {
 				| 'optInPrivacyLinkText'
 				| 'optInPrivacyAriaLabel'
 				| 'optInButtonText'
-				| 'backButtonText'
-				| 'readyButtonText'
-				| 'selectAtLeastOneMediaText'
-				| 'selectDeviceText'
-				| 'selectDeviceHelperText'
 				| 'hangedUpText'
 			>;
 		};
+		Settings: {
+			defaultProps: Pick<
+				SettingsProps,
+				| 'cameraErrorText'
+				| 'backButtonText'
+				| 'readyButtonText'
+				| 'selectAtLeastOneMediaText'
+				| 'selectDeviceHelperText'
+			>;
+		}
 	};
 }
