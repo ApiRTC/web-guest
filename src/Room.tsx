@@ -54,30 +54,30 @@ function Room(inProps: RoomProps) {
         if (conversation) {
             const on_pointerSharingEnabled = (data: any) => {
                 if (globalThis.logLevel.isDebugEnabled) {
-                    console.debug(`${COMPONENT_NAME}|pointerSharingEnabled`, data);
+                    console.debug(`${COMPONENT_NAME}|pointerSharingEnabled`, data)
                 }
             };
             conversation.on('pointerSharingEnabled', on_pointerSharingEnabled);
 
             const on_pointerLocationChanged = (event: any) => {
                 if (globalThis.logLevel.isDebugEnabled) {
-                    console.debug(`${COMPONENT_NAME}|pointerLocationChanged`, event);
+                    console.debug(`${COMPONENT_NAME}|pointerLocationChanged`, event)
                 }
                 setPointer((pointer: Object) => { return { ...pointer, [event.source.contactId]: event.data } });
                 setTimeout(() => {
                     setPointer((pointer: any) => {
                         delete pointer[event.source.contactId];
-                        return { pointer }
+                        return { pointer };
                     });
                 }, 3000);
             };
-            conversation.on('pointerLocationChanged', on_pointerLocationChanged);
+            conversation.on('pointerLocationChanged', on_pointerLocationChanged)
 
-            conversation.enablePointerSharing(true);
+            conversation.enablePointerSharing(true)
 
             return () => {
-                conversation.removeListener('pointerSharingEnabled', on_pointerSharingEnabled);
-                conversation.removeListener('pointerLocationChanged', on_pointerLocationChanged);
+                conversation.removeListener('pointerSharingEnabled', on_pointerSharingEnabled)
+                conversation.removeListener('pointerLocationChanged', on_pointerLocationChanged)
             };
         }
     }, [conversation])
@@ -87,7 +87,7 @@ function Room(inProps: RoomProps) {
         const screenShared = subscribedStreams.find((stream) => stream.isScreensharing());
         if (screenShared) {
             if (globalThis.logLevel.isDebugEnabled) {
-                console.debug(`${COMPONENT_NAME}|useEffect setSelectedStream screenShared`, screenShared);
+                console.debug(`${COMPONENT_NAME}|useEffect setSelectedStream screenShared`, screenShared)
             }
             setSelectedStream(screenShared ? screenShared : undefined)
             return
@@ -95,19 +95,19 @@ function Room(inProps: RoomProps) {
 
         if (facingMode === 'environment') {
             if (globalThis.logLevel.isDebugEnabled) {
-                console.debug(`${COMPONENT_NAME}|useEffect setSelectedStream localStream`, localStream);
+                console.debug(`${COMPONENT_NAME}|useEffect setSelectedStream localStream`, localStream)
             }
             setSelectedStream(localStream)
             return
         }
         if (subscribedStreams.length === 0) {
             if (globalThis.logLevel.isDebugEnabled) {
-                console.debug(`${COMPONENT_NAME}|useEffect setSelectedStream localStream`, localStream);
+                console.debug(`${COMPONENT_NAME}|useEffect setSelectedStream localStream`, localStream)
             }
             setSelectedStream(localStream)
         } else {
             if (globalThis.logLevel.isDebugEnabled) {
-                console.debug(`${COMPONENT_NAME}|useEffect setSelectedStream undefined`);
+                console.debug(`${COMPONENT_NAME}|useEffect setSelectedStream undefined`)
             }
             setSelectedStream(undefined)
         }

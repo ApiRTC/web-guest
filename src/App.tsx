@@ -122,9 +122,9 @@ function App(inProps: AppProps) {
 		// setup logRocket
 		if (logRocketAppID && logRocketAppID !== '') {
 			if (globalThis.logLevel.isDebugEnabled) {
-				console.debug(`${COMPONENT_NAME}|logRocket init`, logRocketAppID);
+				console.debug(`${COMPONENT_NAME}|logRocket init`, logRocketAppID)
 			}
-			LogRocket.init(logRocketAppID);
+			LogRocket.init(logRocketAppID)
 		}
 	}, [logRocketAppID])
 
@@ -212,12 +212,12 @@ function App(inProps: AppProps) {
 			const audioMediaTrackConstraints = userMediaStreamRequest.constraints?.audio;
 			const videoMediaTrackConstraints = userMediaStreamRequest.constraints?.video;
 
-			setStreamAudioEnabled(Boolean(audioMediaTrackConstraints));
-			setStreamVideoEnabled(Boolean(videoMediaTrackConstraints));
+			setStreamAudioEnabled(Boolean(audioMediaTrackConstraints))
+			setStreamVideoEnabled(Boolean(videoMediaTrackConstraints))
 
 			if (videoMediaTrackConstraints instanceof Object) {
 				if (globalThis.logLevel.isDebugEnabled) {
-					console.debug(`${COMPONENT_NAME}|useEffect invitationData has video constraints`, videoMediaTrackConstraints);
+					console.debug(`${COMPONENT_NAME}|useEffect invitationData has video constraints`, videoMediaTrackConstraints)
 				}
 				if (videoMediaTrackConstraints.facingMode) {
 					setFacingMode(videoMediaTrackConstraints.facingMode)
@@ -258,12 +258,10 @@ function App(inProps: AppProps) {
 		}
 
 		if (globalThis.logLevel.isDebugEnabled) {
-			console.debug(`${COMPONENT_NAME}|useMemo new_constraints`, new_constraints);
+			console.debug(`${COMPONENT_NAME}|useMemo new_constraints`, new_constraints)
 		}
 
-		return {
-			constraints: new_constraints
-		};
+		return { constraints: new_constraints };
 	}, [
 		userMediaStreamRequest,
 		selectedAudioInId, selectedVideoInId,
@@ -333,26 +331,26 @@ function App(inProps: AppProps) {
 			headers: {
 				Authorization: `Bearer ${token}`,
 				'Content-Type': 'application/json',
-			},
+			}
 		}).then((response) => {
 			if (response.status !== 200) {
 				return null;
 			}
 			return response.json();
 		}).catch((error) => {
-			console.error(`${COMPONENT_NAME}|getInvitationData`, error);
+			console.error(`${COMPONENT_NAME}|getInvitationData`, error)
 		});
 	};
 
 	useEffect(() => {
 		const handleTabClose = (event: BeforeUnloadEvent) => {
 			//event.preventDefault()
-			setInvitationData(undefined);
+			setInvitationData(undefined)
 			return undefined;
 		};
-		window.addEventListener('beforeunload', handleTabClose);
+		window.addEventListener('beforeunload', handleTabClose)
 		return () => {
-			window.removeEventListener('beforeunload', handleTabClose);
+			window.removeEventListener('beforeunload', handleTabClose)
 		};
 	}, [])
 
@@ -362,21 +360,21 @@ function App(inProps: AppProps) {
 			try {
 				const l_data: InvitationData = JSON.parse(base64_decode(i)) as InvitationData;
 				if (globalThis.logLevel.isDebugEnabled) {
-					console.debug(`${COMPONENT_NAME}|InvitationData`, JSON.stringify(l_data));
+					console.debug(`${COMPONENT_NAME}|InvitationData`, JSON.stringify(l_data))
 				}
 				setInvitationData(l_data);
 			} catch (error) {
 				if (error instanceof SyntaxError) {
 					getInvitationData(i).then((body) => {
 						if (globalThis.logLevel.isInfoEnabled) {
-							console.info(`${COMPONENT_NAME}|getInvitationData`, i, body);
+							console.info(`${COMPONENT_NAME}|getInvitationData`, i, body)
 						}
-						setInvitationData(body.data);
-					});
+						setInvitationData(body.data)
+					})
 					return
 				} else {
-					console.error(`${COMPONENT_NAME}|parsing i search parameter error`, error);
-					setInvitationError(true);
+					console.error(`${COMPONENT_NAME}|parsing i search parameter error`, error)
+					setInvitationError(true)
 				}
 			}
 		}
@@ -387,25 +385,25 @@ function App(inProps: AppProps) {
 			try {
 				const l_data: InvitationData = JSON.parse(base64_decode(params.invitationData)) as InvitationData;
 				if (globalThis.logLevel.isDebugEnabled) {
-					console.debug(`${COMPONENT_NAME}|InvitationData`, JSON.stringify(l_data));
+					console.debug(`${COMPONENT_NAME}|InvitationData`, JSON.stringify(l_data))
 				}
-				setInvitationData(l_data);
+				setInvitationData(l_data)
 			} catch (error) {
 				if (error instanceof SyntaxError) {
 					const invitationId = params.invitationData;
 					loginKeyCloakJS().then((keycloak) => {
 						if (globalThis.logLevel.isDebugEnabled) {
-							console.debug(`${COMPONENT_NAME}|keycloak.token`, keycloak.token);
+							console.debug(`${COMPONENT_NAME}|keycloak.token`, keycloak.token)
 						}
 						getInvitationData(invitationId).then((data) => {
 							if (globalThis.logLevel.isDebugEnabled) {
-								console.debug(`${COMPONENT_NAME}|getInvitationData`, invitationId, data);
+								console.debug(`${COMPONENT_NAME}|getInvitationData`, invitationId, data)
 							}
-							setInvitationData(data);
+							setInvitationData(data)
 						});
 					}).catch((error: any) => {
-						console.error(`${COMPONENT_NAME}|loginKeyCloakJS error`, error);
-					});
+						console.error(`${COMPONENT_NAME}|loginKeyCloakJS error`, error)
+					})
 				}
 			}
 		}
@@ -414,9 +412,9 @@ function App(inProps: AppProps) {
 	useEffect(() => {
 		if (invitationData && session) {
 			if (globalThis.logLevel.isDebugEnabled) {
-				console.debug(`${COMPONENT_NAME}|logRocket identify`, invitationData.conversation.name, session.getId());
+				console.debug(`${COMPONENT_NAME}|logRocket identify`, invitationData.conversation.name, session.getId())
 			}
-			LogRocket.identify(`${invitationData.conversation.name}-${session.getId()}`);
+			LogRocket.identify(`${invitationData.conversation.name}-${session.getId()}`)
 		}
 	}, [invitationData, session])
 
@@ -425,14 +423,14 @@ function App(inProps: AppProps) {
 			const userAgent: UserAgent = session.getUserAgent();
 			const parser = new UAParser();
 			if (globalThis.logLevel.isDebugEnabled) {
-				console.debug(`${COMPONENT_NAME}|UAParser`, parser.getResult());
+				console.debug(`${COMPONENT_NAME}|UAParser`, parser.getResult())
 			}
 			const userData: UserData = userAgent.getUserData();
-			userData.setToSession();
-			userData.setProp('systemInfo', JSON.stringify(parser.getResult()));
+			userData.setToSession()
+			userData.setProp('systemInfo', JSON.stringify(parser.getResult()))
 			// TODO : I was forced to call setUserData again to make it work : check why and how
 			// could the api be enhanced regarding userData usage (setToSession is also a pain)
-			userAgent.setUserData(userData);
+			userAgent.setUserData(userData)
 		}
 	}, [session])
 
@@ -441,7 +439,7 @@ function App(inProps: AppProps) {
 			// To receive data from contacts
 			const onContactData = (contactDataInfo: any) => {
 				if (globalThis.logLevel.isDebugEnabled) {
-					console.debug(`${COMPONENT_NAME}|onContactData`, contactDataInfo);
+					console.debug(`${COMPONENT_NAME}|onContactData`, contactDataInfo)
 				}
 				const sender: Contact = contactDataInfo.sender;
 				const content: Object = contactDataInfo.content;
@@ -449,7 +447,7 @@ function App(inProps: AppProps) {
 					localStream.takeSnapshot(content.takeSnapshot)
 						.then((snapshot: any) => {
 							if (globalThis.logLevel.isDebugEnabled) {
-								console.debug(`${COMPONENT_NAME}|takeSnapshot of`, localStream, snapshot);
+								console.debug(`${COMPONENT_NAME}|takeSnapshot of`, localStream, snapshot)
 							}
 							const fileTransferInvitation = sender.sendFile(
 								{
@@ -459,24 +457,24 @@ function App(inProps: AppProps) {
 							);
 							fileTransferInvitation.on('statusChange', (statusChangeInfo: any) => {
 								if (globalThis.logLevel.isDebugEnabled) {
-									console.debug(`${COMPONENT_NAME}|statusChange`, statusChangeInfo);
+									console.debug(`${COMPONENT_NAME}|statusChange`, statusChangeInfo)
 								}
 							});
 						}).catch((error: any) => {
 							if (globalThis.logLevel.isWarnEnabled) {
-								console.warn(`${COMPONENT_NAME}|takeSnapshot error`, error);
+								console.warn(`${COMPONENT_NAME}|takeSnapshot error`, error)
 							}
 						});
 				} else if (isInstanceOfSwitchFacingMode(content)) {
 					if (globalThis.logLevel.isDebugEnabled) {
-						console.debug(`${COMPONENT_NAME}|SwitchFacingMode`);
+						console.debug(`${COMPONENT_NAME}|SwitchFacingMode`)
 					}
-					setFacingMode((prev) => (prev === 'user' ? 'environment' : 'user'));
+					setFacingMode((prev) => (prev === 'user' ? 'environment' : 'user'))
 				}
 			};
-			session.on('contactData', onContactData);
+			session.on('contactData', onContactData)
 			return () => {
-				session.removeListener('contactData', onContactData);
+				session.removeListener('contactData', onContactData)
 			};
 		}
 	}, [session, localStream])
@@ -486,12 +484,12 @@ function App(inProps: AppProps) {
 			// To receive data from contacts
 			const onData = (dataInfo: any) => {
 				if (globalThis.logLevel.isDebugEnabled) {
-					console.debug(`${COMPONENT_NAME}|Conversation onData`, dataInfo);
+					console.debug(`${COMPONENT_NAME}|Conversation onData`, dataInfo)
 				}
 				const content: Object = dataInfo.content;
 				if (isInstanceOfFileShared(content)) {
 					if (globalThis.logLevel.isDebugEnabled) {
-						console.debug(`${COMPONENT_NAME}|fileShared`, content);
+						console.debug(`${COMPONENT_NAME}|fileShared`, content)
 					}
 					fetch(content.fileShared.link, {
 						method: 'get',
@@ -503,25 +501,25 @@ function App(inProps: AppProps) {
 						return res.blob();
 					}).then((blob) => {
 						const url = window.URL.createObjectURL(blob);
-						setImgSrc(url);
+						setImgSrc(url)
 					}).catch((error) => {
-						console.error(`${COMPONENT_NAME}|fetch error`, content.fileShared.link, error);
+						console.error(`${COMPONENT_NAME}|fetch error`, content.fileShared.link, error)
 					});
 				} else if (isInstanceOfHangup(content)) {
 					conversation.leave().then()
 						.catch((error) => {
 							if (globalThis.logLevel.isWarnEnabled) {
-								console.warn(`${COMPONENT_NAME}|conversation leave error`, error);
+								console.warn(`${COMPONENT_NAME}|conversation leave error`, error)
 							}
 						}).finally(() => {
-							disconnect();
+							disconnect()
 						});
-					setHangedUp(true);
+					setHangedUp(true)
 				}
 			};
-			conversation.on('data', onData);
+			conversation.on('data', onData)
 			return () => {
-				conversation.removeListener('data', onData);
+				conversation.removeListener('data', onData)
 			};
 		}
 	}, [conversation, disconnect])
