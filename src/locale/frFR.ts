@@ -23,6 +23,7 @@ export const frFR: Localization = {
 				selectAtLeastOneMediaText: 'Veuillez sélectionner au moins un média.',
 				selectDeviceHelperText:
 					"Avant d'entrer en communication, vérifiez ce que vous partagerez avec votre interlocuteur.",
+				shareScreenText: "Cliquez ici pour activer le partage d'écran"
 			},
 		},
 	},

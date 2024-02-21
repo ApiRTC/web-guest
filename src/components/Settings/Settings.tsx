@@ -30,13 +30,14 @@ export type SettingsProps = {
     cameraError: any,
     streamAudioEnabled: boolean | undefined, setStreamAudioEnabled: Function,
     streamVideoEnabled: boolean | undefined, setStreamVideoEnabled: Function,
-    setScreen: Function,
+    screenShareStream: Stream | undefined, setScreenShareStream: Function,
     handleBack: () => void, toggleReady: () => void,
     cameraErrorText?: string,
     backButtonText?: string,
     readyButtonText?: string,
     selectAtLeastOneMediaText?: string,
     selectDeviceHelperText?: string
+    shareScreenText?: string
 };
 const COMPONENT_NAME = 'Settings';
 const Settings: React.FC<SettingsProps> = (inProps: SettingsProps) => {
@@ -51,13 +52,14 @@ const Settings: React.FC<SettingsProps> = (inProps: SettingsProps) => {
         cameraError,
         streamAudioEnabled, setStreamAudioEnabled,
         streamVideoEnabled, setStreamVideoEnabled,
-        setScreen,
+        screenShareStream, setScreenShareStream,
         handleBack, toggleReady,
         backButtonText = 'Back',
         selectAtLeastOneMediaText = 'Please select at least one media',
         cameraErrorText = 'Please check a device is available and not already grabbed by another software.',
         readyButtonText = 'Enter',
         selectDeviceHelperText = 'Please check what you want to share before entering the room.',
+        shareScreenText = 'Please click here to share your screen'
     } = props;
 
     const shareScreen = () => {
@@ -68,14 +70,14 @@ const Settings: React.FC<SettingsProps> = (inProps: SettingsProps) => {
             if (globalThis.logLevel.isInfoEnabled) {
                 console.info(`${COMPONENT_NAME}|createDisplayMediaStream`, localStream)
             }
-            setScreen(localStream)
+            setScreenShareStream(localStream)
         }).catch((error: any) => {
             console.error(`${COMPONENT_NAME}|createDisplayMediaStream error`, error)
         })
     };
 
     const _settingsErrors = useMemo(() => [
-        ...(!streamAudioEnabled && !streamVideoEnabled) ? [selectAtLeastOneMediaText] : [],
+        ...(userMediaStreamRequest && !streamAudioEnabled && !streamVideoEnabled) ? [selectAtLeastOneMediaText] : [],
         ...((streamAudioEnabled || streamVideoEnabled) && cameraError ? [cameraErrorText] : []),
         ...(createStreamOptions.constraints?.audio && !grabbing && localStream && !localStream.hasAudio() ? ["Failed to grab audio"] : []),
         ...(createStreamOptions.constraints?.video && !grabbing && localStream && !localStream.hasVideo() ? ["Failed to grab video: Please check a device is available and not already grabbed by another software"] : [])
@@ -242,10 +244,20 @@ const Settings: React.FC<SettingsProps> = (inProps: SettingsProps) => {
                     />
                 </Box>
             </Stack>}
-        {displayMediaStreamRequest && <Box sx={{ display: 'flex', justifyContent: 'center', mt: 1 }}>
-            <Button variant='outlined' color='primary'
-                onClick={shareScreen}>share screen</Button>
-        </Box>}
+        {displayMediaStreamRequest &&
+            <Stack mt={1} alignItems="center" spacing={1}>
+                {screenShareStream && <Video
+                    style={{
+                        display: 'flex',
+                        maxWidth: '100%',
+                        ...VIDEO_ROUNDED_CORNERS,
+                    }}
+                    data-testid={`screen-share-video`}
+                    stream={screenShareStream}
+                />}
+                {!screenShareStream && <Button variant='outlined' color='primary'
+                    onClick={shareScreen}>{shareScreenText}</Button>}
+            </Stack>}
         {settingsErrors.length !== 0 &&
             <Stack direction="column"
                 justifyContent="center" alignItems="center"
@@ -256,13 +268,13 @@ const Settings: React.FC<SettingsProps> = (inProps: SettingsProps) => {
                 }
             </Stack>
         }
-        <Typography sx={{ mt: 1 }}>
-            {selectDeviceHelperText}
-        </Typography>
+        <Alert sx={{ mt: 1 }} severity="info">{selectDeviceHelperText}</Alert>
         <Box sx={{ display: 'flex', justifyContent: 'end', mt: 1 }}>
             <Button onClick={handleBack}>{backButtonText}</Button>
             <Button variant="outlined"
-                disabled={(settingsErrors.length !== 0) || displayMediaStreamRequest && !screen || (userMediaStreamRequest && (!streamAudioEnabled && !streamVideoEnabled))}
+                disabled={(settingsErrors.length !== 0)
+                    || (displayMediaStreamRequest && !screenShareStream)
+                    || (userMediaStreamRequest && !localStream)} //(!streamAudioEnabled && !streamVideoEnabled)
                 onClick={toggleReady}>
                 {readyButtonText}
             </Button>

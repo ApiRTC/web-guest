@@ -280,7 +280,7 @@ function App(inProps: AppProps) {
 	// 	}
 	// }, [localStream])
 
-	const [screen, setScreen] = useState<Stream>();
+	const [screenShareStream, setScreenShareStream] = useState<Stream>();
 
 	const { conversation } = useConversation(
 		session,
@@ -292,8 +292,8 @@ function App(inProps: AppProps) {
 
 	const streamsToPublish = useMemo(() => [
 		...(localStream && ready ? [{ stream: localStream, options: userMediaStreamRequest?.publishOptions }] : []),
-		...(screen ? [{ stream: screen }] : [])],
-		[ready, localStream, userMediaStreamRequest, screen]);
+		...(screenShareStream ? [{ stream: screenShareStream }] : [])],
+		[ready, localStream, userMediaStreamRequest, screenShareStream]);
 
 	const { publishedStreams, subscribedStreams } = useConversationStreams(conversation, streamsToPublish);
 
@@ -525,18 +525,18 @@ function App(inProps: AppProps) {
 	}, [conversation, disconnect])
 
 	useEffect(() => {
-		if (screen) {
-			screen.on('stopped', () => {
+		if (screenShareStream) {
+			screenShareStream.on('stopped', () => {
 				if (globalThis.logLevel.isInfoEnabled) {
 					console.log(`${COMPONENT_NAME}|The user has ended sharing the screen`);
 				}
-				setScreen(undefined)
+				setScreenShareStream(undefined)
 			});
 			return () => {
-				screen.release()
+				screenShareStream.release()
 			}
 		}
-	}, [screen])
+	}, [screenShareStream])
 
 	useEffect(() => {
 		if (optInAccepted) {
@@ -624,7 +624,7 @@ function App(inProps: AppProps) {
 									cameraError={cameraError}
 									streamAudioEnabled={streamAudioEnabled} setStreamAudioEnabled={setStreamAudioEnabled}
 									streamVideoEnabled={streamVideoEnabled} setStreamVideoEnabled={setStreamVideoEnabled}
-									setScreen={setScreen}
+									screenShareStream={screenShareStream} setScreenShareStream={setScreenShareStream}
 									handleBack={handleBack} toggleReady={toggleReady}></Settings>
 							</Step>
 						</TextStepper>
