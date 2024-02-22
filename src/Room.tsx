@@ -26,9 +26,9 @@ const getName = (stream: Stream) => {
     const firstName = stream.getContact()?.getUserData().get('firstName');
     const lastName = stream.getContact()?.getUserData().get('lastName');
     if (!firstName && !lastName) {
-        return undefined;
+        return stream.isScreensharing() ? 'screen' : undefined;
     }
-    return `${firstName ?? ''} ${lastName ?? ''}`;
+    return `${firstName ? firstName : ''} ${lastName ? lastName : ''}${stream.isScreensharing() ? '-screen' : ''}`;
 };
 
 export type RoomProps = {
